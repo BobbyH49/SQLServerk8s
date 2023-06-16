@@ -117,7 +117,7 @@
                 "securityRules": [
                     {
                         "name": "AllowGatewayManager",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules/SqlK8sAzureBastionSubnet-nsg', 'AllowGatewayManager')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowGatewayManager')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "Allow GatewayManager",
@@ -137,7 +137,7 @@
                     },
                     {
                         "name": "AllowHttpsInBound",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules/SqlK8sAzureBastionSubnet-nsg', 'AllowHttpsInBound')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowHttpsInBound')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "Allow HTTPs",
@@ -157,7 +157,7 @@
                     },
                     {
                         "name": "AllowSshRdpOutbound",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules/SqlK8sAzureBastionSubnet-nsg', 'AllowSshRdpOutbound')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowSshRdpOutbound')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "protocol": "*",
@@ -178,7 +178,7 @@
                     },
                     {
                         "name": "AllowAzureCloudOutbound",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules/SqlK8sAzureBastionSubnet-nsg', 'AllowAzureCloudOutbound')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowAzureCloudOutbound')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "protocol": "TCP",
@@ -197,7 +197,7 @@
                     },
                     {
                         "name": "AllowCorpnet",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules/SqlK8sAzureBastionSubnet-nsg', 'AllowCorpnet')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowCorpnet')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "CSS Governance Security Rule.  Allow Corpnet inbound.  https://aka.ms/casg",
@@ -217,7 +217,7 @@
                     },
                     {
                         "name": "AllowSAW",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules/SqlK8sAzureBastionSubnet-nsg', 'AllowSAW')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowSAW')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "CSS Governance Security Rule.  Allow SAW inbound.  https://aka.ms/casg",
@@ -247,7 +247,7 @@
                 "securityRules": [
                     {
                         "name": "AllowCorpnet",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules/SqlK8sAKS-nsg', 'AllowCorpnet')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAKS-nsg', 'AllowCorpnet')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "CSS Governance Security Rule.  Allow Corpnet inbound.  https://aka.ms/casg",
@@ -267,7 +267,7 @@
                     },
                     {
                         "name": "AllowSAW",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules/SqlK8sAKS-nsg', 'AllowSAW')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAKS-nsg', 'AllowSAW')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "CSS Governance Security Rule.  Allow SAW inbound.  https://aka.ms/casg",
