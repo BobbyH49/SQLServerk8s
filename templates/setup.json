@@ -96,6 +96,11 @@
                         }
                     }
                 ],
+                "dnsSettings": {
+                    "dnsServers": [
+                        "168.63.129.16"
+                    ]
+                },
                 "enableAcceleratedNetworking": true,
                 "networkSecurityGroup": {
                     "id": "[variables('jumpboxnsgId')]"
@@ -307,6 +312,11 @@
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": ["10.192.0.0/16"]
+                },
+                "dhcpOptions": {
+                    "dnsServers": [
+                        "10.192.4.4"
+                    ]
                 },
                 "subnets": [
                     {
