@@ -7,9 +7,15 @@
 * An [Azure account](https://azure.microsoft.com/free/) with an active subscription.
 * Owner permissions within a Resource Group to create resources and manage role assignments.
 
-## Deploy Jumpbox
+## Azure Resources
 
-**The Jumpbox will allow you to install all of the client tools away from your client so you can clearly see the dependencies.  It will also sit on the same Virtual Network as your Domain Controller, Linux VM, and Kubernetes Cluster.  This will allow you to connect to each privately over Bastion Host.**
+The following resources will be deployed
+
+* Virtual Network (SqlK8s-vnet)
+* 3 subnets (AKS, VMs, AzureBastionSubnet)
+* Bastion Host (SqlK8s-bastion)
+
+## Deploy Azure Resources
 
 1. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
 
@@ -20,3 +26,9 @@
 ### 1.  Install Client Tools on Jumpbox
 
 **To install the tools you will need to open Powershell as Administrator**
+
+# Install NuGet and Powershell Az Module
+#Write-Host "Installing NuGet"
+#Install-PackageProvider -Name NuGet -Force
+#Write-Host "Installing Az Module"
+#Install-Module Az -AllowClobber -Force

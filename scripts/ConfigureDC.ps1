@@ -1,12 +1,7 @@
-#Last execution of the entire script (7 VMs) below took 40 minutes 
-
 # Connect to Azure Subscription
-# Enable Firewall Rule
 # Install Active Directory Domain Services
 # Configure Active Directory Domain
 # Create a new Active Directory Organization Unit and make it default for computer objects
-# Join Azure VM to domain
-# Add Firewall Rule
 
 [CmdletBinding()]
 param(
@@ -19,7 +14,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$azureUser,
     [Parameter(Mandatory = $true)]
-    [SecureString]$azurePassword
+    [string]$azurePassword
 )
 function NewMessage 
 {
@@ -66,42 +61,6 @@ function ConnectToAzure
     catch {
         Write-Warning "Error occured = " $Error[0]
         Exit
-    }
-}
-
-# Enable Firewall Rule
-function EnableFirewallRule 
-{
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$vmName,
-        [Parameter(Mandatory = $true)]
-        [string]$resourceGroup
-    )
-    try {
-            # Create a temporary file in the users TEMP directory
-            $file = $env:TEMP + "\EnableFirewallRule.ps1"
-
-            $commands = "Enable-NetFirewallRule -DisplayName ""File and Printer Sharing (Echo Request - ICMPv4-In)"""
-            $commands | Out-File -FilePath $file -force
-
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
-
-            if ($result.Status -eq "Succeeded") {
-                $message = "Firewall rule has been enabled on $vmName."
-                NewMessage -message $message -type "success"
-            }
-            else {
-                $message = "Firewall rule couldn't be enabled on $vmName."
-                NewMessage -message $message -type "error"
-            }
-
-            Remove-Item $file
-    }
-    catch {
-        Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
     }
 }
 
@@ -239,62 +198,9 @@ function NewADOU
     }
 }    
 
-# Join Azure VM to domain
-function JoinDomain 
-{
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$vmName,
-        [Parameter(Mandatory = $true)]
-        [string]$resourceGroup,
-        [Parameter(Mandatory = $true)]
-        [string]$domain,
-        [Parameter(Mandatory = $true)]
-        [string]$adminUsername,
-        [Parameter(Mandatory = $true)]
-        [SecureString]$adminPassword
-    )
-    try {
-            # Create a temporary file in the users TEMP directory
-            $file = $env:TEMP + "\JoinDomain.ps1"
-
-            $commands = "`$domainUsername=""$domain\$adminUsername""" + "`r`n"
-            $commands = $commands + "`$domainPassword=""$adminPassword""" + "`r`n"
-            $commands = $commands + "`$SecurePassword = ConvertTo-SecureString `$domainPassword -AsPlainText -Force" + "`r`n"
-            $commands = $commands + "`$credential = New-Object System.Management.Automation.PSCredential (`$domainUsername, `$SecurePassword)" + "`r`n"
-            $commands = $commands + "Add-Computer -DomainName ""$domain.com"" -Credential `$credential -Restart -Force -PassThru -ErrorAction Stop"
-            
-            $commands | Out-File -FilePath $file -force
-
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
-
-            if ($result.Status -eq "Succeeded") {
-                $message = "$vmName has been joined to domain."
-                NewMessage -message $message -type "success"
-            }
-            else {
-                $message = "$vmName couldn't be joined to domain."
-                NewMessage -message $message -type "error"
-            }
-
-            Remove-Item $file
-    }
-    catch {
-        Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
-    }
-}
-
 # Main Code
 Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
-
-# Install NuGet and Powershell Az Module
-#Write-Host "Installing NuGet"
-#Install-PackageProvider -Name NuGet -Force
-#Write-Host "Installing Az Module"
-#Install-Module Az -AllowClobber -Force
 
 # Connect to Azure Subscription
 ConnectToAzure -subscriptionId $subscriptionId
@@ -307,11 +213,5 @@ ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $a
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
 NewADOU -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
-
-#################################################################################################
-# Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $azureUser -adminPassword $azurePassword -ErrorAction SilentlyContinue
-
-#################################################################################################
 
 Write-Host "Configuration ends: $(Get-Date)"
