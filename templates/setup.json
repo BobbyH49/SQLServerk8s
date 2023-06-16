@@ -561,7 +561,7 @@
             "name": "sqlk8saks",
             "properties": {
                 "kubernetesVersion": "1.25.6",
-                "enableRBAC": "true",
+                "enableRBAC": true,
                 "dnsPrefix": "sqlk8saks-dns",
                 "nodeResourceGroup": "[concat('MC_', resourceGroup().name, '_sqlk8saks_', resourceGroup().location)]",
                 "azureMonitorProfile": {
@@ -603,16 +603,16 @@
                 "autoUpgradeProfile": {
                     "upgradeChannel": "patch"
                 },
-                "disableLocalAccounts": "false",
+                "disableLocalAccounts": false,
                 "apiServerAccessProfile": {
-                    "enablePrivateCluster": "true"
+                    "enablePrivateCluster": true
                 },
                 "addonProfiles": {
                     "azurepolicy": {
-                        "enabled": "false"
+                        "enabled": false
                     },
                     "azureKeyvaultSecretsProvider": {
-                        "enabled": "false",
+                        "enabled": false,
                         "config": null
                     }
                 }
