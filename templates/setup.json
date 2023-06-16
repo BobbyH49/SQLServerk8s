@@ -308,11 +308,6 @@
                 "addressSpace": {
                     "addressPrefixes": ["10.192.0.0/16"]
                 },
-                "dhcpOptions": {
-                    "dnsServers": [
-                        "10.192.4.4"
-                    ]
-                },
                 "subnets": [
                     {
                         "name": "AKS",

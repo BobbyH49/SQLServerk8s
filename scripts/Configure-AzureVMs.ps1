@@ -291,10 +291,10 @@ Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Install NuGet and Powershell Az Module
-Write-Host "Installing NuGet"
-Install-PackageProvider -Name NuGet -Force
-Write-Host "Installing Az Module"
-Install-Module Az -AllowClobber -Force
+#Write-Host "Installing NuGet"
+#Install-PackageProvider -Name NuGet -Force
+#Write-Host "Installing Az Module"
+#Install-Module Az -AllowClobber -Force
 
 # Connect to Azure Subscription
 ConnectToAzure -subscriptionId $subscriptionId
