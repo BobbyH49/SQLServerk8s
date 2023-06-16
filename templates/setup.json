@@ -36,7 +36,7 @@
                                 "id": "[variables('subnetRef')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.0.68"
+                            "privateIpAddress": "10.192.4.4"
                         }
                     }
                 ],
@@ -60,7 +60,7 @@
                                 "id": "[variables('subnetRef')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.0.69"
+                            "privateIpAddress": "10.192.4.5"
                         }
                     }
                 ],
@@ -86,7 +86,7 @@
                                 "id": "[variables('subnetRef')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.0.70",
+                            "privateIpAddress": "10.192.4.6",
                             "publicIpAddress": {
                                 "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8sJumpbox-ip')]",
                                 "properties": {
@@ -137,29 +137,29 @@
                 },
                 "subnets": [
                     {
-                        "name": "AzureBastionSubnet",
+                        "name": "AKS",
                         "properties": {
-                            "addressPrefix": "10.192.0.0/26",
+                            "addressPrefix": "10.192.0.0/22",
                             "networkSecurityGroup": {
-                                "id": "[variables('bastionnsgId')]"
+                                "id": "[variables('aksnsgId')]"
                             }
                         }
                     },
                     {
                         "name": "VMs",
                         "properties": {
-                            "addressPrefix": "10.192.0.64/26",
+                            "addressPrefix": "10.192.4.0/26",
                             "networkSecurityGroup": {
                                 "id": "[variables('vmsnsgId')]"
                             }
                         }
                     },
                     {
-                        "name": "AKS",
+                        "name": "AzureBastionSubnet",
                         "properties": {
-                            "addressPrefix": "10.192.1.0/22",
+                            "addressPrefix": "10.192.4.64/26",
                             "networkSecurityGroup": {
-                                "id": "[variables('aksnsgId')]"
+                                "id": "[variables('bastionnsgId')]"
                             }
                         }
                     }
