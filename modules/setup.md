@@ -11,7 +11,7 @@
 
 1. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
 
-    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Version1.0%2Ftemplates%2Fjumpbox.json)
+    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2FVersion1.0%2Ftemplates%2Fjumpbox.json)
 
 ## Create Domain Controller and Linux VM
 
