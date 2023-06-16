@@ -10,10 +10,16 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
-    [string]$subscriptionId = "9204f233-abf1-4491-ad9a-fffb219edbfa",
-    [string]$resourceGroup = "SQLIaaSPoCRG",
-    [string]$location = "uksouth"
+    [Parameter(Mandatory = $true)]
+    [string]$subscriptionId,
+    [Parameter(Mandatory = $true)]
+    [string]$resourceGroup,
+    [Parameter(Mandatory = $true)]
+    [string]$location,
+    [Parameter(Mandatory = $true)]
+    [string]$azureUser,
+    [Parameter(Mandatory = $true)]
+    [SecureString]$azurePassword
 )
 function NewMessage 
 {
@@ -161,8 +167,8 @@ function ConfigureADDS
             $commands = $commands + "-CreateDnsDelegation:`$false ``" + "`r`n"
             $commands = $commands + "-DatabasePath ""C:\Windows\NTDS"" ``" + "`r`n"
             $commands = $commands + "-DomainMode ""WinThreshold"" ``" + "`r`n"
-            $commands = $commands + "-DomainName ""contoso.com"" ``" + "`r`n"
-            $commands = $commands + "-DomainNetbiosName ""CONTOSO"" ``" + "`r`n"
+            $commands = $commands + "-DomainName ""sqlk8s.local"" ``" + "`r`n"
+            $commands = $commands + "-DomainNetbiosName ""SQLK8S"" ``" + "`r`n"
             $commands = $commands + "-ForestMode ""WinThreshold"" ``" + "`r`n"
             $commands = $commands + "-InstallDns:`$true ``" + "`r`n"
             $commands = $commands + "-LogPath ""C:\Windows\NTDS"" ``" + "`r`n"
@@ -206,8 +212,8 @@ function NewADOU
             $file = $env:TEMP + "\NewADOU.ps1"
 
             $commands = "#Create an OU and make it default computer objects OU" + "`r`n"
-            $commands = $commands + "New-ADOrganizationalUnit -Name ""AlwaysOnOU"" -Path ""DC=CONTOSO,DC=COM""" + "`r`n"
-            $commands = $commands + "redircmp ""OU=AlwaysOnOU,DC=CONTOSO,DC=COM"""
+            $commands = $commands + "New-ADOrganizationalUnit -Name ""ComputersOU"" -Path ""DC=SQLK8S,DC=LOCAL""" + "`r`n"
+            $commands = $commands + "redircmp ""OU=ComputersOU,DC=SQLK8S,DC=LOCAL"""
             $commands | Out-File -FilePath $file -force
 
             $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
@@ -247,7 +253,7 @@ function JoinDomain
         [Parameter(Mandatory = $true)]
         [string]$adminUsername,
         [Parameter(Mandatory = $true)]
-        [string]$adminPassword
+        [SecureString]$adminPassword
     )
     try {
             # Create a temporary file in the users TEMP directory
@@ -280,103 +286,32 @@ function JoinDomain
     }
 }
 
-# Add Firewall Rule
-function AddFirewallRule 
-{
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$vmName,
-        [Parameter(Mandatory = $true)]
-        [string]$resourceGroup
-    )
-    try {
-            # Create a temporary file in the users TEMP directory
-            $file = $env:TEMP + "\AddFirewallRule.ps1"
-
-            $commands = "New-NetFirewallRule -DisplayName 'SQLAG' -Profile @('Domain') -Direction Inbound -Action Allow -Protocol TCP -LocalPort @('1433', '5022')"
-            $commands | Out-File -FilePath $file -force
-
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
-
-            if ($result.Status -eq "Succeeded") {
-                $message = "Firewall rule has been added on $vmName."
-                NewMessage -message $message -type "success"
-            }
-            else {
-                $message = "Firewall rule couldn't be added on $vmName."
-                NewMessage -message $message -type "error"
-            }
-
-            Remove-Item $file
-    }
-    catch {
-        Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
-    }
-}
-
 # Main Code
 Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
+# Install NuGet and Powershell Az Module
+Write-Host "Installing NuGet"
+Install-PackageProvider -Name NuGet -Force
+Write-Host "Installing Az Module"
+Install-Module Az -AllowClobber -Force
+
 # Connect to Azure Subscription
 ConnectToAzure -subscriptionId $subscriptionId
 
-# Enable Firewall Rule
-EnableFirewallRule -resourceGroup $resourceGroup -vmName "DCVM01" -ErrorAction SilentlyContinue
-EnableFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN1" -ErrorAction SilentlyContinue
-EnableFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN2" -ErrorAction SilentlyContinue
-EnableFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN3" -ErrorAction SilentlyContinue
-EnableFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN4" -ErrorAction SilentlyContinue
-EnableFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN5" -ErrorAction SilentlyContinue
-EnableFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnClient" -ErrorAction SilentlyContinue
-
 # Install Active Directory Domain Services
-InstallADDS -resourceGroup $resourceGroup -vmName "DCVM01" -ErrorAction SilentlyContinue
+InstallADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
-ConfigureADDS -resourceGroup $resourceGroup -vmName "DCVM01" -adminPassword "Microsoft123" -ErrorAction SilentlyContinue
+ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $azurePassword -ErrorAction SilentlyContinue
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
-NewADOU -resourceGroup $resourceGroup -vmName "DCVM01" -ErrorAction SilentlyContinue
+NewADOU -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 #################################################################################################
 # Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "AlwaysOnN1" -domain "contoso" -adminUsername "azadmin" -adminPassword "Microsoft123" -ErrorAction SilentlyContinue
+JoinDomain -resourceGroup $resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $azureUser -adminPassword $azurePassword -ErrorAction SilentlyContinue
 
-# Add Firewall Rule
-AddFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN1" -ErrorAction SilentlyContinue
-#################################################################################################
-# Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "AlwaysOnN2" -domain "contoso" -adminUsername "azadmin" -adminPassword "Microsoft123" -ErrorAction SilentlyContinue
-
-# Add Firewall Rule
-AddFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN2" -ErrorAction SilentlyContinue
-#################################################################################################
-# Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "AlwaysOnN3" -domain "contoso" -adminUsername "azadmin" -adminPassword "Microsoft123" -ErrorAction SilentlyContinue
-
-# Add Firewall Rule
-AddFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN3" -ErrorAction SilentlyContinue
-#################################################################################################
-# Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "AlwaysOnN4" -domain "contoso" -adminUsername "azadmin" -adminPassword "Microsoft123" -ErrorAction SilentlyContinue
-
-# Add Firewall Rule
-AddFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN4" -ErrorAction SilentlyContinue
-#################################################################################################
-# Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "AlwaysOnN5" -domain "contoso" -adminUsername "azadmin" -adminPassword "Microsoft123" -ErrorAction SilentlyContinue
-
-# Add Firewall Rule
-AddFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnN5" -ErrorAction SilentlyContinue
-#################################################################################################
-# Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "AlwaysOnClient" -domain "contoso" -adminUsername "azadmin" -adminPassword "Microsoft123" -ErrorAction SilentlyContinue
-
-# Add Firewall Rule
-AddFirewallRule -resourceGroup $resourceGroup -vmName "AlwaysOnClient" -ErrorAction SilentlyContinue
 #################################################################################################
 
 Write-Host "Configuration ends: $(Get-Date)"
