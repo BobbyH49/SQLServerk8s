@@ -576,7 +576,7 @@
                 "agentPoolProfiles": [
                     {
                         "name": "agentpool",
-                        "osDiskSizeGB": "0",
+                        "osDiskSizeGB": 0,
                         "count": 2,
                         "enableAutoScaling": false,
                         "vmSize": "Standard_D8s_v3",
