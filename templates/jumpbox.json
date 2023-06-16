@@ -10,21 +10,21 @@
         }
     },
     "variables": {
-        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SQLServerk8sJumpbox-nsg')]",
-        "vnetName": "SQLServerk8sJumpbox-vnet",
-        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', 'SQLServerk8sJumpbox-vnet')]",
+        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SqlK8sJumpbox-nsg')]",
+        "vnetName": "SqlK8sJumpbox-vnet",
+        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', 'SqlK8sJumpbox-vnet')]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'default')]"
     },
     "resources": [
         {
-            "name": "SQLServerk8sjumpbox-nic",
+            "name": "SqlK8sJumpbox-nic",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2021-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', 'SQLServerk8sJumpbox-nsg')]",
-                "[concat('Microsoft.Network/virtualNetworks/', 'SQLServerk8sJumpbox-vnet')]",
-                "[concat('Microsoft.Network/publicIpAddresses/', 'SQLServerk8sJumpbox-ip')]"
+                "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sJumpbox-nsg')]",
+                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8sJumpbox-vnet')]",
+                "[concat('Microsoft.Network/publicIpAddresses/', 'SqlK8sJumpbox-ip')]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -36,7 +36,7 @@
                             },
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIpAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SQLServerk8sJumpbox-ip')]",
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8sJumpbox-ip')]",
                                 "properties": {
                                     "deleteOption": "Detach"
                                 }
@@ -51,7 +51,7 @@
             }
         },
         {
-            "name": "['SQLServerk8sJumpbox-nsg']",
+            "name": "['SqlK8sJumpbox-nsg']",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]",
@@ -74,7 +74,7 @@
             }
         },
         {
-            "name": "SQLServerk8sJumpbox-vnet",
+            "name": "SqlK8sJumpbox-vnet",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2020-11-01",
             "location": "[resourceGroup().location]",
@@ -101,7 +101,7 @@
         {
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-08-01",
-            "name": "SQLServerk8sJumpbox-bastion-ip",
+            "name": "SqlK8sJumpbox-bastion-ip",
             "location": "[resourceGroup().location]",
             "sku": {
                 "name": "Standard"
@@ -113,11 +113,11 @@
         {
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2019-04-01",
-            "name": "SQLServerk8sJumpbox-bastion",
+            "name": "SqlK8sJumpbox-bastion",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', 'SQLServerk8sJumpbox-vnet')]",
-                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SQLServerk8sJumpbox-bastion-ip')]"
+                "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', 'SqlK8sJumpbox-vnet')]",
+                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8sJumpbox-bastion-ip')]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -125,10 +125,10 @@
                         "name": "IpConf",
                         "properties": {
                             "subnet": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', 'SQLServerk8sJumpbox-vnet', 'AzureBastionSubnet')]"
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', 'SqlK8sJumpbox-vnet', 'AzureBastionSubnet')]"
                             },
                             "publicIPAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SQLServerk8sJumpbox-bastion-ip')]"
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8sJumpbox-bastion-ip')]"
                             }
                         }
                     }
@@ -136,7 +136,7 @@
             }
         },
         {
-            "name": "SQLServerk8sJumpbox-ip",
+            "name": "SqlK8sJumpbox-ip",
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-08-01",
             "location": "[resourceGroup().location]",
@@ -148,12 +148,12 @@
             }
         },
         {
-            "name": "SQLServerk8sJumpbox",
+            "name": "SqlK8sJumpbox",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', 'SQLServerk8sjumpbox-nic')]"
+                "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sJumpbox-nic')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -177,7 +177,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'SQLServerk8sjumpbox-nic')]",
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'SqlK8sJumpbox-nic')]",
                             "properties": {
                                 "deleteOption": "Detach"
                             }
@@ -185,7 +185,7 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "SQLServerk8sJumpbox",
+                    "computerName": "SqlK8sJumpbox",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
                     "windowsConfiguration": {
