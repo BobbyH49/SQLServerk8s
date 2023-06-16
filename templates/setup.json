@@ -131,6 +131,11 @@
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2020-11-01",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sVMs-nsg')]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sAzureBastionSubnet-nsg')]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sAKS-nsg')]"
+            ],
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": ["10.192.0.0/16"]
