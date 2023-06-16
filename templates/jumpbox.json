@@ -1,0 +1,210 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        }
+    },
+    "variables": {
+        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SQLServerk8sJumpbox-nsg')]",
+        "vnetName": "SQLServerk8sJumpbox-vnet",
+        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', 'SQLServerk8sJumpbox-vnet')]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'default')]"
+    },
+    "resources": [
+        {
+            "name": "SQLServerk8sjumpbox-nic",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2021-03-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', 'SQLServerk8sJumpbox-nsg')]",
+                "[concat('Microsoft.Network/virtualNetworks/', 'SQLServerk8sJumpbox-vnet')]",
+                "[concat('Microsoft.Network/publicIpAddresses/', 'SQLServerk8sJumpbox-ip')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SQLServerk8sJumpbox-ip')]",
+                                "properties": {
+                                    "deleteOption": "Detach"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "name": "['SQLServerk8sJumpbox-nsg']",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "RDP",
+                        "properties": {
+                            "priority": 300,
+                            "protocol": "Tcp",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "3389"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SQLServerk8sJumpbox-vnet",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-11-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": ["10.255.255.0/24"]
+                },
+                "subnets": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "addressPrefix": "10.255.255.0/26"
+                        }
+                    },
+                    {
+                        "name": "AzureBastionSubnet",
+                        "properties": {
+                            "addressPrefix": "10.255.255.64/27"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2020-08-01",
+            "name": "SQLServerk8sJumpbox-bastion-ip",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2019-04-01",
+            "name": "SQLServerk8sJumpbox-bastion",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', 'SQLServerk8sJumpbox-vnet')]",
+                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SQLServerk8sJumpbox-bastion-ip')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', 'SQLServerk8sJumpbox-vnet', 'AzureBastionSubnet')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SQLServerk8sJumpbox-bastion-ip')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SQLServerk8sJumpbox-ip",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2020-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIpAllocationMethod": "Static"
+            },
+            "sku": {
+                "name": "Standard"
+            }
+        },
+        {
+            "name": "SQLServerk8sJumpbox",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2022-03-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', 'SQLServerk8sjumpbox-nic')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_D2s_v3"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "deleteOption": "Delete"
+                    },
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsDesktop",
+                        "offer": "Windows-10",
+                        "sku": "win10-21h2-pro",
+                        "version": "latest"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'SQLServerk8sjumpbox-nic')]",
+                            "properties": {
+                                "deleteOption": "Detach"
+                            }
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "SQLServerk8sJumpbox",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "enableAutomaticUpdates": true,
+                        "provisionVmAgent": true,
+                        "patchSettings": {
+                            "enableHotpatching": false,
+                            "patchMode": "AutomaticByOS"
+                        }
+                    }
+                },
+                "licenseType": "Windows_Client"
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}
