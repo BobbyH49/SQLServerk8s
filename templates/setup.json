@@ -597,8 +597,8 @@
                     "loadBalancerSku": "standard",
                     "networkPlugin": "azure",
                     "networkPolicy": "calico",
-                    "serviceCidr": "10.192.0.0/22",
-                    "dnsServiceIP": "10.192.0.10"
+                    "serviceCidr": "10.193.0.0/22",
+                    "dnsServiceIP": "10.193.0.4"
                 },
                 "autoUpgradeProfile": {
                     "upgradeChannel": "patch"
