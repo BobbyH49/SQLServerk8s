@@ -97,9 +97,14 @@ The following resources will be deployed (expensive to keep running)
 
 ## Create Domain Controller
 
-1. Open Powershell ISE
+1. Open Powershell ISE as Administrator
 
-2. 
+2. Create a new script
+
+3. Paste the contents of [ConfigureDC.ps1](https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/Version1.0/scripts/ConfigureDC.ps1) into the empty Powershell script window and run script with the following parameters
+    1. subscriptionId
+    2. resourceGroup
+
 
 
 ### 1.  Install Client Tools on Jumpbox
