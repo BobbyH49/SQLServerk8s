@@ -27,24 +27,76 @@ The following resources will be deployed (expensive to keep running)
 
 * Azure Kubernetes Cluster (VM Scale Set with 1 Standard_D8s_v3 VM)
 
-## Deploy Azure Resources
+## Deploy Azure Resources (Deployment 1)
 
 1. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
 
     [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2FVersion1.0%2Ftemplates%2Fsetup.json)
 
-2. Connect to SqlK8sJumpbox using Bastion
+## Install dependencies
 
-3. Open Powershell as Administrator
+1. Connect to SqlK8sJumpbox using Bastion
 
-4. Run the following command to install NuGet
+2. Open Powershell as Administrator
+
+3. Install NuGet
 
     ```text
     Install-PackageProvider -Name NuGet -Force
     ```
 
+4. Install Azure Powershell module (Az)
 
-## Create Domain Controller and Linux VM
+    ```text
+    Install-Module Az -AllowClobber -Force
+    ```
+
+5.  Install Azure CLI
+
+    For latest version go to https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli
+
+    ```text
+    $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi; Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'; rm .\AzureCLI.msi
+    ```
+
+    **Restart Powershell**
+
+6.  Install Kubectl
+    
+    For latest version go to https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+    Example download using curl for version 1.24.0 
+
+    ```text
+    $ProgressPreference = 'SilentlyContinue'; mkdir C:\Kube; Invoke-WebRequest -Uri https://dl.k8s.io/release/v1.24.0/bin/windows/amd64/kubectl.exe -OutFile "C:\kube\kubectl.exe"
+    ```
+
+    Validate by running the following and comparing the two versions in SHA256 format
+
+    ```text
+    $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri https://dl.k8s.io/v1.24.0/bin/windows/amd64/kubectl.exe.sha256 -OutFile "C:\kube\kubectl.exe.sha256"
+    CertUtil -hashfile C:\kube\kubectl.exe SHA256
+    type C:\kube\kubectl.exe.sha256
+    ```
+
+    Ensure you are able to run Kubectl in **Powershell**
+
+    ```text
+    $env:Path += "C:\kube;"
+    [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
+    ```
+
+    **Restart Powershell**
+
+    ```text
+    kubectl version --client
+    ```
+
+## Create Domain Controller
+
+1. Open Powershell ISE
+
+2. 
+
 
 ### 1.  Install Client Tools on Jumpbox
 
