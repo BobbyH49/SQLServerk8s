@@ -25,7 +25,7 @@ The following resources will be deployed (expensive to keep running)
 
 ### Deployment 2
 
-* Azure Kubernetes Cluster (VM Scale Set with 1 Standard_D8s_v3 VM)
+* Azure Kubernetes Cluster (VM Scale Set with 1 Standard_D8s_v3 VM to reduce cost)
 
 ## Deploy Azure Resources (Deployment 1)
 
@@ -33,9 +33,13 @@ The following resources will be deployed (expensive to keep running)
 
     [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2FVersion1.0%2Ftemplates%2Fsetup.json)
 
+2. Complete the form and then click **Review + create**
+
+3. Click **Create**
+
 ## Install dependencies
 
-1. Connect to SqlK8sJumpbox using Bastion
+1. Connect to SqlK8sJumpbox using Bastion and credentials supplied during deployment
 
 2. Open Powershell as Administrator
 
