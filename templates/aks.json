@@ -81,10 +81,6 @@
         }
     ],
     "outputs": {
-        "adminUsername": {
-            "type": "string",
-            "value": "[parameters('adminUsername')]"
-        },
         "controlPlaneFQDN": {
             "type": "string",
             "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', 'sqlk8saks')).privateFQDN]"
