@@ -4,7 +4,7 @@
 
 ## Configure Network and DNS Settings on SqlK8sLinux
 
-1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. <azureUser>.sqlk8s.local)
+1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<azureUser\>.sqlk8s.local)
 
 2. Open Putty
 
@@ -61,7 +61,7 @@
 10. Join SqlK8SLinux to the domain (realm) using your azureUser username
 
     ```text
-    sudo realm join sqlk8s.local -U '<azureUser>@SQLK8S.LOCAL' -v
+    sudo realm join sqlk8s.local -U '\<azureUser\>@SQLK8S.LOCAL' -v
     ```
 
 

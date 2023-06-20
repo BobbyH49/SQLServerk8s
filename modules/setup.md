@@ -146,10 +146,10 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 2. Open Powershell as Administrator
 
-3. Create DNS Conditional Forwarder for privatelink connection to the AKS Cluster with <location> as the region for the previous deployment (e.g. uksouth)
+3. Create DNS Conditional Forwarder for privatelink connection to the AKS Cluster with \<location\> as the region for the previous deployment (e.g. uksouth)
 
     ```text
-    Add-DnsServerConditionalForwarderZone -Name privatelink.<location>.azmk8s.io -MasterServers 168.63.129.16
+    Add-DnsServerConditionalForwarderZone -Name privatelink.\<location\>.azmk8s.io -MasterServers 168.63.129.16
     ```
 
 4. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
