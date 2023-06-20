@@ -138,7 +138,7 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
     2. resourceGroup - The name of your new Resource Group
     3. azureUser & azurePassword - The credentials supplied during the azure deployment
 
-4. SqlK8sJumpbox will reboot during the running of this script.  Close the session rather than re-connecting and then log in from the Bastion using ***\<azureUser\>***@sqlk8s.local where \<azureUser\> is the username that you have provisioned.
+4. SqlK8sJumpbox will reboot during the running of this script.  Close the session rather than re-connecting and then log in from the Bastion using **\<azureUser\>**@sqlk8s.local where \<azureUser\> is the username that you have provisioned.
 
 
 
