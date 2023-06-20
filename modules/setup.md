@@ -142,6 +142,10 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 ## Deploy AKS Cluster
 
+1. Connect to SqlK8sDC using Bastion and credentials supplied during deployment with username in the format \<azureUser\>@sqlk8s.local
+
+2. Open Powershell as Administrator
+
 1. Install NuGet (may not be needed)
 
     ```text
@@ -154,7 +158,7 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
     Import-Module DnsServer
     ```
 
-3. Create DNS Conditional Forwarder for privatelink connection to the AKS Cluster with <location> as the region for the previous deployment
+3. Create DNS Conditional Forwarder for privatelink connection to the AKS Cluster with <location> as the region for the previous deployment (e.g. uksouth)
 
     ```text
     Add-DnsServerConditionalForwarderZone -Name privatelink.<location>.azmk8s.io -MasterServers 168.63.129.16
