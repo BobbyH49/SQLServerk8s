@@ -140,26 +140,32 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 **NB: SqlK8sJumpbox will reboot during the running of this script.  Close the session rather than re-connecting and then log in from the Bastion using \<azureUser\>@sqlk8s.local where \<azureUser\> is the username that you have provisioned.**
 
-4. Open Powershell as Administrator
+## Deploy AKS Cluster
 
-5. Conditional Forwarder
+1. Install NuGet (may not be needed)
 
     ```text
-    Add-DnsServerConditonalForwarderZone -Name privatelink.uksouth.azmk8s.io -MasterServers 168.63.129.16
+    Install-PackageProvider -Name NuGet -Force
     ```
 
+2. Import DnsServer module (may not be needed)
 
+    ```text
+    Import-Module DnsServer
+    ```
 
-### 1.  Install Client Tools on Jumpbox
+3. Create DNS Conditional Forwarder for privatelink connection to the AKS Cluster with <location> as the region for the previous deployment
 
-**To install the tools you will need to open Powershell as Administrator**
+    ```text
+    Add-DnsServerConditionalForwarderZone -Name privatelink.<location>.azmk8s.io -MasterServers 168.63.129.16
+    ```
 
-# Install NuGet and Powershell Az Module
-#Write-Host "Installing NuGet"
-#Install-PackageProvider -Name NuGet -Force
-#Write-Host "Installing Az Module"
-#Install-Module Az -AllowClobber -Force
-
-1. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
+4. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
 
     [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2FVersion1.0%2Ftemplates%2Faks.json)
+
+5. Complete the form using the same resource group and location as before
+
+6. Click **Review + create**
+
+7. Click **Create**
