@@ -97,13 +97,26 @@ The following resources will be deployed (expensive to keep running)
 
 ## Create Domain Controller
 
+This script will install ADDS on SqlK8sDC and then promote it to a Domain Controller.  It will then create an OU called ComputersOU and make this the default OU for domain joined computers.
+
 1. Open Powershell ISE as Administrator
 
 2. Create a new script
 
 3. Paste the contents of [ConfigureDC.ps1](https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/Version1.0/scripts/ConfigureDC.ps1) into the empty Powershell script window and run script with the following parameters
-    1. subscriptionId
-    2. resourceGroup
+    1. subscriptionId - Go to your deployed Resource Group to get the Subscription Id
+    2. resourceGroup - The name of your new Resource Group
+    3. location - The region used to deploy your resources (e.g. uksouth)
+    4. azureUser & azurePassword - The credentials supplied during the azure deployment
+
+4. You will be prompted to sign in using an Azure AD account (use one with owner or contributor permissions to the subscription)
+
+## Join Jumpbox to the Domain
+
+The DNS server configured for the Virtual Network (SqlK8s-vnet) is 10.192.4.4 (SqlK8sDC).  However, the DNS server configured for the jumpbox (SqlK8sJumpbox) is 168.63.129.16.  This was done to allow the dependencies to be downloaded using name resolution of public servers.  Before joining to the domain you will need to point DNS back to the Domain Controller and then create a Conditional Forwarder (prerequisite for the AKS cluster).
+
+1. Remove 168.63.129.16 from the DNS settings on SqlK8sJumpbox-nic
+
 
 
 

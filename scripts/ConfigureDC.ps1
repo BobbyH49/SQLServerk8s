@@ -214,4 +214,9 @@ ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $a
 # Create a new Active Directory Organization Unit and make it default for computer objects
 NewADOU -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
+# Remove DNS Server from SqlK8sJumpbox-nic
+$nic = Get-AzNetworkInterface -ResourceGroupName "SQLServerk8sRG" -Name "SqlK8sJumpbox-nic"
+$nic.DnsSettings.DnsServers.Clear()
+$nic | Set-AzNetworkInterface
+
 Write-Host "Configuration ends: $(Get-Date)"
