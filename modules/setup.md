@@ -1,4 +1,4 @@
-# Environment Setup
+# Setup Environment with AKS Cluster using privatelink connections
 
 **[Home](../README.md)** - [Next Module >](../modules/kerberos.md)
 
@@ -115,7 +115,7 @@ This script will install ADDS on SqlK8sDC and then promote it to a Domain Contro
 
 4. You will be prompted to sign in using an Azure AD account (use one with owner permissions to the subscription)
 
-**NB: The DNS server configured for the Virtual Network (SqlK8s-vnet) is 10.192.4.4 (SqlK8sDC).  However, the DNS server configured for the jumpbox (SqlK8sJumpbox) has been overridden to 168.63.129.16 (Azure DNS).  This was done to allow the dependencies to be downloaded using name resolution of public servers.  This script removes the override to allow the Jumpbox to join to the domain.**
+    **NB: The DNS server configured for the Virtual Network (SqlK8s-vnet) is 10.192.4.4 (SqlK8sDC).  However, the DNS server configured for the jumpbox (SqlK8sJumpbox) has been overridden to 168.63.129.16 (Azure DNS).  This was done to allow the dependencies to be downloaded using name resolution of public servers.  This script removes the override to allow the Jumpbox to join to the domain.**
 
 5. Reboot SqlK8sJumpbox and re-open Powershell as Administrator
 
@@ -138,7 +138,7 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
     2. resourceGroup - The name of your new Resource Group
     3. azureUser & azurePassword - The credentials supplied during the azure deployment
 
-**NB: SqlK8sJumpbox will reboot during the running of this script.  Close the session rather than re-connecting and then log in from the Bastion using \<azureUser\>@sqlk8s.local where \<azureUser\> is the username that you have provisioned.**
+    **NB: SqlK8sJumpbox will reboot during the running of this script.  Close the session rather than re-connecting and then log in from the Bastion using \<azureUser\>@sqlk8s.local where \<azureUser\> is the username that you have provisioned.**
 
 ## Deploy AKS Cluster
 
@@ -169,3 +169,5 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 6. Click **Review + create**
 
 7. Click **Create**
+
+[Continue >](../modules/kerberos.md)
