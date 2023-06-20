@@ -140,6 +140,13 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 **NB: SqlK8sJumpbox will reboot during the running of this script.  Close the session rather than re-connecting and then log in from the Bastion using \<azureUser\>@sqlk8s.local where \<azureUser\> is the username that you have provisioned.**
 
+4. Open Powershell as Administrator
+
+5. Conditional Forwarder
+
+    ```text
+    Add-DnsServerConditonalForwarderZone -Name privatelink.uksouth.azmk8s.io -MasterServers 168.63.129.16
+    ```
 
 
 
