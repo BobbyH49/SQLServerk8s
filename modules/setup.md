@@ -109,7 +109,7 @@ This script will install ADDS on SqlK8sDC and then promote it to a Domain Contro
     3. location - The region used to deploy your resources (e.g. uksouth)
     4. azureUser & azurePassword - The credentials supplied during the azure deployment
 
-4. You will be prompted to sign in using an Azure AD account (use one with owner or contributor permissions to the subscription)
+4. You will be prompted to sign in using an Azure AD account (use one with owner permissions to the subscription)
 
 ## Join Jumpbox to the Domain
 
