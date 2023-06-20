@@ -127,9 +127,7 @@ This script will install ADDS on SqlK8sDC and then promote it to a Domain Contro
 
 ## Join Jumpbox to the Domain
 
-The DNS server configured for the Virtual Network (SqlK8s-vnet) is 10.192.4.4 (SqlK8sDC).  However, the DNS server configured for the jumpbox (SqlK8sJumpbox) is 168.63.129.16.  This was done to allow the dependencies to be downloaded using name resolution of public servers.  Before joining to the domain you will need to point DNS back to the Domain Controller and then create a Conditional Forwarder (prerequisite for the AKS cluster).
-
-This script will join SqlK8sJumpbox to the SqlK8s.local domain and then reboot SqlK8sJumpbox.
+This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 1. Open Powershell ISE as Administrator
 
@@ -140,7 +138,7 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain and then reboot S
     2. resourceGroup - The name of your new Resource Group
     3. azureUser & azurePassword - The credentials supplied during the azure deployment
 
-4. You will be prompted to sign in using an Azure AD account (use one with owner permissions to the subscription)
+4. SqlK8sJumpbox will reboot during the running of this script.  Close the session rather than re-connecting and then log in from the Bastion using ***<azureUser>***@sqlk8s.local where <azureUser> is the username that you have provisioned.
 
 
 
