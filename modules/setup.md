@@ -146,18 +146,6 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 2. Open Powershell as Administrator
 
-1. Install NuGet (may not be needed)
-
-    ```text
-    Install-PackageProvider -Name NuGet -Force
-    ```
-
-2. Import DnsServer module (may not be needed)
-
-    ```text
-    Import-Module DnsServer
-    ```
-
 3. Create DNS Conditional Forwarder for privatelink connection to the AKS Cluster with <location> as the region for the previous deployment (e.g. uksouth)
 
     ```text
