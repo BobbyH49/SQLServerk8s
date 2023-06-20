@@ -95,9 +95,9 @@ The following resources will be deployed (expensive to keep running)
     kubectl version --client
     ```
 
-7. Download and install [Putty](https://putty.org/)
+7. Download and install [Putty](https://putty.org/) on SqlK8sJumpbox
 
-8. Download and install [SQL Server Management Studio](https://learn.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver16)
+8. Download and install [SQL Server Management Studio](https://learn.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver16) on SqlK8sJumpbox
 
 ## Create Domain Controller
 
