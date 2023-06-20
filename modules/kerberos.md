@@ -61,7 +61,7 @@
 10. Join SqlK8SLinux to the domain (realm) using your azureUser username
 
     ```text
-    sudo realm join sqlk8s.local -U '\<azureUser\>@SQLK8S.LOCAL' -v
+    sudo realm join sqlk8s.local -U '<azureUser>@SQLK8S.LOCAL' -v
     ```
 
 
