@@ -115,6 +115,14 @@ This script will install ADDS on SqlK8sDC and then promote it to a Domain Contro
 
 4. You will be prompted to sign in using an Azure AD account (use one with owner permissions to the subscription)
 
+**NB: The DNS server configured for the Virtual Network (SqlK8s-vnet) is 10.192.4.4 (SqlK8sDC).  However, the DNS server configured for the jumpbox (SqlK8sJumpbox) has been overridden to 168.63.129.16 (Azure DNS).  This was done to allow the dependencies to be downloaded using name resolution of public servers.  This script removes the override to allow the Jumpbox to join to the domain.**
+
+5. Reboot SqlK8sJumpbox and then verify that you can ping the SqlK8s.local domain
+
+    ```text
+    ping sqlk8s.local
+    ```
+
 ## Join Jumpbox to the Domain
 
 The DNS server configured for the Virtual Network (SqlK8s-vnet) is 10.192.4.4 (SqlK8sDC).  However, the DNS server configured for the jumpbox (SqlK8sJumpbox) is 168.63.129.16.  This was done to allow the dependencies to be downloaded using name resolution of public servers.  Before joining to the domain you will need to point DNS back to the Domain Controller and then create a Conditional Forwarder (prerequisite for the AKS cluster).
