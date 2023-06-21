@@ -99,7 +99,7 @@ The following resources will be deployed (expensive to keep running)
 
 8. Download and install [SQL Server Management Studio](https://learn.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver16) on SqlK8sJumpbox
 
-9. Download and extract the contents of this project to the C Drive (https://github.com/BobbyH49/SQLServerk8s/archive/refs/heads/Version1.0.zip)
+9. Download and extract the contents of the [SQLServerk8s](https://github.com/BobbyH49/SQLServerk8s/archive/refs/heads/Version1.0.zip) project to the C Drive
 
 ## Create Domain Controller
 
