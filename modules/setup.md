@@ -25,7 +25,7 @@ The following resources will be deployed (expensive to keep running)
 
 ### Deployment 2
 
-* Azure Kubernetes Cluster (VM Scale Set with 1 Standard_D8s_v3 VM to reduce cost)
+* Azure Kubernetes Cluster (VM Scale Set with 2 Standard_D8s_v3 VMs)
 
 ## Deploy Azure Resources (Deployment 1)
 
