@@ -1,6 +1,6 @@
 # Create SQL Server Container Instances
 
-[< Previous Module](../modules/kerberos.md) - **[Home](../)** - Next Module \>
+[< Previous Module](../modules/kerberos.md) - **[Home](../README.md)** - Next Module \>
 
 ## Install and configure SQL Server on Containers
 

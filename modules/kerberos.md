@@ -1,6 +1,6 @@
 # Setup Windows Authentication (Kerberos) via Linux Server
 
-[< Previous Module](../modules/setup.md) - **[Home](../)** - [Next Module >](../modules/sql.md)
+[< Previous Module](../modules/setup.md) - **[Home](../README.md)** - [Next Module >](../modules/sql.md)
 
 ## Configure Network and DNS Settings on SqlK8sLinux
 
