@@ -31,7 +31,7 @@ The following resources will be deployed (expensive to keep running)
 
 1. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
 
-    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2FVersion1.0%2Ftemplates%2Fsetup.json)
+    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2Fsetup.json)
 
 2. Complete the form and then click **Review + create**
 
@@ -99,7 +99,7 @@ The following resources will be deployed (expensive to keep running)
 
 8. Download and install [SQL Server Management Studio](https://learn.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver16) on SqlK8sJumpbox
 
-9. Download and extract the contents of the [SQLServerk8s](https://github.com/BobbyH49/SQLServerk8s/archive/refs/heads/Version1.0.zip) project to the C Drive
+9. Download and extract the contents of the [SQLServerk8s](https://github.com/BobbyH49/SQLServerk8s/archive/refs/heads/main.zip) project to the C Drive
 
 ## Create Domain Controller
 
@@ -156,7 +156,7 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 4. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
 
-    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2FVersion1.0%2Ftemplates%2Faks.json)
+    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2Faks.json)
 
 5. Complete the form using the same resource group and location as before
 

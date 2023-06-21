@@ -4,6 +4,10 @@
 
 ## Install and configure SQL Server on Containers
 
+**NB: This page is all about installing and configuring the SQL Server Container Instances.  However, there are some prerequisites for the clustering technology which will also be configured.**
+
+**DH2I is the clustering technology of choice.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.**
+
 1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<azureUser\>.sqlk8s.local)
 
 2. Open Powershell
@@ -33,10 +37,6 @@
     ```
 
 7. Create headless services which will allow your SQL Server pods to connect to one another using hostnames
-
-    **NB: This page is all about installing and configuring the SQL Server Container Instances.  However, there are some prerequisites for the clustering technology which will also be configured.**
-
-    **All of the cluster commands come from dh2i which will be used as the clustering technology - refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/ for more information.**
 
     ```text
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\headless-services.yaml -n sql
