@@ -107,9 +107,9 @@ This script will install ADDS on SqlK8sDC and then promote it to a Domain Contro
 
 1. Open Powershell ISE as Administrator
 
-2. Create a new script
+2. Open the script "C:\SQLServerk8s-main\scripts\ConfigureDC.ps1"
 
-3. Paste the contents of [ConfigureDC.ps1](https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/Version1.0/scripts/ConfigureDC.ps1) into the empty Powershell script window and run script with the following parameters
+3. Run the script with the following parameters
     1. subscriptionId - Go to your deployed Resource Group to get the Subscription Id
     2. resourceGroup - The name of your new Resource Group
     3. location - The region used to deploy your resources (e.g. uksouth)
@@ -133,9 +133,9 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 1. Open Powershell ISE as Administrator
 
-2. Create a new script
+2. Open the script "C:\SQLServerk8s-main\scripts\DCJoinJumpbox.ps1"
 
-3. Paste the contents of [DCJoinJumpbox.ps1](https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/Version1.0/scripts/DCJoinJumpbox.ps1) into the empty Powershell script window and run script with the following parameters
+3. Run the script with the following parameters
     1. subscriptionId - Go to your deployed Resource Group to get the Subscription Id
     2. resourceGroup - The name of your new Resource Group
     3. azureUser & azurePassword - The credentials supplied during the azure deployment
