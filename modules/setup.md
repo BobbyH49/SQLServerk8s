@@ -1,6 +1,6 @@
 # Setup Environment with AKS Cluster using privatelink connections
 
-**[Home](../README.md)** - [Next Module >](../modules/kerberos.md)
+**[Home](../)** - [Next Module >](../modules/kerberos.md)
 
 ## Prerequisites
 
