@@ -2,7 +2,8 @@
 
 The following topics are covered
 
-* [Setup Environment](./modules/setup.md)
-* [Setup Windows Authentication (Kerberos)](./modules/kerberos.md)
-* [Create Always-on Availability Group](./modules/hadr.md)
-* [Configure monitoring](./modules/monitoring.md)
+* [Setup Environment with AKS Cluster using privatelink connections](./modules/setup.md)
+* [Setup Windows Authentication (Kerberos) via Linux Server](./modules/kerberos.md)
+* [Create SQL Server Container Instances](./modules/sql.md)
+* Create Always-on Availability Group
+* Configure Monitoring
