@@ -24,5 +24,5 @@ data:
     enabled = true
 
     [network]
-    privilegedadaccount = azakssqluser
+    privilegedadaccount = sqlk8ssvc
     kerberoskeytabfile = /var/opt/mssql/secrets/mssql.keytab

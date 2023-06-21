@@ -32,129 +32,101 @@
     kubectl create namespace sql
     ```
 
-7. Copy the contents of [yaml/SQLContainerDeployment/SQL2019](https://github.com/BobbyH49/SQLServerk8s/blob/Version1.0/yaml/SQLContainerDeployment/SQL2019) to C:\SQLContainerDeployment\SQL2019 on SqlK8sJumpbox
-
-8. Create headless services which will allow your SQL Server pods to connect to one another using hostnames
+7. Create headless services which will allow your SQL Server pods to connect to one another using hostnames
 
     **NB: This page is all about installing and configuring the SQL Server Container Instances.  However, there are some prerequisites for the clustering technology which will also be configured.**
 
     **All of the cluster commands come from dh2i which will be used as the clustering technology - refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/ for more information.**
 
     ```text
-    kubectl apply -f C:\SQLContainerDeployment\SQL2019\headless-services.yaml -n sql
+    kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\headless-services.yaml -n sql
     ```
 
+8. Create secret for SQL Server sa password using \<azurePassword\> for consistency
 
---Create secret for SQL Server sa password
-kubectl create secret generic mssql --from-literal=MSSQL_SA_PASSWORD="L@bAdm1n1234" -n sql
+    ```text
+    kubectl create secret generic mssql --from-literal=MSSQL_SA_PASSWORD=<azurePassword> -n sql
+    ```
 
---SQL Server Configuration
-kubectl apply -f C:\SQLContainerDeployment\SQL2019AGDomain\krb5-conf.yaml -n sql
-kubectl apply -f C:\SQLContainerDeployment\SQL2019AGDomain\mssql-conf.yaml -n sql
+9. Apply the Kerberos configuration file
 
---Apply StatefulSet configuration of SQL Server and install cluster software (dxe)
-kubectl apply -f C:\SQLContainerDeployment\SQL2019AGDomain\dxemssql.yaml -n sql
+    ```text
+    kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\krb5-conf.yaml -n sql
+    ```
 
---Add load balancers for each node
-kubectl apply -f C:\SQLContainerDeployment\SQL2019AGDomain\pod-service.yaml -n sql
+10. Apply the SQL Server Configuration
 
---Check pods and services
-kubectl get pods -n sql
-kubectl get services -n sql
+    ```text
+    kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\mssql-conf.yaml -n sql
+    ```
 
---Check pods by nodes
-kubectl get pod -o=custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName -n sql
+11. Apply StatefulSet configuration of SQL Server and install cluster software (dxe)
 
---Copy keytab files to 3 SQL Pods
-kubectl cp \..\SQLContainerDeployment\SQL2019AGDomain\mssql_mssql-0.keytab mssql-0:/var/opt/mssql/secrets/mssql.keytab -n sql
-kubectl cp \..\SQLContainerDeployment\SQL2019AGDomain\mssql_mssql-1.keytab mssql-1:/var/opt/mssql/secrets/mssql.keytab -n sql
-kubectl cp \..\SQLContainerDeployment\SQL2019AGDomain\mssql_mssql-2.keytab mssql-2:/var/opt/mssql/secrets/mssql.keytab -n sql
+    ```text
+    kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\dxemssql.yaml -n sql
+    ```
 
---Copy logger.ini files to 3 SQL Pods
-kubectl cp "\..\SQLContainerDeployment\SQL2019AGDomain\logger.ini" mssql-0:/var/opt/mssql/logger.ini -n sql
-kubectl cp "\..\SQLContainerDeployment\SQL2019AGDomain\logger.ini" mssql-1:/var/opt/mssql/logger.ini -n sql
-kubectl cp "\..\SQLContainerDeployment\SQL2019AGDomain\logger.ini" mssql-2:/var/opt/mssql/logger.ini -n sql
+12. Add internal load balancers for each node
 
---If SSPI error still occurs then delete all 3 SQL Pods so they are re-created
-kubectl delete pod mssql-0 -n sql
-kubectl delete pod mssql-1 -n sql
-kubectl delete pod mssql-2 -n sql
+    ```text
+    kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\pod-service.yaml -n sql
+    ```
 
---Connect to SQL using SSMS and run the following under the sa account on all 3 nodes
-create login [SQLLAB\azureuser] from windows
-alter server role sysadmin add member [SQLLAB\azureuser]
+13. Verify pods and services are up and running
 
---Activate cluster licensing software (developer in this case)
-kubectl exec -n sql -c dxe mssql-0 -- dxcli activate-server DC16-ESUF-76VG-31GP --accept-eula
+    ```text
+    kubectl get pods -n sql
+    ```
 
---Add a VHost
-kubectl exec -n sql -c dxe mssql-0 -- dxcli cluster-add-vhost agl1 *127.0.0.1 mssql-0
+    ```text
+    kubectl get services -n sql
+    ```
 
---Encrypt sa password for cluster software
-kubectl exec -n sql -c dxe mssql-0 -- dxcli encrypt-text L@bAdm1n1234
+14. Check pods by nodes (in this case there should only be 1 node)
 
---Create AG
-kubectl exec -n sql -c dxe mssql-0 -- dxcli add-ags agl1 ag1 "mssql-0|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
+    ```text
+    kubectl get pod -o=custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName -n sql
+    ```
 
---Set cluster passkey
-kubectl exec -n sql -c dxe mssql-0 -- dxcli cluster-set-secret-ex L@bAdm1n1234
+15. Copy the keytab files (created in the kerberos module) to all 3 SQL Pods
 
---Enable vhost lookup in DxEnterprise's global settings
-kubectl exec -n sql -c dxe mssql-0 -- dxcli set-globalsetting membername.lookup true
+    ```text
+    kubectl cp \..\SQLContainerDeployment\SQL2019\mssql_mssql-0.keytab mssql-0:/var/opt/mssql/secrets/mssql.keytab -n sql
+    kubectl cp \..\SQLContainerDeployment\SQL2019\mssql_mssql-1.keytab mssql-1:/var/opt/mssql/secrets/mssql.keytab -n sql
+    kubectl cp \..\SQLContainerDeployment\SQL2019\mssql_mssql-2.keytab mssql-2:/var/opt/mssql/secrets/mssql.keytab -n sql
+    ```
 
---Activate license on second pod
-kubectl exec -n sql -c dxe mssql-1 -- dxcli activate-server DC16-ESUF-76VG-31GP --accept-eula
+16. Copy logger.ini files to all 3 SQL Pods
 
---Join second pod to cluster
-kubectl exec -n sql -c dxe mssql-1 -- dxcli join-cluster-ex mssql-0 L@bAdm1n1234
+    ```text
+    kubectl cp "\..\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\logger.ini" mssql-0:/var/opt/mssql/logger.ini -n sql
+    kubectl cp "\..\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\logger.ini" mssql-1:/var/opt/mssql/logger.ini -n sql
+    kubectl cp "\..\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\logger.ini" mssql-2:/var/opt/mssql/logger.ini -n sql
+    ```
 
---Join second pod to AG
-kubectl exec -n sql -c dxe mssql-1 -- dxcli add-ags-node agl1 ag1 "mssql-1|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
+17. Delete all 3 pods so they are re-created with Kerberos correctly configured
 
---Activate license on third pod
-kubectl exec -n sql -c dxe mssql-2 -- dxcli activate-server DC16-ESUF-76VG-31GP --accept-eula
+    **NB: This also tests the High Availability of each SQL Server Instance before the availability group is implemented**
 
---Join third pod to cluster
-kubectl exec -n sql -c dxe mssql-2 -- dxcli join-cluster-ex mssql-0 L@bAdm1n1234
+    ```text
+    kubectl delete pod mssql-0 -n sql
+    kubectl delete pod mssql-1 -n sql
+    kubectl delete pod mssql-2 -n sql
+    ```
 
---Join third pod to AG
-kubectl exec -n sql -c dxe mssql-2 -- dxcli add-ags-node agl1 ag1 "mssql-2|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
+18. Verify pods are back up and running
 
---Set AG listener port
-kubectl exec -n sql -c dxe mssql-0 -- dxcli add-ags-listener agl1 ag1 14033
+    ```text
+    kubectl get pods -n sql
+    ```
 
---Add loadbalancer for listener
-kubectl apply -f C:\SQLContainerDeployment\SQL2019AGDomain\service.yaml -n sql
+19. Open SQL Server Management Studio and connect to each of the SQL Containers (i.e. mssql-0, mssql-1, mssql-2) using SQL authentication (sa account and \<azurePassword\>)
 
---Use Tunnels for Faster Connections to the Listener
-kubectl exec -n sql -c dxe mssql-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" agl1
+20. Open a T-SQL session and create a Windows login for your \<azureUser\> on each Container with sysadmin permissions
 
---Vew services
-kubectl get services -n sql
-
---Copy database to pod 1
-kubectl cp \..\SQLBackups\AdventureWorks2019.bak mssql-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql
-
---Restore database
-restore database AdventureWorks2019
-from disk = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
-with
-move N'AdventureWorks2017' to N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
-, move N'AdventureWorks2017_log' to N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
-, recovery, stats = 10
-
---Set recovery to full
-alter database AdventureWorks2019 set recovery full
-
---Take a fresh full backup
-backup database AdventureWorks2019
-to disk = N'/var/opt/mssql/backup/AdventureWorks2019_v2.bak'
-with format, init, stats = 10
-
---Add database to AG
-kubectl exec -n sql -c dxe mssql-0 -- dxcli add-ags-databases agl1 ag1 AdventureWorks2019
-
---Verify AG State
-kubectl exec -n sql -c dxe mssql-0 -- dxcli get-ags-detail agl1 ag1
+    ```text
+    create login [SQLK8S\<azureUser>] from windows
+    alter server role sysadmin add member [SQLK8S\<azureUser>]
+    ```
 
 Continue \>
