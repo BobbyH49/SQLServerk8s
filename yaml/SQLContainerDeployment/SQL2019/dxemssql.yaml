@@ -37,7 +37,7 @@ spec:
           image: 'mcr.microsoft.com/mssql/server:2019-latest'
           resources:
             limits:
-              memory: 8Gi
+              memory: 6Gi
               cpu: '2'
           ports:
             - containerPort: 1433
