@@ -99,6 +99,8 @@ The following resources will be deployed (expensive to keep running)
 
 8. Download and install [SQL Server Management Studio](https://learn.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver16) on SqlK8sJumpbox
 
+9. Download and extract the contents of this project to the C Drive (https://github.com/BobbyH49/SQLServerk8s)
+
 ## Create Domain Controller
 
 This script will install ADDS on SqlK8sDC and then promote it to a Domain Controller.  It will then create an OU called ComputersOU and make this the default OU for domain joined computers.
