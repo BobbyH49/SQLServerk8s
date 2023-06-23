@@ -27,7 +27,7 @@
 5. Connect to your AKS Cluster and store the profile
 
     ```text
-    az aks get-credentials -n sqlk8saks -g SqlServerK8sRG
+    az aks get-credentials -n sqlk8saks -g <Your Resource Group Name>
     ```
 
 6. Create SQL Namespace
