@@ -164,4 +164,11 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 7. Click **Create**
 
+8. Go back to Powershell and configure your AKS Principal with permissions to the AKS subnet
+
+    ```text
+    $objectid = (Get-AzADServicePrincipal -DisplayName "sqlk8saks").id
+    az role assignment create --assignee $objectid --role "Network Contributor" --scope "/subscriptions/<Your subscription id/resourceGroups/<Your Resource Group Name>/providers/Microsoft.Network/virtualNetworks/sqlk8s-vnet/subnets/AKS"
+    ```
+
 [Continue >](../modules/kerberos.md)
