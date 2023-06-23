@@ -129,4 +129,6 @@
     alter server role sysadmin add member [SQLK8S\<azureUser>]
     ```
 
+21. You should now be able to login to all 3 instances using Windows Authentication (SQLK8S\\\<azureUser\>)
+
 Continue \>
