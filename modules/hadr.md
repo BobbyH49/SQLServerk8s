@@ -22,7 +22,13 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ```text
     kubectl exec -n sql -c dxe mssql-0 -- dxcli activate-server <license key> --accept-eula
+    ```
+
+    ```text
     kubectl exec -n sql -c dxe mssql-1 -- dxcli activate-server <license key> --accept-eula
+    ```
+
+    ```text
     kubectl exec -n sql -c dxe mssql-2 -- dxcli activate-server <license key> --accept-eula
     ```
 
