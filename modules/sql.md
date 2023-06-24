@@ -1,6 +1,6 @@
 # Create SQL Server Container Instances
 
-[< Previous Module](../modules/kerberos.md) - **[Home](../README.md)** - Next Module \>
+[< Previous Module](../modules/kerberos.md) - **[Home](../README.md)** - [Next Module >](../modules/hadr.md)
 
 ## Install and configure SQL Server on Containers
 
@@ -131,4 +131,4 @@
 
 21. You should now be able to login to all 3 instances using Windows Authentication (SQLK8S\\\<azureUser\>)
 
-Continue \>
+[Continue >](../modules/hadr.md)

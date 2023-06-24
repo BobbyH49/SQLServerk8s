@@ -101,6 +101,8 @@ The following resources will be deployed (expensive to keep running)
 
 9. Download and extract the contents of the [SQLServerk8s](https://github.com/BobbyH49/SQLServerk8s/archive/refs/heads/main.zip) project to the C Drive
 
+10. Download the AdventureWorks2019 database backup from https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2019.bak and move to C:\SQLBackups\AdventureWorks2019.bak
+
 ## Create Domain Controller
 
 This script will install ADDS on SqlK8sDC and then promote it to a Domain Controller.  It will then create an OU called ComputersOU and make this the default OU for domain joined computers.
