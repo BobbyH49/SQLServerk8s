@@ -127,8 +127,8 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     restore database AdventureWorks2019
     from disk = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
     with
-    move N'AdventureWorks2017' to N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
-    , move N'AdventureWorks2017_log' to N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
+    move N'AdventureWorks2019' to N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
+    , move N'AdventureWorks2019_log' to N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
     , recovery, stats = 10
     ```
 
@@ -158,12 +158,12 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-0 -- dxcli get-ags-detail mssql-agl1 mssql-ag1
     ```
 
-26. Connect to the listener from SQL Server Management Studio (mssql-agl1) and verify that mssql-0 is the primary pod
+26. Connect to the listener from SQL Server Management Studio (mssql-agl1,14033 or mssql-agl1.sqlk8s.local,14033) and verify that mssql-0 is the primary pod
 
-26. Try failing over the database by deleting mssql-0 and check which pod becomes the new primary by refreshing the listener
+27. Try failing over the database by deleting mssql-0 and check which pod becomes the new primary by refreshing the listener
 
     ```text
-    kubectl delete service mssql-0 -n sql
+    kubectl delete pod mssql-0 -n sql
     ```
 
 Continue \>
