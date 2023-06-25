@@ -1,6 +1,6 @@
 # Configure Monitoring
 
-[< Previous Module](../modules/sql.md) - **[Home](../README.md)** - Next Module \>
+[< Previous Module](../modules/sql.md) - **[Home](../README.md)**
 
 ## Install and configure InfluxDB and Telegraf Agent
 
