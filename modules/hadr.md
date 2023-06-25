@@ -1,6 +1,6 @@
 # Create Always-on Availability Group
 
-[< Previous Module](../modules/sql.md) - **[Home](../README.md)** - Next Module \>
+[< Previous Module](../modules/sql.md) - **[Home](../README.md)** - [Next Module >](../modules/monitor.md)
 
 ## Install and configure Availability Group using DxEnterprise
 
@@ -166,4 +166,4 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl delete pod mssql-0 -n sql
     ```
 
-Continue \>
+[Continue >](../modules/monitor.md)

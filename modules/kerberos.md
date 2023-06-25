@@ -107,13 +107,15 @@
 
     **NB: The listener will run under port 14033**
 
-4. Add DNS entries for all 3 sql instances and the availability group listener
+4. Add DNS entries for all 3 sql instances, the availability group listener, and the monitoring tools (will be deployed later)
 
     ```text
     Add-DnsServerResourceRecordA -Name "mssql-0" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.4" -TimeToLive "00:20:00"
     Add-DnsServerResourceRecordA -Name "mssql-1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.5" -TimeToLive "00:20:00"
     Add-DnsServerResourceRecordA -Name "mssql-2" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.6" -TimeToLive "00:20:00"
     Add-DnsServerResourceRecordA -Name "mssql-agl1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.7" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "influxdb" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.8" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "grafana" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.9" -TimeToLive "00:20:00"
     ```
 
 5. Connect to SqlK8sJumpbox, open Putty, and connect to 10.192.4.5 (SqlK8sLinux)
