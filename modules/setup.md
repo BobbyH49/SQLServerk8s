@@ -138,6 +138,7 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 2. Open the script "C:\SQLServerk8s-main\scripts\DCJoinJumpbox.ps1"
 
 3. Run the script with the following parameters
+
     1. subscriptionId - Go to your deployed Resource Group to get the Subscription Id
     2. resourceGroup - The name of your new Resource Group
     3. azureUser & azurePassword - The credentials supplied during the azure deployment

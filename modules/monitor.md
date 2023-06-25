@@ -60,10 +60,10 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
 11. Enter the following and click **Continue**
 
-    * User = root
-    * Password = root1234
-    * Initial Organization Name = sqlmon
-    * Initial Bucket Name = sqlmon
+* User = root
+* Password = root1234
+* Initial Organization Name = sqlmon
+* Initial Bucket Name = sqlmon
 
 12. Click the **Advanced** button on the Complete page
 
@@ -73,7 +73,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
 15. Make the following configuration changes
 
-    * Configuration Name = sqlmon
+* Configuration Name = sqlmon
     
     Replace line 11 within the servers section and edit the ip address and password
     **NB: To get the ip address info for the sql pods run \"kubectl get services -n sql\"**
@@ -189,8 +189,8 @@ This solution currently creates Grafana as a pod on your AKS cluster but you cou
 
 6. Login by using the credentials below and clicking **Log in**
 
-    * User = admin
-    * Password = admin1234
+* User = admin
+* Password = admin1234
 
 7. On the \"Welcome to Grafana\" page click on the **Data Sources** panel where it says \"Add your first data source\"
 
@@ -198,15 +198,15 @@ This solution currently creates Grafana as a pod on your AKS cluster but you cou
 
 9. Edit the data source and click **Save and test**
 
-    * Name = InfluxDB
-    * Query Language = Flux
-    * HTTP URL = http://\<influxdb ClusterIP\>:8086
-    * Auth Basic Auth = Disabled
-    * InfluxDB Details Organization = sqlmon
-    * InfluxDB Details Token = \<API Token with read permissions to sqlmon\>
-    * InfluxDB Details Default Bucket = sqlmon
+* Name = InfluxDB
+* Query Language = Flux
+* HTTP URL = http://\<influxdb ClusterIP\>:8086
+* Auth Basic Auth = Disabled
+* InfluxDB Details Organization = sqlmon
+* InfluxDB Details Token = \<API Token with read permissions to sqlmon\>
+* InfluxDB Details Default Bucket = sqlmon
 
-    **NB: You should get a message saying \"datasource is working. 1 buckets found\"
+    **NB: You should get a message saying \"datasource is working. 1 buckets found\"**
 
 10. From the left menu blade select **Dashboards**
 
