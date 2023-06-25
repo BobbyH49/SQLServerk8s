@@ -215,7 +215,7 @@ ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $a
 NewADOU -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 # Remove DNS Server from SqlK8sJumpbox-nic
-$nic = Get-AzNetworkInterface -ResourceGroupName "SQLServerk8sRG" -Name "SqlK8sJumpbox-nic"
+$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
 $nic.DnsSettings.DnsServers.Clear()
 $nic | Set-AzNetworkInterface
 
