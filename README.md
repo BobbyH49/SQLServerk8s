@@ -6,4 +6,4 @@ The following topics are covered
 * [Setup Windows Authentication (Kerberos) via Linux Server](./modules/kerberos.md)
 * [Create SQL Server Container Instances](./modules/sql.md)
 * [Create Always-on Availability Group](./modules/hadr.md)
-* Configure Monitoring
+* [Configure Monitoring](./modules/monitor.md)
