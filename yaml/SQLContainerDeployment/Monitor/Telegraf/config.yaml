@@ -89,7 +89,7 @@ data:
       urls = ["http://<InfluxDB CLUSTER-IP>:8086"]
     
       ## Token for authentication.
-      token = ""
+      token = "<API Token>"
     
       ## Organization is the name of the organization you wish to write to; must exist.
       organization = "sqlmon"
@@ -140,9 +140,9 @@ data:
       ##   parameters, in particular, tls connections can be created like so:
       ##   "encrypt=true;certificate=<cert>;hostNameInCertificate=<SqlServer host fqdn>"
       servers = [
-        "Server=<mssql-0 CLUSTER-IP>;Port=1433;User Id=Telegraf;Password=L@bAdm1n1234;app name=telegraf;log=1;",
-        "Server=<mssql-1 CLUSTER-IP>;Port=1433;User Id=Telegraf;Password=L@bAdm1n1234;app name=telegraf;log=1;",
-        "Server=<mssql-2 CLUSTER-IP>;Port=1433;User Id=Telegraf;Password=L@bAdm1n1234;app name=telegraf;log=1;",
+        "Server=<mssql-0-lb CLUSTER-IP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
+        "Server=<mssql-1-lb CLUSTER-IP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
+        "Server=<mssql-2-lb CLUSTER-IP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
       ]
     
       ## Authentication method

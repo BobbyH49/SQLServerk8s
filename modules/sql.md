@@ -122,13 +122,25 @@
 
 19. Open SQL Server Management Studio and connect to each of the SQL Containers (i.e. mssql-0, mssql-1, mssql-2) using SQL authentication (sa account and \<azurePassword\>)
 
-20. Open a T-SQL session and create a Windows login for your \<azureUser\> on each Container with sysadmin permissions
+20. Open a T-SQL session on each pod (container) and create a Windows login for \<azureUser\> with sysadmin permissions
 
     ```text
     create login [SQLK8S\<azureUser>] from windows
     alter server role sysadmin add member [SQLK8S\<azureUser>]
     ```
 
-21. You should now be able to login to all 3 instances using Windows Authentication (SQLK8S\\\<azureUser\>)
+21.  On the same sessions, create a SQL login for Telegraf which will be used later in the montior section (using \<azurePassword\> for consistency)
+    ```text
+    USE master;
+    GO
+    CREATE LOGIN [Telegraf] WITH PASSWORD = N'<azurePassword>';
+    GO
+    GRANT VIEW SERVER STATE TO [Telegraf];
+    GO
+    GRANT VIEW ANY DEFINITION TO [Telegraf];
+    GO
+    ```
+
+22. You should now be able to login to all 3 instances using Windows Authentication (SQLK8S\\\<azureUser\>)
 
 [Continue >](../modules/hadr.md)
