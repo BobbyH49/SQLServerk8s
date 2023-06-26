@@ -157,7 +157,9 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
     Add-DnsServerConditionalForwarderZone -Name privatelink.<location>.azmk8s.io -MasterServers 168.63.129.16
     ```
 
-4. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
+4. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window
+
+    **NB: You should run this locally or from SqlK8sJumpbox (not SqlK8sDC)**
 
     [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2Faks.json)
 
@@ -167,7 +169,11 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
 
 7. Click **Create**
 
-8. Go back to Powershell and configure your AKS Principal with permissions to the AKS subnet
+8. Connect to SqlK8sJumpbox using Bastion and credentials supplied during deployment with username in the format \<azureUser\>@sqlk8s.local
+
+9. Open Powershell as Administrator
+
+10. Configure your AKS Principal with permissions to the AKS subnet
 
     ```text
     $objectid = (Get-AzADServicePrincipal -DisplayName "sqlk8saks").id
