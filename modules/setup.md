@@ -35,6 +35,8 @@ The following resources will be deployed (expensive to keep running)
 
 2. Complete the form and then click **Review + create**
 
+        ![az-login](media/DeployResources.jpg)
+
 3. Click **Create**
 
 ## Install dependencies
