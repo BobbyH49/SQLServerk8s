@@ -392,6 +392,7 @@
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sDC-nic')]"
             ],
             "properties": {
@@ -445,6 +446,7 @@
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sLinux-nic')]"
             ],
             "properties": {
@@ -506,6 +508,7 @@
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sJumpbox-nic')]",
                 "[concat('Microsoft.Network/publicIpAddresses/', 'SqlK8sJumpbox-ip')]"
             ],
