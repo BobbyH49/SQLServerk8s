@@ -90,7 +90,7 @@
 
 ## Configure Kerberos on AKS Cluster using adutil on SqlK8sLinux
 
-1. Connect to SqlK8sDC and open Powershell as Administrator
+1. Connect to SqlK8sDC using AD Credentials
 
     ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 
