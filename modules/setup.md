@@ -89,7 +89,7 @@ The following resources will be deployed (expensive to keep running)
 
     ![Install Az Module](media/InstallAzModule.jpg)
 
-10.  Install Azure CLI
+10. Install Azure CLI
 
     For the latest version go to https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli
 
@@ -105,7 +105,7 @@ The following resources will be deployed (expensive to keep running)
 
     ![Open Powershell](media/OpenPowershell.jpg)
 
-11.  Install Kubectl
+11. Install Kubectl
     
     For latest version go to https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
     Example download using curl for version 1.24.0 
