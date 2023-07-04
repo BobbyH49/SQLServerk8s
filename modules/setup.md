@@ -307,10 +307,13 @@ This script will join SqlK8sJumpbox to the SqlK8s.local domain.
     az role assignment create --assignee $objectid --role "Network Contributor" --scope "/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.Network/virtualNetworks/sqlk8s-vnet/subnets/AKS"
     ```
 
-    **NB: You will need to sign in to Azure twice**
-    **The previous sign in was was via Azure Powershell under your local account session**
-    **These two sign ins are for Azure Powershell and Azure CLI under your domain account session**
-    **Azure Powershell will produce a popup but Azure CLI will open via Edge**
+    **NB: You will need to sign in to Azure twice. The previous sign in was was via Azure Powershell under your local account session whereas these two sign ins are for Azure Powershell and Azure CLI under your domain account session. Azure Powershell will produce a popup but Azure CLI will open via Edge**
+
+    ![Azure Powershell Signin](media/AzurePowershellSignin.jpg)
+
+    ![Azure CLI Signin](media/AzureCLISignin.jpg)
+
+    ![Azure CLI SignedIn](media/AzureCLISignedIn.jpg)
 
     ![Configure AKS Permissions 1](media/ConfigureAKSPermissions1.jpg)
 
