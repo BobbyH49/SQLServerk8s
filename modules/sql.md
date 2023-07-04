@@ -14,7 +14,7 @@
 
 2. Open Powershell
 
-    ![Open Powershell DC](media/OpenPowershellDC.jpg)
+    ![Open Powershell](media/OpenPowershell.jpg)
 
 3. Login to Azure AD with an account that has ownership permissions to your subscription
 
