@@ -10,13 +10,23 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
 1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<azureUser\>.sqlk8s.local)
 
+    ![Supply AD Credentials](media/SupplyADCredentials.jpg)
+
 2. Open Powershell
+
+    ![Open Powershell](media/OpenPowershell.jpg)
 
 3. Login to Azure AD with an account that has ownership permissions to your subscription
 
     ```text
     az login
     ```
+
+    ![Azure CLI Signin](media/AzureCLISignin.jpg)
+
+    ![Azure CLI SignedIn](media/AzureCLISignedIn.jpg)
+
+    ![Azure CLI SignedIn Powershell](media/AzureCLISignedInPowershell.jpg)
 
 4. Activate cluster licensing software (developer in this case) on each pod
 
@@ -32,12 +42,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-2 -- dxcli activate-server <license key> --accept-eula
     ```
 
+    ![Activate DXE License](media/ActivateDXELicense.jpg)
+
 5. Add a VHost with the name of the listener on the first pod
 
     ```text
     kubectl exec -n sql -c dxe mssql-0 -- dxcli cluster-add-vhost mssql-agl1 *127.0.0.1 mssql-0
     ```
 
+    ![Add HA VHost](media/AddHaVHost.jpg)
 
 6. Encrypt sa password for cluster software on the first pod (value returned will be \<EncryptedPassword\>)
 
@@ -45,11 +58,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-0 -- dxcli encrypt-text <azurePassword>
     ```
 
+    ![Encrypt sa Password](media/EncryptSAPassword.jpg)
+
 7. Create the Availability Group on the first pod
 
     ```text
     kubectl exec -n sql -c dxe mssql-0 -- dxcli add-ags mssql-agl1 mssql-ag1 "mssql-0|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
+
+    ![Create SQL Availability Group](media/CreateSqlAg.jpg)
 
 8. Set the cluster passkey using \<azurePassword\> for consistency
 
@@ -57,11 +74,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-0 -- dxcli cluster-set-secret-ex <azurePassword>
     ```
 
+    ![Set Cluster Passkey](media/SetClusterPasskey.jpg)
+
 9. Enable vhost lookup in DxEnterprise's global settings
 
     ```text
     kubectl exec -n sql -c dxe mssql-0 -- dxcli set-globalsetting membername.lookup true
     ```
+
+    ![Update DXE Global Settings](media/UpdateDxeGlobalSettings.jpg)
 
 10. Join second pod to cluster
 
@@ -69,11 +90,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-1 -- dxcli join-cluster-ex mssql-0 <azurePassword>
     ```
 
+    ![Join Cluster Node 2](media/JoinClusterNode2.jpg)
+
 11. Join second pod to Availability Group
 
     ```text
     kubectl exec -n sql -c dxe mssql-1 -- dxcli add-ags-node mssql-agl1 mssql-ag1 "mssql-1|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
+
+    ![Join Availability Group Node 2](media/JoinAgNode2.jpg)
 
 12. Join third pod to cluster
 
@@ -81,11 +106,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-2 -- dxcli join-cluster-ex mssql-0 <azurePassword>
     ```
 
+    ![Join Cluster Node 3](media/JoinClusterNode3.jpg)
+
 13. Join third pod to Availability Group
 
     ```text
     kubectl exec -n sql -c dxe mssql-2 -- dxcli add-ags-node mssql-agl1 mssql-ag1 "mssql-2|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
+
+    ![Join Availability Group Node 3](media/JoinAgNode3.jpg)
 
 14. Set Availability Group listener port (14033)
 
@@ -93,11 +122,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-0 -- dxcli add-ags-listener mssql-agl1 mssql-ag1 14033
     ```
 
+    ![Set Listener Port](media/SetListenerPort.jpg)
+
 15. Add loadbalancer for listener
 
     ```text
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\service.yaml -n sql
     ```
+
+    ![Create Listener Internal Load Balancer](media/CreateListenerILB.jpg)
 
 16. Use tunnels for faster connections to the listener
 
@@ -105,11 +138,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql-agl1
     ```
 
-17. Check listenser service is available
+    ![Create Tunnel for Listener](media/CreateListenerTunnel.jpg)
+
+17. Check listener service is available
 
     ```text
     kubectl get services -n sql
     ```
+
+    ![Verify Listener Service](media/VerifyListenerService.jpg)
 
 18. Copy AdventureWorks2019.bak to first pod
 
@@ -117,9 +154,16 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl cp \..\SQLBackups\AdventureWorks2019.bak mssql-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql
     ```
 
+    ![Upload AdventureWorks2019 Backup](media/UploadSqlBackup.jpg)
+
 19. Open SQL Server Management Studio
 
+    ![Open SQL Server Management Studio](media/OpenSSMS.jpg)
+
 20. Connect to mssql-0
+
+    ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos.jpg)
+
 
 21. Restore AdventureWorks2019 using T-SQL
 
@@ -132,11 +176,16 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     , recovery, stats = 10
     ```
 
+    ![Restore AdventureWorks2019](media/RestoreDatabase.jpg)
+
+
 22. Set the database recovery to full
 
     ```text
     alter database AdventureWorks2019 set recovery full
     ```
+
+    ![Set AdventureWorks2019 Recovery Model](media/SetDatabaseRecoveryModel.jpg)
 
 23. Take a fresh full backup
 
@@ -146,11 +195,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     with format, init, compression, stats = 10
     ```
 
+    ![Backup AdventureWorks2019](media/BackupDatabase.jpg)
+
 24. Switch back to Powershell and add the database to Availability Group
 
     ```text
     kubectl exec -n sql -c dxe mssql-0 -- dxcli add-ags-databases mssql-agl1 mssql-ag1 AdventureWorks2019
     ```
+
+    ![Add AdventureWorks2019 to Availability Group](media/AddDatabaseToAg.jpg)
 
 25. Verify Availability Group State
 
@@ -158,12 +211,22 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql -c dxe mssql-0 -- dxcli get-ags-detail mssql-agl1 mssql-ag1
     ```
 
+    ![Verify Availability Group](media/VerifyAg.jpg)
+
 26. Connect to the listener from SQL Server Management Studio (mssql-agl1,14033 or mssql-agl1.sqlk8s.local,14033) and verify that mssql-0 is the primary pod
+
+    ![Connect to SQL Listener via Kerberos](media/ConnectSQLListener.jpg)
+
+    ![Connected to SQL Listener](media/ConnectedSQLListener.jpg)
 
 27. Try failing over the database by deleting mssql-0 and check which pod becomes the new primary by refreshing the listener
 
     ```text
     kubectl delete pod mssql-0 -n sql
     ```
+
+    ![Failover and Verify Availability Group](media/FailoverVerifyAg.jpg)
+
+    ![Listener Post Failover](media/ListenerPostFailover.jpg)
 
 [Continue >](../modules/monitor.md)
