@@ -1,8 +1,8 @@
-# Create Always-on Availability Group
+# Create Always-on Contained Availability Group
 
 [< Previous Module](../modules/sql22.md) - **[Home](../README.md)** - [Next Module >](../modules/monitor.md)
 
-## Install and configure Availability Group using DxEnterprise
+## Install and configure Contained Availability Group using DxEnterprise
 
 For this solution, you will be using DxEnterprise which is a licensed product from DH2I.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.
 
@@ -60,7 +60,9 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Encrypt sa Password](media/EncryptSAPassword.jpg)
 
-7. Create the Availability Group on the first pod
+7. Create the Contained Availability Group on the first pod
+
+    **NB: This is done by adding an extra \"CONTAINED\" optional parameter**
 
     ```text
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-ags mssql22-agl1 mssql22-ag1 "mssql22-0|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0" "CONTAINED"
