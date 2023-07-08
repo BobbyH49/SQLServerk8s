@@ -1,6 +1,6 @@
 # Create Always-on Availability Group
 
-[< Previous Module](../modules/sql.md) - **[Home](../README.md)** - [Next Module >](../modules/sql22.md)
+[< Previous Module](../modules/sql19.md) - **[Home](../README.md)** - [Next Module >](../modules/sql22.md)
 
 ## Install and configure Availability Group using DxEnterprise
 

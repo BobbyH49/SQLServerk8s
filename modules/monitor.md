@@ -1,6 +1,6 @@
 # Configure Monitoring
 
-[< Previous Module](../modules/sql.md) - **[Home](../README.md)**
+[< Previous Module](../modules/hadr22.md) - **[Home](../README.md)**
 
 ## Install and configure InfluxDB and Telegraf Agent
 
