@@ -3,14 +3,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mssql19-cluster-lb
+  name: mssql22-cluster-lb
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.192.1.7
+  loadBalancerIP: 10.222.1.11
   selector:
-    app: mssql19
+    app: mssql22
   ports:
   - name: sql
     protocol: TCP

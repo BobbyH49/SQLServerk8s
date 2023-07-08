@@ -1,6 +1,6 @@
 # Setup Windows Authentication (Kerberos) via Linux Server
 
-[< Previous Module](../modules/setup.md) - **[Home](../README.md)** - [Next Module >](../modules/sql.md)
+[< Previous Module](../modules/setup.md) - **[Home](../README.md)** - [Next Module >](../modules/sql19.md)
 
 ## Configure Network and DNS Settings on SqlK8sLinux
 
@@ -106,10 +106,13 @@
 
     ![Add Linux Server DNS](media/AddLinuxDNS.jpg)
 
-4. Create a new AD Account that will be the privileged AD account for SQL Server on each container
+4. Create new AD account that will be the privileged AD account for the SQL Server Pods
+
+    **NB: This will be done for both the SQL Server 2019 and 2022 instances**
 
     ```text
-    New-ADUser SqlK8sSvc -AccountPassword (Read-Host -AsSecureString "Enter Password") -PasswordNeverExpires $true -Enabled $true -KerberosEncryptionType AES256
+    New-ADUser SqlK8sSvc19 -AccountPassword (Read-Host -AsSecureString "Enter Password") -PasswordNeverExpires $true -Enabled $true -KerberosEncryptionType AES256
+    New-ADUser SqlK8sSvc22 -AccountPassword (Read-Host -AsSecureString "Enter Password") -PasswordNeverExpires $true -Enabled $true -KerberosEncryptionType AES256
     ```
 
     When prompted provide the \<azurePassword\> for consistency
@@ -120,24 +123,39 @@
 
 5. Create all of the required SPNs for each SQL Pod instance and the availability group listener
 
+    **NB: This will be done for both the SQL Server 2019 and 2022 instances**
+
     ```text
-    setspn -S MSSQLSvc/mssql-0.sqlk8s.local SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-1.sqlk8s.local SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-2.sqlk8s.local SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-0.sqlk8s.local:1433 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-1.sqlk8s.local:1433 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-2.sqlk8s.local:1433 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-0:1433 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-1:1433 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-2:1433 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-0 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-1 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-2 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-agl1.sqlk8s.local SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-agl1.sqlk8s.local:14033 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-agl1:14033 SQLK8S\SqlK8sSvc
-    setspn -S MSSQLSvc/mssql-agl1 SQLK8S\SqlK8sSvc
-    setspn -l SQLK8S\SqlK8sSvc
+    setspn -S MSSQLSvc/mssql19-0.sqlk8s.local SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-1.sqlk8s.local SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-2.sqlk8s.local SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-0.sqlk8s.local:1433 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-1.sqlk8s.local:1433 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-2.sqlk8s.local:1433 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-0:1433 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-1:1433 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-2:1433 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-0 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-1 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-2 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-agl1.sqlk8s.local:14033 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-agl1:14033 SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql22-0.sqlk8s.local SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-1.sqlk8s.local SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-2.sqlk8s.local SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-0.sqlk8s.local:1433 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-1.sqlk8s.local:1433 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-2.sqlk8s.local:1433 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-0:1433 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-1:1433 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-2:1433 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-0 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-1 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-2 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-agl1.sqlk8s.local:14033 SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-agl1:14033 SQLK8S\SqlK8sSvc22
+    setspn -l SQLK8S\SqlK8sSvc19
+    setspn -l SQLK8S\SqlK8sSvc22
     ```
 
     **NB: The listener will run under port 14033**
@@ -146,13 +164,19 @@
 
 6. Add DNS entries for all 3 sql instances, the availability group listener, and the monitoring tools (will be deployed later)
 
+    **NB: This will be done for both the SQL Server 2019 and 2022 instances**
+
     ```text
-    Add-DnsServerResourceRecordA -Name "mssql-0" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.4" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql-1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.5" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql-2" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.6" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql-agl1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.7" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "influxdb" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.8" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "grafana" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.9" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql19-0" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.4" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql19-1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.5" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql19-2" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.6" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql19-agl1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.7" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql22-0" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.8" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql22-1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.9" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql22-2" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.10" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql22-agl1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.11" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "influxdb" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.12" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "grafana" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.13" -TimeToLive "00:20:00"
     ```
 
     ![Add SQL Pod DNS](media/AddSQLPodDNS.jpg)
@@ -209,49 +233,96 @@
 
     ![Obtain Kerberos TGT](media/ObtainKerberosTGT.jpg)
 
-13. Create SPN keytab file for mssql-0 pod encrypted using AES256
+13. Create SPN keytab file for Pod 0 encrypted using AES256
 
+    For SQL Server 2019
+    
     ```text
-    adutil keytab createauto -k mssql_mssql-0.keytab -p 1433 -H mssql-0.sqlk8s.local --password <azurePassword> -s MSSQLSvc
+    adutil keytab createauto -k mssql_mssql19-0.keytab -p 1433 -H mssql19-0.sqlk8s.local --password <azurePassword> -s MSSQLSvc19
     ```
+
+    For SQL Server 2022
+    
+    ```text
+    adutil keytab createauto -k mssql_mssql22-0.keytab -p 1433 -H mssql22-0.sqlk8s.local --password <azurePassword> -s MSSQLSvc22
+    ```
+
     When prompted to add SPN enter `y`
 
     When prompted for the encryption type select `1` for AES256
 
     ![Create SPN keytab](media/CreateSPNKeytab.jpg)
 
-14. Repeat for mssql-1 and mssql-2
+14. Repeat for Pods 1 and 2
+
+    For SQL Server 2019
 
     ```text
-    adutil keytab createauto -k mssql_mssql-1.keytab -p 1433 -H mssql-1.sqlk8s.local --password <azurePassword> -s MSSQLSvc
+    adutil keytab createauto -k mssql_mssql19-1.keytab -p 1433 -H mssql19-1.sqlk8s.local --password <azurePassword> -s MSSQLSvc19
     ```
 
     ```text
-    adutil keytab createauto -k mssql_mssql-2.keytab -p 1433 -H mssql-2.sqlk8s.local --password <azurePassword> -s MSSQLSvc
+    adutil keytab createauto -k mssql_mssql19-2.keytab -p 1433 -H mssql19-2.sqlk8s.local --password <azurePassword> -s MSSQLSvc19
+    ```
+
+    For SQL Server 2022
+
+    ```text
+    adutil keytab createauto -k mssql_mssql22-1.keytab -p 1433 -H mssql22-1.sqlk8s.local --password <azurePassword> -s MSSQLSvc22
+    ```
+
+    ```text
+    adutil keytab createauto -k mssql_mssql22-2.keytab -p 1433 -H mssql22-2.sqlk8s.local --password <azurePassword> -s MSSQLSvc22
     ```
 
 15. Append each file with AD Account info (select `1` for AES256)
 
+    For SQL Server 2019
+    
     ```text
-    adutil keytab create -k mssql_mssql-0.keytab -p SqlK8sSvc --password <azurePassword>
+    adutil keytab create -k mssql_mssql19-0.keytab -p SqlK8sSvc19 --password <azurePassword>
     ```
 
     ![Append SPN keytab](media/AppendSPNKeytab.jpg)
 
     ```text
-    adutil keytab create -k mssql_mssql-1.keytab -p SqlK8sSvc --password <azurePassword>
+    adutil keytab create -k mssql_mssql19-1.keytab -p SqlK8sSvc19 --password <azurePassword>
     ```
 
     ```text
-    adutil keytab create -k mssql_mssql-2.keytab -p SqlK8sSvc --password <azurePassword>
+    adutil keytab create -k mssql_mssql19-2.keytab -p SqlK8sSvc19 --password <azurePassword>
+    ```
+
+    For SQL Server 2022
+    
+    ```text
+    adutil keytab create -k mssql_mssql22-0.keytab -p SqlK8sSvc22 --password <azurePassword>
+    ```
+
+    ```text
+    adutil keytab create -k mssql_mssql22-1.keytab -p SqlK8sSvc22 --password <azurePassword>
+    ```
+
+    ```text
+    adutil keytab create -k mssql_mssql22-2.keytab -p SqlK8sSvc22 --password <azurePassword>
     ```
 
 16. Open Powershell and copy the files from SqlK8sLinux to SqlK8sJumpbox
 
+    For SQL Server 2019
+    
     ```text
     cd /
     mkdir SQLContainerDeployment\SQL2019
-    scp azureuser@sqlk8slinux:/home/azureuser/* C:\SQLContainerDeployment\SQL2019\
+    scp azureuser@sqlk8slinux:/home/azureuser/mssql_mssql19* C:\SQLContainerDeployment\SQL2019\
+    ```
+
+    For SQL Server 2022
+    
+    ```text
+    cd /
+    mkdir SQLContainerDeployment\SQL2022
+    scp azureuser@sqlk8slinux:/home/azureuser/mssql_mssql22* C:\SQLContainerDeployment\SQL2022\
     ```
 
     When prompted to continue enter `yes`
@@ -262,4 +333,4 @@
 
     ![Downloaded Keytab Files](media/DownloadedKeytabFiles.jpg)
 
-[Continue >](../modules/sql.md)
+[Continue >](../modules/sql19.md)

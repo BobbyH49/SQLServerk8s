@@ -11,30 +11,30 @@ parameters:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mssql19
+  name: mssql22
   labels:
-    app: mssql19
+    app: mssql22
 spec:
-  serviceName: mssql19
+  serviceName: mssql22
   replicas: 3
   podManagementPolicy: Parallel
   selector:
     matchLabels:
-      app: mssql19
+      app: mssql22
   template:
     metadata:
       labels:
-        app: mssql19
+        app: mssql22
     spec:
       securityContext:
         fsGroup: 10001
       containers:
-        - name: mssql19
+        - name: mssql22
           command:
             - /bin/bash
             - -c
             - cp /var/opt/config/mssql.conf /var/opt/mssql/mssql.conf && /opt/mssql/bin/sqlservr
-          image: 'mcr.microsoft.com/mssql/server:2019-latest'
+          image: 'mcr.microsoft.com/mssql/server:2022-latest'
           resources:
             limits:
               memory: 8Gi
@@ -79,7 +79,7 @@ spec:
           - name: dxe
             mountPath: "/etc/dh2i"
       hostAliases:
-        - ip: "10.192.4.4"
+        - ip: "10.222.4.4"
           hostnames:
             - "sqlk8sdc.sqlk8s.local"
             - "sqlk8s.local"
@@ -87,7 +87,7 @@ spec:
 #      dnsPolicy: "None"
 #      dnsConfig:
 #        nameservers:
-#          - 10.192.4.4
+#          - 10.222.4.4
 #        searches:
 #          - "sqlk8s.local"
 #          - "local"
