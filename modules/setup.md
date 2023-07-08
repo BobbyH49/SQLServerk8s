@@ -27,7 +27,7 @@ The following resources will be deployed (expensive to keep running)
 
 * Azure Kubernetes Cluster (VM Scale Set with 2 Standard_D8s_v3 VMs)
 
-**NB: The Scale set has a minimum of 2 VMs to handle either of the SQL Server 2019 or 2022 deployments.  But it can scale to a maximum of 4 VMs if you wish to deploy both.** 
+    **NB: The Scale set has a minimum of 2 VMs to handle either of the SQL Server 2019 or 2022 deployments.  But it can scale to a maximum of 4 VMs if you wish to deploy both.** 
 
 ## Deploy Azure Resources (Deployment 1)
 
