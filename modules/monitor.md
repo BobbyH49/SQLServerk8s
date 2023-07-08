@@ -109,17 +109,27 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
     
     Replace line 11 within the servers section and edit the ip address and password
 
-    **NB: To get the ip address info for the sql pods run \"kubectl get services -n sql\"**
+    **NB: To get the ip address info for the sql pods run \"kubectl get services -n sql19\" or \"kubectl get services -n sql22\"**
 
     ![Verify SQL Services](media/VerifySQLServices.jpg)
 
+    For SQL Server 2019
+
     ```text
-        "Server=<mssql-0-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
-        "Server=<mssql-1-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
-        "Server=<mssql-2-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
+        "Server=<mssql19-0-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
+        "Server=<mssql19-1-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
+        "Server=<mssql19-2-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
     ```
 
-    Copy the 3 server entries (lines 11-13) and then click **Save and Test**
+    For SQL Server 2022
+
+    ```text
+        "Server=<mssql22-0-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
+        "Server=<mssql22-1-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
+        "Server=<mssql22-2-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
+    ```
+
+    Copy the server entries (lines 11-13) and then click **Save and Test**
 
     ![Edit InfluxDB Config](media/EditInfluxDBConfig.jpg)
 
@@ -362,10 +372,10 @@ This solution currently creates Grafana as a pod on your AKS cluster but you cou
 
     ![Refreshed Dashboard](media/RefreshedDashboard.jpg)
 
-23. Change between the 3 different hosts (mssql-0, mssql-1 and mssql-2) and view the charts for each
+23. Change between each of the hosts and view the charts for each
 
     ![Change Host](media/ChangeHost.jpg)
 
 24. Try Running some problematic queries against the primary and monitor the performance
 
-25. Try failing over and verifying performance on all 3 pods
+25. Try failing over and verifying performance on each pod
