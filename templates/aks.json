@@ -52,7 +52,7 @@
                     "loadBalancerSku": "standard",
                     "networkPlugin": "azure",
                     "networkPolicy": "calico",
-                    "serviceCidr": "10.193.0.0/22",
+                    "serviceCidr": "10.193.0.0/20",
                     "dnsServiceIP": "10.193.0.4"
                 },
                 "autoUpgradeProfile": {

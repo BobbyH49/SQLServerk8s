@@ -36,7 +36,7 @@
                                 "id": "[variables('subnetRef')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.4.4"
+                            "privateIpAddress": "10.192.16.4"
                         }
                     }
                 ],
@@ -60,7 +60,7 @@
                                 "id": "[variables('subnetRef')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.4.5"
+                            "privateIpAddress": "10.192.16.5"
                         }
                     }
                 ],
@@ -86,7 +86,7 @@
                                 "id": "[variables('subnetRef')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.4.6",
+                            "privateIpAddress": "10.192.16.6",
                             "publicIpAddress": {
                                 "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8sJumpbox-ip')]",
                                 "properties": {
@@ -315,14 +315,14 @@
                 },
                 "dhcpOptions": {
                     "dnsServers": [
-                        "10.192.4.4"
+                        "10.192.16.4"
                     ]
                 },
                 "subnets": [
                     {
                         "name": "AKS",
                         "properties": {
-                            "addressPrefix": "10.192.0.0/22",
+                            "addressPrefix": "10.192.0.0/20",
                             "networkSecurityGroup": {
                                 "id": "[variables('aksnsgId')]"
                             }
@@ -331,7 +331,7 @@
                     {
                         "name": "VMs",
                         "properties": {
-                            "addressPrefix": "10.192.4.0/26",
+                            "addressPrefix": "10.192.16.0/26",
                             "networkSecurityGroup": {
                                 "id": "[variables('vmsnsgId')]"
                             }
@@ -340,7 +340,7 @@
                     {
                         "name": "AzureBastionSubnet",
                         "properties": {
-                            "addressPrefix": "10.192.4.64/26",
+                            "addressPrefix": "10.192.16.64/26",
                             "networkSecurityGroup": {
                                 "id": "[variables('bastionnsgId')]"
                             }

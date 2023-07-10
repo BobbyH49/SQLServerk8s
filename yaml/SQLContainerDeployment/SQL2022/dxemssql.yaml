@@ -49,7 +49,7 @@ spec:
             - name: MSSQL_SA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mssql
+                  name: mssql22
                   key: MSSQL_SA_PASSWORD
           volumeMounts:
             - name: mssql
@@ -73,13 +73,13 @@ spec:
           - name: MSSQL_SA_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: mssql
+                name: mssql22
                 key: MSSQL_SA_PASSWORD
           volumeMounts:
           - name: dxe
             mountPath: "/etc/dh2i"
       hostAliases:
-        - ip: "10.222.4.4"
+        - ip: "10.192.16.4"
           hostnames:
             - "sqlk8sdc.sqlk8s.local"
             - "sqlk8s.local"
@@ -87,14 +87,14 @@ spec:
 #      dnsPolicy: "None"
 #      dnsConfig:
 #        nameservers:
-#          - 10.222.4.4
+#          - 10.192.16.4
 #        searches:
 #          - "sqlk8s.local"
 #          - "local"
       volumes:
         - name: mssql-config-volume
           configMap:
-            name: mssql
+            name: mssql22
         - name: krb5-config-volume
           configMap:
             name: krb5
