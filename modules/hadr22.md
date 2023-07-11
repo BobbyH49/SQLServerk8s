@@ -1,6 +1,6 @@
 # Create Always-on Contained Availability Group
 
-[< Previous Module](../modules/sql22.md) - **[Home](../README.md)** - [Next Module >](../modules/monitor.md)
+[< Previous Module](../modules/sql22.md) - **[Home](../README.md)** - [Next Module >](../modules/logins.md)
 
 ## Install and configure Contained Availability Group using DxEnterprise
 
@@ -240,4 +240,4 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Failover and Verify Availability Group](media/FailoverVerifyAg22.jpg)
 
-[Continue >](../modules/monitor.md)
+[Continue >](../modules/logins.md)
