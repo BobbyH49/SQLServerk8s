@@ -50,7 +50,7 @@
     kubectl create namespace sql19
     ```
 
-    ![Create SQL Namespace](media/CreateSQLNamespace.jpg)
+    ![Create SQL Namespace](media/CreateSQLNamespace19.jpg)
 
 7. Create headless services which will allow your SQL Server pods to connect to one another using hostnames
 
@@ -58,15 +58,15 @@
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\headless-services.yaml -n sql19
     ```
 
-    ![Create SQL Headless Services](media/CreateSQLHeadlessServices.jpg)
+    ![Create SQL Headless Services](media/CreateSQLHeadlessServices19.jpg)
 
 8. Create secret for SQL Server sa password using \<azurePassword\> for consistency
 
     ```text
-    kubectl create secret generic mssql --from-literal=MSSQL_SA_PASSWORD=<azurePassword> -n sql19
+    kubectl create secret generic mssql19 --from-literal=MSSQL_SA_PASSWORD=<azurePassword> -n sql19
     ```
 
-    ![Create sa password secret](media/CreateSAPassword.jpg)
+    ![Create sa password secret](media/CreateSAPassword19.jpg)
 
 9. Apply the Kerberos configuration file
 
@@ -74,7 +74,7 @@
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\krb5-conf.yaml -n sql19
     ```
 
-    ![Apply Kerberos Config](media/ApplyKerberosConfig.jpg)
+    ![Apply Kerberos Config](media/ApplyKerberosConfig19.jpg)
 
 10. Apply the SQL Server Configuration
 
@@ -82,7 +82,7 @@
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\mssql-conf.yaml -n sql19
     ```
 
-    ![Apply SQL Config](media/ApplySQLConfig.jpg)
+    ![Apply SQL Config](media/ApplySQLConfig19.jpg)
 
 11. Apply StatefulSet configuration of SQL Server and install cluster software (dxe)
 
@@ -90,7 +90,7 @@
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\dxemssql.yaml -n sql19
     ```
 
-    ![Create Stateful SQL Pods](media/CreateStatefulSQLPods.jpg)
+    ![Create Stateful SQL Pods](media/CreateStatefulSQLPods19.jpg)
 
 12. Add internal load balancers for each node
 
@@ -98,7 +98,7 @@
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\pod-service.yaml -n sql19
     ```
 
-    ![Create Internal Load Balancer Services](media/CreateILBServices.jpg)
+    ![Create Internal Load Balancer Services](media/CreateILBServices19.jpg)
 
 13. Verify pods and services are up and running
 
@@ -106,21 +106,21 @@
     kubectl get pods -n sql19
     ```
 
-    ![Verify SQL Pods](media/VerifySQLPods.jpg)
+    ![Verify SQL Pods](media/VerifySQLPods19.jpg)
 
     ```text
     kubectl get services -n sql19
     ```
 
-    ![Verify SQL Services](media/VerifySQLServices.jpg)
+    ![Verify SQL Services](media/VerifySQLServices19.jpg)
 
-14. Check pods by nodes (in this case there should only be 1 node)
+14. Check pods by nodes (there will be 2 nodes if you are only running one instance e.g. SQL 2019 or SQL 2022, but this could increase up to 4 nodes if running both)
 
     ```text
     kubectl get pod -o=custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName -n sql19
     ```
 
-    ![Verify AKS Nodes](media/VerifyAKSNodes.jpg)
+    ![Verify AKS Nodes](media/VerifyAKSNodes19.jpg)
 
 15. Copy the keytab files (created in the kerberos module) to all 3 SQL Pods
 
@@ -130,7 +130,7 @@
     kubectl cp \..\SQLContainerDeployment\SQL2019\mssql_mssql19-2.keytab mssql19-2:/var/opt/mssql/secrets/mssql.keytab -n sql19
     ```
 
-    ![Upload Keytab Files](media/UploadKeytabFiles.jpg)
+    ![Upload Keytab Files](media/UploadKeytabFiles19.jpg)
 
 16. Copy logger.ini files to all 3 SQL Pods
 
@@ -140,7 +140,7 @@
     kubectl cp "\..\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\logger.ini" mssql19-2:/var/opt/mssql/logger.ini -n sql19
     ```
 
-    ![Upload Logger Files](media/UploadLoggerFiles.jpg)
+    ![Upload Logger Files](media/UploadLoggerFiles19.jpg)
 
 17. Delete all 3 pods so they are re-created with Kerberos correctly configured
 
@@ -152,7 +152,7 @@
     kubectl delete pod mssql19-2 -n sql19
     ```
 
-    ![Delete SQL Pods](media/DeleteSQLPods.jpg)
+    ![Delete SQL Pods](media/DeleteSQLPods19.jpg)
 
 18. Verify pods are back up and running
 
@@ -160,15 +160,15 @@
     kubectl get pods -n sql19
     ```
 
-    ![Verify SQL Pods](media/VerifySQLPods.jpg)
+    ![Verify SQL Pods](media/VerifySQLPods19.jpg)
 
 19. Open SQL Server Management Studio and connect to each of the SQL Containers (i.e. mssql19-0, mssql19-1, mssql19-2) using SQL authentication (sa account and \<azurePassword\>)
 
     ![Open SQL Server Management Studio](media/OpenSSMS.jpg)
 
-    ![Connect to SQL Pods](media/ConnectSQLPods.jpg)
+    ![Connect to SQL Pods](media/ConnectSQLPods19.jpg)
 
-    ![SQL Pods Connected](media/SQLPodsConnected.jpg)
+    ![SQL Pods Connected](media/SQLPodsConnected19.jpg)
 
 20. Open a T-SQL session on each pod (container) and create a Windows login for \<azureUser\> with sysadmin permissions
 
@@ -188,10 +188,12 @@
     GO
     ```
 
-    ![Create SQL Logins](media/CreateSQLLogins.jpg)
+    ![Create SQL Logins](media/CreateSQLLogins19.jpg)
 
 21. You should now be able to login to all 3 instances using Windows Authentication (SQLK8S\\\<azureUser\>)
 
-    ![SQL Pods Connected via Kerberos](media/SQLKerberosConnected.jpg)
+    ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos19.jpg)
+
+    ![SQL Pods Connected via Kerberos](media/SQLKerberosConnected19.jpg)
 
 [Continue >](../modules/hadr19.md)

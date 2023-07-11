@@ -42,7 +42,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli activate-server <license key> --accept-eula
     ```
 
-    ![Activate DXE License](media/ActivateDXELicense.jpg)
+    ![Activate DXE License](media/ActivateDXELicense19.jpg)
 
 5. Add a VHost with the name of the listener on the first pod
 
@@ -50,7 +50,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli cluster-add-vhost mssql19-agl1 *127.0.0.1 mssql19-0
     ```
 
-    ![Add HA VHost](media/AddHaVHost.jpg)
+    ![Add HA VHost](media/AddHaVHost19.jpg)
 
 6. Encrypt sa password for cluster software on the first pod (value returned will be \<EncryptedPassword\>)
 
@@ -58,7 +58,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli encrypt-text <azurePassword>
     ```
 
-    ![Encrypt sa Password](media/EncryptSAPassword.jpg)
+    ![Encrypt sa Password](media/EncryptSAPassword19.jpg)
 
 7. Create the Availability Group on the first pod
 
@@ -66,7 +66,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags mssql19-agl1 mssql19-ag1 "mssql19-0|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
 
-    ![Create SQL Availability Group](media/CreateSqlAg.jpg)
+    ![Create SQL Availability Group](media/CreateSqlAg19.jpg)
 
 8. Set the cluster passkey using \<azurePassword\> for consistency
 
@@ -74,7 +74,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli cluster-set-secret-ex <azurePassword>
     ```
 
-    ![Set Cluster Passkey](media/SetClusterPasskey.jpg)
+    ![Set Cluster Passkey](media/SetClusterPasskey19.jpg)
 
 9. Enable vhost lookup in DxEnterprise's global settings
 
@@ -82,7 +82,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli set-globalsetting membername.lookup true
     ```
 
-    ![Update DXE Global Settings](media/UpdateDxeGlobalSettings.jpg)
+    ![Update DXE Global Settings](media/UpdateDxeGlobalSettings19.jpg)
 
 10. Join second pod to cluster
 
@@ -90,7 +90,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli join-cluster-ex mssql19-0 <azurePassword>
     ```
 
-    ![Join Cluster Node 2](media/JoinClusterNode2.jpg)
+    ![Join Cluster Node 2](media/JoinClusterNode219.jpg)
 
 11. Join second pod to Availability Group
 
@@ -98,7 +98,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli add-ags-node mssql19-agl1 mssql19-ag1 "mssql19-1|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
 
-    ![Join Availability Group Node 2](media/JoinAgNode2.jpg)
+    ![Join Availability Group Node 2](media/JoinAgNode219.jpg)
 
 12. Join third pod to cluster
 
@@ -106,7 +106,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli join-cluster-ex mssql19-0 <azurePassword>
     ```
 
-    ![Join Cluster Node 3](media/JoinClusterNode3.jpg)
+    ![Join Cluster Node 3](media/JoinClusterNode319.jpg)
 
 13. Join third pod to Availability Group
 
@@ -114,7 +114,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli add-ags-node mssql19-agl1 mssql19-ag1 "mssql19-2|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
 
-    ![Join Availability Group Node 3](media/JoinAgNode3.jpg)
+    ![Join Availability Group Node 3](media/JoinAgNode319.jpg)
 
 14. Set Availability Group listener port (14033)
 
@@ -122,7 +122,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-listener mssql19-agl1 mssql19-ag1 14033
     ```
 
-    ![Set Listener Port](media/SetListenerPort.jpg)
+    ![Set Listener Port](media/SetListenerPort19.jpg)
 
 15. Add loadbalancer for listener
 
@@ -130,7 +130,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\service.yaml -n sql19
     ```
 
-    ![Create Listener Internal Load Balancer](media/CreateListenerILB.jpg)
+    ![Create Listener Internal Load Balancer](media/CreateListenerILB19.jpg)
 
 16. Use tunnels for faster connections to the listener
 
@@ -138,7 +138,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql19-agl1
     ```
 
-    ![Create Tunnel for Listener](media/CreateListenerTunnel.jpg)
+    ![Create Tunnel for Listener](media/CreateListenerTunnel19.jpg)
 
 17. Check listener service is available
 
@@ -146,7 +146,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl get services -n sql19
     ```
 
-    ![Verify Listener Service](media/VerifyListenerService.jpg)
+    ![Verify Listener Service](media/VerifyListenerService19.jpg)
 
 18. Copy AdventureWorks2019.bak to first pod
 
@@ -154,7 +154,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl cp \..\SQLBackups\AdventureWorks2019.bak mssql19-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql19
     ```
 
-    ![Upload AdventureWorks2019 Backup](media/UploadSqlBackup.jpg)
+    ![Upload AdventureWorks2019 Backup](media/UploadSqlBackup19.jpg)
 
 19. Open SQL Server Management Studio
 
@@ -162,8 +162,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
 20. Connect to mssql19-0
 
-    ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos.jpg)
-
+    ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos19.jpg)
 
 21. Restore AdventureWorks2019 using T-SQL
 
@@ -176,7 +175,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     , recovery, stats = 10
     ```
 
-    ![Restore AdventureWorks2019](media/RestoreDatabase.jpg)
+    ![Restore AdventureWorks2019](media/RestoreDatabase19.jpg)
 
 
 22. Set the database recovery to full
@@ -203,7 +202,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-databases mssql19-agl1 mssql19-ag1 AdventureWorks2019
     ```
 
-    ![Add AdventureWorks2019 to Availability Group](media/AddDatabaseToAg.jpg)
+    ![Add AdventureWorks2019 to Availability Group](media/AddDatabaseToAg19.jpg)
 
 25. Verify Availability Group State
 
@@ -211,13 +210,13 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli get-ags-detail mssql19-agl1 mssql19-ag1
     ```
 
-    ![Verify Availability Group](media/VerifyAg.jpg)
+    ![Verify Availability Group](media/VerifyAg19.jpg)
 
 26. Connect to the listener from SQL Server Management Studio (mssql19-agl1,14033 or mssql19-agl1.sqlk8s.local,14033) and verify that mssql19-0 is the primary pod
 
-    ![Connect to SQL Listener via Kerberos](media/ConnectSQLListener.jpg)
+    ![Connect to SQL Listener via Kerberos](media/ConnectSQLListener19.jpg)
 
-    ![Connected to SQL Listener](media/ConnectedSQLListener.jpg)
+    ![Connected to SQL Listener](media/ConnectedSQLListener19.jpg)
 
 27. Try failing over the database by deleting mssql19-0 and check which pod becomes the new primary by refreshing the listener
 
@@ -225,8 +224,8 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl delete pod mssql19-0 -n sql19
     ```
 
-    ![Failover and Verify Availability Group](media/FailoverVerifyAg.jpg)
+    ![Failover and Verify Availability Group](media/FailoverVerifyAg19.jpg)
 
-    ![Listener Post Failover](media/ListenerPostFailover.jpg)
+    ![Listener Post Failover](media/ListenerPostFailover19.jpg)
 
 [Continue >](../modules/sql22.md)

@@ -12,7 +12,7 @@
 
     ![Open Putty](media/OpenPutty.jpg)
 
-3. Connect to 10.192.4.5 (sqlK8sLinux) using preconfigured credentials
+3. Connect to 10.192.16.5 (sqlK8sLinux) using preconfigured credentials
 
     ![Connect to Linux Server](media/ConnectLinux.jpg)
 
@@ -44,7 +44,7 @@
     sudo nano /etc/resolvconf/resolv.conf.d/head
     ```
 
-    Add **nameserver 10.192.4.4** (SqlK8sDC) to the bottom of the file and then press `Ctrl + X` followed by `Y` and `Enter` to save the file
+    Add **nameserver 10.192.16.4** (SqlK8sDC) to the bottom of the file and then press `Ctrl + X` followed by `Y` and `Enter` to save the file
 
     ![Update resolvconf](media/Updateresolvconf.jpg)
 
@@ -101,7 +101,7 @@
 3. Add DNS entry for SqlK8sLinux
 
     ```text
-    Add-DnsServerResourceRecordA -Name "SqlK8sLinux" -ZoneName "sqlk8s.local" -IPv4Address "10.192.4.5" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "SqlK8sLinux" -ZoneName "sqlk8s.local" -IPv4Address "10.192.16.5" -TimeToLive "00:20:00"
     ```
 
     ![Add Linux Server DNS](media/AddLinuxDNS.jpg)
@@ -181,26 +181,26 @@
     For SQL Server 2019
 
     ```text
-    Add-DnsServerResourceRecordA -Name "mssql19-0" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.4" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql19-1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.5" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql19-2" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.6" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql19-agl1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.7" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql19-0" -ZoneName "sqlk8s.local" -IPv4Address "10.192.4.0" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql19-1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.4.1" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql19-2" -ZoneName "sqlk8s.local" -IPv4Address "10.192.4.2" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql19-agl1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.4.3" -TimeToLive "00:20:00"
     ```
 
     For SQL Server 2022
 
     ```text
-    Add-DnsServerResourceRecordA -Name "mssql22-0" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.8" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql22-1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.9" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql22-2" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.10" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "mssql22-agl1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.11" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql22-0" -ZoneName "sqlk8s.local" -IPv4Address "10.192.5.0" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql22-1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.5.1" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql22-2" -ZoneName "sqlk8s.local" -IPv4Address "10.192.5.2" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "mssql22-agl1" -ZoneName "sqlk8s.local" -IPv4Address "10.192.5.3" -TimeToLive "00:20:00"
     ```
 
     For SQL Server Monitor
 
     ```text
-    Add-DnsServerResourceRecordA -Name "influxdb" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.12" -TimeToLive "00:20:00"
-    Add-DnsServerResourceRecordA -Name "grafana" -ZoneName "sqlk8s.local" -IPv4Address "10.192.1.13" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "influxdb" -ZoneName "sqlk8s.local" -IPv4Address "10.192.6.0" -TimeToLive "00:20:00"
+    Add-DnsServerResourceRecordA -Name "grafana" -ZoneName "sqlk8s.local" -IPv4Address "10.192.6.1" -TimeToLive "00:20:00"
     ```
 
     ![Add SQL Pod DNS SQL 2019](media/AddSQLPodDNS19.jpg)
@@ -209,7 +209,7 @@
 
     ![Add SQL Pod DNS SQL Monitor](media/AddSQLPodDNSMonitor.jpg)
 
-7. Connect to SqlK8sJumpbox, open Putty, and connect to 10.192.4.5 (SqlK8sLinux)
+7. Connect to SqlK8sJumpbox, open Putty, and connect to 10.192.16.5 (SqlK8sLinux)
 
     ![Connect to Linux Server](media/ConnectLinux.jpg)
 

@@ -42,7 +42,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-2 -- dxcli activate-server <license key> --accept-eula
     ```
 
-    ![Activate DXE License](media/ActivateDXELicense.jpg)
+    ![Activate DXE License](media/ActivateDXELicense22.jpg)
 
 5. Add a VHost with the name of the listener on the first pod
 
@@ -50,7 +50,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli cluster-add-vhost mssql22-agl1 *127.0.0.1 mssql22-0
     ```
 
-    ![Add HA VHost](media/AddHaVHost.jpg)
+    ![Add HA VHost](media/AddHaVHost22.jpg)
 
 6. Encrypt sa password for cluster software on the first pod (value returned will be \<EncryptedPassword\>)
 
@@ -58,7 +58,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli encrypt-text <azurePassword>
     ```
 
-    ![Encrypt sa Password](media/EncryptSAPassword.jpg)
+    ![Encrypt sa Password](media/EncryptSAPassword22.jpg)
 
 7. Create the Contained Availability Group on the first pod
 
@@ -68,7 +68,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-ags mssql22-agl1 mssql22-ag1 "mssql22-0|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0" "CONTAINED"
     ```
 
-    ![Create SQL Availability Group](media/CreateSqlAg.jpg)
+    ![Create SQL Contained Availability Group](media/CreateSqlAg22.jpg)
 
 8. Set the cluster passkey using \<azurePassword\> for consistency
 
@@ -76,7 +76,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli cluster-set-secret-ex <azurePassword>
     ```
 
-    ![Set Cluster Passkey](media/SetClusterPasskey.jpg)
+    ![Set Cluster Passkey](media/SetClusterPasskey22.jpg)
 
 9. Enable vhost lookup in DxEnterprise's global settings
 
@@ -84,7 +84,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli set-globalsetting membername.lookup true
     ```
 
-    ![Update DXE Global Settings](media/UpdateDxeGlobalSettings.jpg)
+    ![Update DXE Global Settings](media/UpdateDxeGlobalSettings22.jpg)
 
 10. Join second pod to cluster
 
@@ -92,7 +92,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-1 -- dxcli join-cluster-ex mssql22-0 <azurePassword>
     ```
 
-    ![Join Cluster Node 2](media/JoinClusterNode2.jpg)
+    ![Join Cluster Node 2](media/JoinClusterNode222.jpg)
 
 11. Join second pod to Availability Group
 
@@ -100,7 +100,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-1 -- dxcli add-ags-node mssql22-agl1 mssql22-ag1 "mssql22-1|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
 
-    ![Join Availability Group Node 2](media/JoinAgNode2.jpg)
+    ![Join Availability Group Node 2](media/JoinAgNode222.jpg)
 
 12. Join third pod to cluster
 
@@ -108,7 +108,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-2 -- dxcli join-cluster-ex mssql22-0 <azurePassword>
     ```
 
-    ![Join Cluster Node 3](media/JoinClusterNode3.jpg)
+    ![Join Cluster Node 3](media/JoinClusterNode322.jpg)
 
 13. Join third pod to Availability Group
 
@@ -116,7 +116,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-2 -- dxcli add-ags-node mssql22-agl1 mssql22-ag1 "mssql22-2|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
 
-    ![Join Availability Group Node 3](media/JoinAgNode3.jpg)
+    ![Join Availability Group Node 3](media/JoinAgNode322.jpg)
 
 14. Set Availability Group listener port (14033)
 
@@ -124,7 +124,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-ags-listener mssql22-agl1 mssql22-ag1 14033
     ```
 
-    ![Set Listener Port](media/SetListenerPort.jpg)
+    ![Set Listener Port](media/SetListenerPort22.jpg)
 
 15. Add loadbalancer for listener
 
@@ -132,7 +132,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2022\service.yaml -n sql22
     ```
 
-    ![Create Listener Internal Load Balancer](media/CreateListenerILB.jpg)
+    ![Create Listener Internal Load Balancer](media/CreateListenerILB22.jpg)
 
 16. Use tunnels for faster connections to the listener
 
@@ -140,7 +140,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql22-agl1
     ```
 
-    ![Create Tunnel for Listener](media/CreateListenerTunnel.jpg)
+    ![Create Tunnel for Listener](media/CreateListenerTunnel22.jpg)
 
 17. Check listener service is available
 
@@ -148,7 +148,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl get services -n sql22
     ```
 
-    ![Verify Listener Service](media/VerifyListenerService.jpg)
+    ![Verify Listener Service](media/VerifyListenerService22.jpg)
 
 18. Copy AdventureWorks2019.bak to first pod
 
@@ -156,7 +156,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     kubectl cp \..\SQLBackups\AdventureWorks2019.bak mssql22-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql22
     ```
 
-    ![Upload AdventureWorks2019 Backup](media/UploadSqlBackup.jpg)
+    ![Upload AdventureWorks2019 Backup](media/UploadSqlBackup22.jpg)
 
 19. Open SQL Server Management Studio
 
@@ -164,10 +164,13 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
 20. Connect to mssql22-0
 
-    ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos.jpg)
+    ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos22.jpg)
 
+21. Verify the Availability Group is available and there are 2 synchronized databases (MSSQL22-AG1_master and MSSQL22-AG1_msdb)
 
-21. Restore AdventureWorks2019 using T-SQL
+    ![Verify New Contained Availability Group and Databases](media/VerifyNewAgDatabases.jpg)
+
+22. Restore AdventureWorks2019 using T-SQL
 
     ```text
     restore database AdventureWorks2019
@@ -178,10 +181,10 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     , recovery, stats = 10
     ```
 
-    ![Restore AdventureWorks2019](media/RestoreDatabase.jpg)
+    ![Restore AdventureWorks2019](media/RestoreDatabase22.jpg)
 
 
-22. Set the database recovery to full
+23. Set the database recovery to full
 
     ```text
     alter database AdventureWorks2019 set recovery full
@@ -189,7 +192,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Set AdventureWorks2019 Recovery Model](media/SetDatabaseRecoveryModel.jpg)
 
-23. Take a fresh full backup
+24. Take a fresh full backup
 
     ```text
     backup database AdventureWorks2019
@@ -199,36 +202,38 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Backup AdventureWorks2019](media/BackupDatabase.jpg)
 
-24. Switch back to Powershell and add the database to Availability Group
+25. Switch back to Powershell and add the database to Availability Group
 
     ```text
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-ags-databases mssql22-agl1 mssql22-ag1 AdventureWorks2019
     ```
 
-    ![Add AdventureWorks2019 to Availability Group](media/AddDatabaseToAg.jpg)
+    ![Add AdventureWorks2019 to Availability Group](media/AddDatabaseToAg22.jpg)
 
-25. Verify Availability Group State
+26. Verify Availability Group State
 
     ```text
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli get-ags-detail mssql22-agl1 mssql22-ag1
     ```
 
-    ![Verify Availability Group](media/VerifyAg.jpg)
+    ![Verify Availability Group](media/VerifyAg22.jpg)
 
-26. Connect to the listener from SQL Server Management Studio (mssql22-agl1,14033 or mssql22-agl1.sqlk8s.local,14033) and verify that mssql22-0 is the primary pod
+27. Connect to the listener from SQL Server Management Studio (mssql22-agl1,14033 or mssql22-agl1.sqlk8s.local,14033)
 
-    ![Connect to SQL Listener via Kerberos](media/ConnectSQLListener.jpg)
+    **NB: You will notice there is no Availability Group option when connected to the listener, and there is only 1 database (AdventureWorks2019) which is not synchronized.  However, mssql-0 shows 3 synchronized databases.  This is by design, with Contained Availability Groups, the listener appears as a standalone instance.  The availability group is under the hood.**
 
-    ![Connected to SQL Listener](media/ConnectedSQLListener.jpg)
+    **NB: You can still check which instance is primary by connecting to the 3 instances and expanding every folder from \"Always On High Availability\".**
 
-27. Try failing over the database by deleting mssql22-0 and check which pod becomes the new primary by refreshing the listener
+    ![Connect to SQL Listener via Kerberos](media/ConnectSQLListener22.jpg)
+
+    ![Connected to SQL Listener](media/ConnectedSQLListener22.jpg)
+
+28. Try failing over the database by deleting mssql22-0 and check which pod becomes the new primary by refreshing the listener
 
     ```text
     kubectl delete pod mssql22-0 -n sql22
     ```
 
-    ![Failover and Verify Availability Group](media/FailoverVerifyAg.jpg)
-
-    ![Listener Post Failover](media/ListenerPostFailover.jpg)
+    ![Failover and Verify Availability Group](media/FailoverVerifyAg22.jpg)
 
 [Continue >](../modules/monitor.md)
