@@ -62,7 +62,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
 7. Create the Contained Availability Group on the first pod
 
-    **NB: This is done by adding an extra \"CONTAINED\" optional parameter**
+    **NB: This is done by adding an extra \"CONTAINED\" optional parameter.  Allow 1 minute for the availability group to be created with 2 new synchronized databases**
 
     ```text
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-ags mssql22-agl1 mssql22-ag1 "mssql22-0|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0" "CONTAINED"
@@ -96,6 +96,8 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
 11. Join second pod to Availability Group
 
+    **NB: Allow 1 minute for the node to be added with 2 new synchronized databases**
+
     ```text
     kubectl exec -n sql22 -c dxe mssql22-1 -- dxcli add-ags-node mssql22-agl1 mssql22-ag1 "mssql22-1|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
@@ -112,13 +114,23 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
 13. Join third pod to Availability Group
 
+    **NB: Allow 1 minute for the node to be added with 2 new synchronized databases**
+
     ```text
     kubectl exec -n sql22 -c dxe mssql22-2 -- dxcli add-ags-node mssql22-agl1 mssql22-ag1 "mssql22-2|mssqlserver|sa|<EncryptedPassword>|5022|synchronous_commit|0"
     ```
 
     ![Join Availability Group Node 3](media/JoinAgNode322.jpg)
 
-14. Set Availability Group listener port (14033)
+14. Create Listener Tunnel
+
+    ```text
+    kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql22-agl1
+    ```
+
+    ![Create Tunnel for Listener](media/CreateListenerTunnel22.jpg)
+
+15. Set Availability Group listener port (14033)
 
     ```text
     kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-ags-listener mssql22-agl1 mssql22-ag1 14033
@@ -126,21 +138,13 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Set Listener Port](media/SetListenerPort22.jpg)
 
-15. Add loadbalancer for listener
+16. Add loadbalancer for listener
 
     ```text
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2022\service.yaml -n sql22
     ```
 
     ![Create Listener Internal Load Balancer](media/CreateListenerILB22.jpg)
-
-16. Use tunnels for faster connections to the listener
-
-    ```text
-    kubectl exec -n sql22 -c dxe mssql22-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql22-agl1
-    ```
-
-    ![Create Tunnel for Listener](media/CreateListenerTunnel22.jpg)
 
 17. Check listener service is available
 
