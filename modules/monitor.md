@@ -109,9 +109,11 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
     
     Replace line 11 within the servers section and edit the ip address and password
 
-    **NB: To get the ip address info for the sql pods run \"kubectl get services -n sql19\" or \"kubectl get services -n sql22\"**
+    **NB: To get the ip address info for the sql pods run \"kubectl get services -n sql19\" and\/or \"kubectl get services -n sql22\"**
 
-    ![Verify SQL Services](media/VerifySQLServices.jpg)
+    ![Verify SQL 2019 Services](media/VerifySQLServices19.jpg)
+
+    ![Verify SQL 2022 Services](media/VerifySQLServices22.jpg)
 
     For SQL Server 2019
 
@@ -129,7 +131,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
         "Server=<mssql22-2-lb ClusterIP>;Port=1433;User Id=Telegraf;Password=<azurePassword>;app name=telegraf;log=1;",
     ```
 
-    Copy the server entries (lines 11-13) and then click **Save and Test**
+    Copy the server entries (lines 11-13 for one instance or 11-16 for both) and then click **Save and Test**
 
     ![Edit InfluxDB Config](media/EditInfluxDBConfig.jpg)
 
