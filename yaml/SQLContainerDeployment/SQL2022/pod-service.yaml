@@ -1,0 +1,81 @@
+#Access for SQL server, AG listener, and DxE management
+apiVersion: v1
+kind: Service
+metadata:
+  #Unique name
+  name: mssql22-0-lb
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.192.5.0
+  selector:
+    #Assign load balancer to a specific pod
+    statefulset.kubernetes.io/pod-name: mssql22-0
+  ports:
+  - name: sql
+    protocol: TCP
+    port: 1433
+    targetPort: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+    targetPort: 14033
+  - name: dxe
+    protocol: TCP
+    port: 7979
+    targetPort: 7979
+---
+apiVersion: v1
+kind: Service
+metadata:
+  #Unique name
+  name: mssql22-1-lb
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.192.5.1
+  selector:
+    #Assign load balancer to a specific pod
+    statefulset.kubernetes.io/pod-name: mssql22-1
+  ports:
+  - name: sql
+    protocol: TCP
+    port: 1433
+    targetPort: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+    targetPort: 14033
+  - name: dxe
+    protocol: TCP
+    port: 7979
+    targetPort: 7979
+---
+apiVersion: v1
+kind: Service
+metadata:
+  #Unique name
+  name: mssql22-2-lb
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.192.5.2
+  selector:
+    #Assign load balancer to a specific pod
+    statefulset.kubernetes.io/pod-name: mssql22-2
+  ports:
+  - name: sql
+    protocol: TCP
+    port: 1433
+    targetPort: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+    targetPort: 14033
+  - name: dxe
+    protocol: TCP
+    port: 7979
+    targetPort: 7979

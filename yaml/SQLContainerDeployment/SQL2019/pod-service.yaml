@@ -3,15 +3,15 @@ apiVersion: v1
 kind: Service
 metadata:
   #Unique name
-  name: mssql-0-lb
+  name: mssql19-0-lb
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.192.1.4
+  loadBalancerIP: 10.192.4.0
   selector:
     #Assign load balancer to a specific pod
-    statefulset.kubernetes.io/pod-name: mssql-0
+    statefulset.kubernetes.io/pod-name: mssql19-0
   ports:
   - name: sql
     protocol: TCP
@@ -30,15 +30,15 @@ apiVersion: v1
 kind: Service
 metadata:
   #Unique name
-  name: mssql-1-lb
+  name: mssql19-1-lb
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.192.1.5
+  loadBalancerIP: 10.192.4.1
   selector:
     #Assign load balancer to a specific pod
-    statefulset.kubernetes.io/pod-name: mssql-1
+    statefulset.kubernetes.io/pod-name: mssql19-1
   ports:
   - name: sql
     protocol: TCP
@@ -57,15 +57,15 @@ apiVersion: v1
 kind: Service
 metadata:
   #Unique name
-  name: mssql-2-lb
+  name: mssql19-2-lb
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.192.1.6
+  loadBalancerIP: 10.192.4.2
   selector:
     #Assign load balancer to a specific pod
-    statefulset.kubernetes.io/pod-name: mssql-2
+    statefulset.kubernetes.io/pod-name: mssql19-2
   ports:
   - name: sql
     protocol: TCP

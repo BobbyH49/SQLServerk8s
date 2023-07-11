@@ -1,0 +1,19 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: krb5
+data:
+  krb5.conf: |
+    [libdefaults]
+    default_realm = SQLK8S.LOCAL
+
+    [realms]
+    SQLK8S.LOCAL = {
+        kdc = sqlk8sdc.sqlk8s.local
+        admin_server = sqlk8sdc.sqlk8s.local
+        default_domain = SQLK8S.LOCAL
+    }
+
+    [domain_realm]
+    .sqlk8s.local = SQLK8S.LOCAL
+    sqlk8s.local = SQLK8s.LOCAL

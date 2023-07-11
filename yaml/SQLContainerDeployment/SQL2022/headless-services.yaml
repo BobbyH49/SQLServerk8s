@@ -1,0 +1,75 @@
+#Headless services for local connections/resolution
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql22-0
+spec:
+  clusterIP: None
+  selector:
+    statefulset.kubernetes.io/pod-name: mssql22-0
+  ports:
+  - name: dxl
+    protocol: TCP
+    port: 7979
+  - name: dxc-tcp
+    protocol: TCP
+    port: 7980
+  - name: dxc-udp
+    protocol: UDP
+    port: 7981
+  - name: sql
+    protocol: TCP
+    port: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql22-1
+spec:
+  clusterIP: None
+  selector:
+    statefulset.kubernetes.io/pod-name: mssql22-1
+  ports:
+  - name: dxl
+    protocol: TCP
+    port: 7979
+  - name: dxc-tcp
+    protocol: TCP
+    port: 7980
+  - name: dxc-udp
+    protocol: UDP
+    port: 7981
+  - name: sql
+    protocol: TCP
+    port: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql22-2
+spec:
+  clusterIP: None
+  selector:
+    statefulset.kubernetes.io/pod-name: mssql22-2
+  ports:
+  - name: dxl
+    protocol: TCP
+    port: 7979
+  - name: dxc-tcp
+    protocol: TCP
+    port: 7980
+  - name: dxc-udp
+    protocol: UDP
+    port: 7981
+  - name: sql
+    protocol: TCP
+    port: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
