@@ -106,18 +106,18 @@
 
     ![Add Linux Server DNS](media/AddLinuxDNS.jpg)
 
-4. Create new AD account that will be the privileged AD account for the SQL Server Pods
+4. Create new AD account that will be the privileged AD account for the SQL Server Pods (keep service account in lower case)
 
     For SQL Server 2019
 
     ```text
-    New-ADUser SqlK8sSvc19 -AccountPassword (Read-Host -AsSecureString "Enter Password") -PasswordNeverExpires $true -Enabled $true -KerberosEncryptionType AES256
+    New-ADUser sqlk8ssvc19 -AccountPassword (Read-Host -AsSecureString "Enter Password") -PasswordNeverExpires $true -Enabled $true -KerberosEncryptionType AES256
     ```
 
     For SQL Server 2022
 
     ```text
-    New-ADUser SqlK8sSvc22 -AccountPassword (Read-Host -AsSecureString "Enter Password") -PasswordNeverExpires $true -Enabled $true -KerberosEncryptionType AES256
+    New-ADUser sqlk8ssvc22 -AccountPassword (Read-Host -AsSecureString "Enter Password") -PasswordNeverExpires $true -Enabled $true -KerberosEncryptionType AES256
     ```
 
     When prompted provide the \<azurePassword\> for consistency
@@ -133,41 +133,41 @@
     For SQL Server 2019
     
     ```text
-    setspn -S MSSQLSvc/mssql19-0.sqlk8s.local SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-1.sqlk8s.local SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-2.sqlk8s.local SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-0.sqlk8s.local:1433 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-1.sqlk8s.local:1433 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-2.sqlk8s.local:1433 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-0:1433 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-1:1433 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-2:1433 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-0 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-1 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-2 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-agl1.sqlk8s.local:14033 SQLK8S\SqlK8sSvc19
-    setspn -S MSSQLSvc/mssql19-agl1:14033 SQLK8S\SqlK8sSvc19
-    setspn -l SQLK8S\SqlK8sSvc19
+    setspn -S MSSQLSvc/mssql19-0.sqlk8s.local SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-1.sqlk8s.local SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-2.sqlk8s.local SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-0.sqlk8s.local:1433 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-1.sqlk8s.local:1433 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-2.sqlk8s.local:1433 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-0:1433 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-1:1433 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-2:1433 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-0 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-1 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-2 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-agl1.sqlk8s.local:14033 SQLK8S\sqlk8ssvc19
+    setspn -S MSSQLSvc/mssql19-agl1:14033 SQLK8S\sqlk8ssvc19
+    setspn -l SQLK8S\sqlk8ssvc19
     ```
 
     For SQL Server 2022
     
     ```text
-    setspn -S MSSQLSvc/mssql22-0.sqlk8s.local SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-1.sqlk8s.local SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-2.sqlk8s.local SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-0.sqlk8s.local:1433 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-1.sqlk8s.local:1433 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-2.sqlk8s.local:1433 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-0:1433 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-1:1433 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-2:1433 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-0 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-1 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-2 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-agl1.sqlk8s.local:14033 SQLK8S\SqlK8sSvc22
-    setspn -S MSSQLSvc/mssql22-agl1:14033 SQLK8S\SqlK8sSvc22
-    setspn -l SQLK8S\SqlK8sSvc22
+    setspn -S MSSQLSvc/mssql22-0.sqlk8s.local SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-1.sqlk8s.local SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-2.sqlk8s.local SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-0.sqlk8s.local:1433 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-1.sqlk8s.local:1433 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-2.sqlk8s.local:1433 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-0:1433 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-1:1433 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-2:1433 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-0 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-1 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-2 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-agl1.sqlk8s.local:14033 SQLK8S\sqlk8ssvc22
+    setspn -S MSSQLSvc/mssql22-agl1:14033 SQLK8S\sqlk8ssvc22
+    setspn -l SQLK8S\sqlk8ssvc22
     ```
 
     **NB: The listener will run under port 14033**
@@ -310,29 +310,29 @@
     For SQL Server 2019
     
     ```text
-    adutil keytab create -k mssql_mssql19-0.keytab -p SqlK8sSvc19 --password <azurePassword>
+    adutil keytab create -k mssql_mssql19-0.keytab -p sqlk8ssvc19 --password <azurePassword>
     ```
 
     ```text
-    adutil keytab create -k mssql_mssql19-1.keytab -p SqlK8sSvc19 --password <azurePassword>
+    adutil keytab create -k mssql_mssql19-1.keytab -p sqlk8ssvc19 --password <azurePassword>
     ```
 
     ```text
-    adutil keytab create -k mssql_mssql19-2.keytab -p SqlK8sSvc19 --password <azurePassword>
+    adutil keytab create -k mssql_mssql19-2.keytab -p sqlk8ssvc19 --password <azurePassword>
     ```
 
     For SQL Server 2022
     
     ```text
-    adutil keytab create -k mssql_mssql22-0.keytab -p SqlK8sSvc22 --password <azurePassword>
+    adutil keytab create -k mssql_mssql22-0.keytab -p sqlk8ssvc22 --password <azurePassword>
     ```
 
     ```text
-    adutil keytab create -k mssql_mssql22-1.keytab -p SqlK8sSvc22 --password <azurePassword>
+    adutil keytab create -k mssql_mssql22-1.keytab -p sqlk8ssvc22 --password <azurePassword>
     ```
 
     ```text
-    adutil keytab create -k mssql_mssql22-2.keytab -p SqlK8sSvc22 --password <azurePassword>
+    adutil keytab create -k mssql_mssql22-2.keytab -p sqlk8ssvc22 --password <azurePassword>
     ```
 
     ![Append SPN keytab SQL 2019](media/AppendSPNKeytab19.jpg)
