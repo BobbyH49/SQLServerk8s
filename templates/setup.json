@@ -15,8 +15,10 @@
         "aksNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SqlK8sAKS-nsg')]",
         "jumpboxNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SqlK8sJumpbox-nsg')]",
         "vnetName": "SqlK8s-vnet",
-        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', 'SqlK8s-vnet')]",
-        "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'VMs')]"
+        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
+        "githubBranch": "optimize_setup",
+        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', variables('githubBranch'))]"
     },
     "resources": [
         {
@@ -25,7 +27,7 @@
             "apiVersion": "2021-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -49,7 +51,7 @@
             "apiVersion": "2021-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -74,7 +76,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sJumpbox-nsg')]",
-                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/publicIpAddresses/', 'SqlK8sJumpbox-ip')]"
             ],
             "properties": {
@@ -367,7 +369,7 @@
             "name": "SqlK8s-bastion",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', 'SqlK8s-vnet')]",
+                "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
                 "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8s-bastion-ip')]"
             ],
             "properties": {
@@ -376,7 +378,7 @@
                         "name": "IpConf",
                         "properties": {
                             "subnet": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', 'SqlK8s-vnet', 'AzureBastionSubnet')]"
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureBastionSubnet')]"
                             },
                             "publicIPAddress": {
                                 "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8s-bastion-ip')]"
@@ -392,7 +394,7 @@
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sDC-nic')]"
             ],
             "properties": {
@@ -446,7 +448,7 @@
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sLinux-nic')]"
             ],
             "properties": {
@@ -508,7 +510,7 @@
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', 'SqlK8s-vnet')]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sJumpbox-nic')]",
                 "[concat('Microsoft.Network/publicIpAddresses/', 'SqlK8sJumpbox-ip')]"
             ],
@@ -555,6 +557,30 @@
                     }
                 },
                 "licenseType": "Windows_Client"
+            }
+        }
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "['SqlK8sJumpbox', '/Bootstrap')]",
+            "apiVersion": "2022-03-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sJumpbox')]"
+            ],
+            "tags": {
+                "displayName": "config-choco"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.10",
+                "autoUpgradeMinorVersion": true,
+                "protectedSettings": {
+                    "fileUris": [
+                        "[uri(variables('templateBaseUrl'), 'scripts/Bootstrap.ps1')]"
+                    ],
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File Bootstrap.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'))]"
+                }
             }
         }
    ],
