@@ -585,7 +585,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "SqlK8sDC/CreateDC",
+            "name": "SqlK8sDC/ConfigureDC",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
@@ -603,7 +603,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/ConfigureDC.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File ConfigureDC.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name)]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File ConfigureDC.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'))]"
                 }
             }
         }
