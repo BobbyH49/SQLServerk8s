@@ -6,7 +6,7 @@
 [CmdletBinding()]
 param(
     [string]$adminUser,
-    [string]$adminPassword
+    [string]$adminPassword,
     [string]$subscriptionId,
     [string]$resourceGroup
 )
