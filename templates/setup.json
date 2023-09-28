@@ -603,7 +603,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/ConfigureDC.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File Configure.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name)]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File ConfigureDC.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name)]"
                 }
             }
         }

@@ -197,7 +197,6 @@ function NewADOU
 [System.Environment]::SetEnvironmentVariable('adminPassword', $adminPassword, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('subscriptionId', $subscriptionId, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('resourceGroup', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DCDir', "C:\DC", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('SuppressAzurePowerShellBreakingChangeWarnings', "$true", [System.EnvironmentVariableTarget]::Machine)
 
