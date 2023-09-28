@@ -73,7 +73,7 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:J
 
 # Configure Domain Controller
 #Invoke-Command -ComputerName SqlK8sDC -FilePath $Env:JumpboxDir\ConfigureDC.ps1 -ArgumentList $adminUser,$adminPassword,$subscriptionId,$resourceGroup
-.$JumpboxDir\ConfigureDC.ps1 $adminUser $adminPassword $subscriptionId $resourceGroup
+.$Env:JumpboxDir\ConfigureDC.ps1 $adminUser $adminPassword $subscriptionId $resourceGroup
 
 # Remove DNS Server from SqlK8sJumpbox-nic
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
