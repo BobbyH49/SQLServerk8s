@@ -5,11 +5,10 @@
 
 [CmdletBinding()]
 param(
-    [string]$subscriptionId,
-    [string]$resourceGroup,
-    [string]$location,
     [string]$adminUser,
     [string]$adminPassword
+    [string]$subscriptionId,
+    [string]$resourceGroup
 )
 function NewMessage 
 {
@@ -21,16 +20,16 @@ function NewMessage
         [string]$type
     )
     if ($type -eq "success") {
-        write-host $message -ForegroundColor Green
+        Write-Header $message -ForegroundColor Green
     }
     elseif ($type -eq "information") {
-        write-host $message -ForegroundColor Yellow
+        Write-Header $message -ForegroundColor Yellow
     }
     elseif ($type -eq "error") {
-        write-host $message -ForegroundColor Red
+        Write-Header $message -ForegroundColor Red
     }
     else {
-        write-host "You need to pass message type as success/warning/error."
+        Write-Header "You need to pass message type as success/warning/error."
         Exit
     }
 }
@@ -198,7 +197,6 @@ function NewADOU
 [System.Environment]::SetEnvironmentVariable('adminPassword', $adminPassword, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('subscriptionId', $subscriptionId, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('resourceGroup', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('azureLocation', $azureLocation, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DCDir', "C:\DC", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('SuppressAzurePowerShellBreakingChangeWarnings', "$true", [System.EnvironmentVariableTarget]::Machine)
