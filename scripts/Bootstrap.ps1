@@ -34,7 +34,7 @@ Install-PackageProvider -Name NuGet -Force
 
 # Installing tools
 Write-Header "Installing Chocolatey Apps"
-$chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,ssms,putty,setdefaultbrowser'
+$chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,ssms,putty'
 
 try {
     choco config get cacheLocation
