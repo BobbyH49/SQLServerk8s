@@ -56,8 +56,9 @@ foreach ($app in $appsToInstall) {
 
 Write-Header "Fetching Artifacts for SqlServerK8s"
 #Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogonScript.ps1") -OutFile $Env:JumpboxDir\JumpboxLogonScript.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:JumpboxDir\ConfigureDC.ps1
 
-Write-Header "Configuring Logon Scripts"
+#Write-Header "Configuring Logon Scripts"
 
 # Creating scheduled task for JumpboxLogonScript.ps1
 #$Trigger = New-ScheduledTaskTrigger -AtLogOn
@@ -68,7 +69,16 @@ Write-Header "Configuring Logon Scripts"
 #Get-ScheduledTask -TaskName ServerManager | Disable-ScheduledTask
 
 # Add firewall rule for SMB
-netsh advfirewall firewall add rule name="SMB" dir=in action=allow protocol=TCP localport=445 enable=yes
+#netsh advfirewall firewall add rule name="SMB" dir=in action=allow protocol=TCP localport=445 enable=yes
+
+# Configure Domain Controller
+Invoke-Command -ComputerName SqlK8sDC -FilePath $Env:JumpboxDir\ConfigureDC.ps1 -ArgumentList = $adminUser,$adminPassword,$subscriptionId,$resourceGroup
+
+# Remove DNS Server from SqlK8sJumpbox-nic
+$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
+$nic.DnsSettings.DnsServers.Clear()
+$nic | Set-AzNetworkInterface
+Restart-Computer -Force
 
 # Clean up Bootstrap.log
 Write-Header "Clean up Bootstrap.log"
