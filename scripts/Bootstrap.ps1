@@ -56,7 +56,8 @@ foreach ($app in $appsToInstall) {
 
 Write-Header "Fetching Artifacts for SqlServerK8s"
 #Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogonScript.ps1") -OutFile $Env:JumpboxDir\JumpboxLogonScript.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:JumpboxDir\ConfigureDC.ps1
+#Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:JumpboxDir\ConfigureDC.ps1
+.$JumpboxDir\ConfigureDC.ps1 $adminUser $adminPassword $subscriptionId $resourceGroup
 
 #Write-Header "Configuring Logon Scripts"
 
