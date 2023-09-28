@@ -19,7 +19,7 @@ param (
 # Creating Jumpbox path
 Write-Output "Creating Jumpbox path"
 $Env:JumpboxDir = "C:\Jumpbox"
-$Env:JumpboxLogsDir = "$Env:Jumpbox\Logs"
+$Env:JumpboxLogsDir = "$Env:JumpboxDir\Logs"
 
 New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
