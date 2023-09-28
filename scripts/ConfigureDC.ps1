@@ -5,16 +5,11 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
     [string]$subscriptionId,
-    [Parameter(Mandatory = $true)]
     [string]$resourceGroup,
-    [Parameter(Mandatory = $true)]
     [string]$location,
-    [Parameter(Mandatory = $true)]
-    [string]$azureUser,
-    [Parameter(Mandatory = $true)]
-    [string]$azurePassword
+    [string]$adminUser,
+    [string]$adminPassword
 )
 function NewMessage 
 {
@@ -199,24 +194,53 @@ function NewADOU
 }    
 
 # Main Code
-Write-Host "Configuration starts: $(Get-Date)"
-Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
+[System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('adminPassword', $adminPassword, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('subscriptionId', $subscriptionId, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('resourceGroup', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('azureLocation', $azureLocation, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('DCDir', "C:\DC", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('SuppressAzurePowerShellBreakingChangeWarnings', "$true", [System.EnvironmentVariableTarget]::Machine)
+
+# Creating DC path
+Write-Output "Creating DC path"
+$Env:DCDir = "C:\DC"
+$Env:DCLogsDir = "$Env:DCDir\Logs"
+
+New-Item -Path $Env:DCDir -ItemType directory -Force
+New-Item -Path $Env:DCLogsDir -ItemType directory -Force
+
+Start-Transcript -Path $Env:DCLogsDir\ConfigureDC.log
+
+# Copy PowerShell Profile and Reload
+Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
+.$PsHome\Profile.ps1
+
+Write-Header "Configuration starts: $(Get-Date)"
+#Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-ConnectToAzure -subscriptionId $subscriptionId
+#ConnectToAzure -subscriptionId $subscriptionId
 
 # Install Active Directory Domain Services
 InstallADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
-ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $azurePassword -ErrorAction SilentlyContinue
+ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $adminPassword -ErrorAction SilentlyContinue
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
 NewADOU -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 # Remove DNS Server from SqlK8sJumpbox-nic
-$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
-$nic.DnsSettings.DnsServers.Clear()
-$nic | Set-AzNetworkInterface
+#$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
+#$nic.DnsSettings.DnsServers.Clear()
+#$nic | Set-AzNetworkInterface
 
-Write-Host "Configuration ends: $(Get-Date)"
+Write-Header "Configuration ends: $(Get-Date)"
+
+# Clean up ConfigureDC.log
+Write-Header "Clean up ConfigureDC.log"
+Stop-Transcript
+$logSuppress = Get-Content $Env:DCLogsDir\ConfigureDC.log | Where { $_ -notmatch "Host Application: powershell.exe" } 
+$logSuppress | Set-Content $Env:DCLogsDir\ConfigureDC.log -Force

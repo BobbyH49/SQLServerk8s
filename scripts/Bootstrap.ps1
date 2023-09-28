@@ -12,7 +12,6 @@ param (
 [System.Environment]::SetEnvironmentVariable('subscriptionId', $subscriptionId, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('resourceGroup', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('azureLocation', $azureLocation, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('githubUser', $githubUser, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('JumpboxDir', "C:\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
 
@@ -25,8 +24,6 @@ New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
 
 Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log
-
-$ErrorActionPreference = 'SilentlyContinue'
 
 # Copy PowerShell Profile and Reload
 Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
@@ -47,7 +44,7 @@ catch {
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 }
 
-Write-Host "Chocolatey Apps Specified"
+Write-Header "Chocolatey Apps Specified"
 
 $appsToInstall = $chocolateyAppList -split "," | foreach { "$($_.Trim())" }
 
@@ -57,7 +54,7 @@ foreach ($app in $appsToInstall) {
     
 }
 
-Write-Host "Fetching Artifacts for SqlServerK8s"
+Write-Header "Fetching Artifacts for SqlServerK8s"
 #Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogonScript.ps1") -OutFile $Env:JumpboxDir\JumpboxLogonScript.ps1
 
 Write-Header "Configuring Logon Scripts"
@@ -74,7 +71,7 @@ Write-Header "Configuring Logon Scripts"
 netsh advfirewall firewall add rule name="SMB" dir=in action=allow protocol=TCP localport=445 enable=yes
 
 # Clean up Bootstrap.log
-Write-Host "Clean up Bootstrap.log"
+Write-Header "Clean up Bootstrap.log"
 Stop-Transcript
 $logSuppress = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -notmatch "Host Application: powershell.exe" } 
 $logSuppress | Set-Content $Env:JumpboxLogsDir\Bootstrap.log -Force
