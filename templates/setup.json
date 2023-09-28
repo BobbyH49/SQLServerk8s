@@ -18,7 +18,7 @@
         "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
         "githubBranch": "optimize_setup",
-        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', variables('githubBranch'))]"
+        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', variables('githubBranch'), '/')]"
     },
     "resources": [
         {
@@ -110,13 +110,13 @@
             }
         },
         {
-            "name": "['SqlK8sVMs-nsg']",
+            "name": "SqlK8sVMs-nsg",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]"
         },
         {
-            "name": "['SqlK8sAzureBastionSubnet-nsg']",
+            "name": "SqlK8sAzureBastionSubnet-nsg",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]",
@@ -246,7 +246,7 @@
             }
         },
         {
-            "name": "['SqlK8sAKS-nsg']",
+            "name": "SqlK8sAKS-nsg",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]",
@@ -296,7 +296,7 @@
             }
         },
         {
-            "name": "['SqlK8sJumpbox-nsg']",
+            "name": "SqlK8sJumpbox-nsg",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]"
@@ -558,10 +558,10 @@
                 },
                 "licenseType": "Windows_Client"
             }
-        }
+        },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "['SqlK8sJumpbox', '/Bootstrap')]",
+            "name": "SqlK8sJumpbox/Bootstrap",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
