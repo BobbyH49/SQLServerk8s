@@ -370,7 +370,8 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8s-bastion-ip')]"
+                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8s-bastion-ip')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sJumpbox')]"
             ],
             "properties": {
                 "ipConfigurations": [
