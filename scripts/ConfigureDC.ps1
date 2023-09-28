@@ -6,7 +6,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string]$adminUser,
+    [string]$adminUsername,
     [Parameter(Mandatory = $true)]
     [string]$adminPassword,
     [Parameter(Mandatory = $true)]

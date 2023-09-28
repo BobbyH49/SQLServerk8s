@@ -72,7 +72,6 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:J
 #netsh advfirewall firewall add rule name="SMB" dir=in action=allow protocol=TCP localport=445 enable=yes
 
 # Configure Domain Controller
-#Invoke-Command -ComputerName SqlK8sDC -FilePath $Env:JumpboxDir\ConfigureDC.ps1 -ArgumentList $adminUser,$adminPassword,$subscriptionId,$resourceGroup
 .$Env:JumpboxDir\ConfigureDC.ps1 $adminUsername $adminPassword $subscriptionId $resourceGroup
 
 # Remove DNS Server from SqlK8sJumpbox-nic
