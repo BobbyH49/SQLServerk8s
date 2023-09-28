@@ -449,7 +449,8 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sLinux-nic')]"
+                "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sLinux-nic')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sDC')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -512,7 +513,8 @@
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sJumpbox-nic')]",
-                "[concat('Microsoft.Network/publicIpAddresses/', 'SqlK8sJumpbox-ip')]"
+                "[concat('Microsoft.Network/publicIpAddresses/', 'SqlK8sJumpbox-ip')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sLinux')]"
             ],
             "properties": {
                 "hardwareProfile": {
