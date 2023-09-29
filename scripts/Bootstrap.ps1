@@ -4,7 +4,10 @@ param (
     [string]$subscriptionId,
     [string]$resourceGroup,
     [string]$azureLocation,
-    [string]$templateBaseUrl
+    [string]$templateBaseUrl,
+    [string]$spnAppId,
+    [string]$spnPassword,
+    [string]$tenant
 )
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
@@ -13,6 +16,9 @@ param (
 [System.Environment]::SetEnvironmentVariable('resourceGroup', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('azureLocation', $azureLocation, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('spnAppId', $spnAppId, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('spnPassword', $spnPassword, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('tenant', $tenant, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('JumpboxDir', "C:\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
 
 # Creating Jumpbox path
@@ -72,7 +78,8 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:J
 #netsh advfirewall firewall add rule name="SMB" dir=in action=allow protocol=TCP localport=445 enable=yes
 
 # Configure Domain Controller
-.$Env:JumpboxDir\ConfigureDC.ps1 $adminUsername $adminPassword $subscriptionId $resourceGroup
+#.$Env:JumpboxDir\ConfigureDC.ps1 $adminUsername $adminPassword $subscriptionId $resourceGroup
+.$Env:JumpboxDir\ConfigureDC.ps1
 
 # Remove DNS Server from SqlK8sJumpbox-nic
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"

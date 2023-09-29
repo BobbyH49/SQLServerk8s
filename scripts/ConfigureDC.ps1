@@ -3,17 +3,6 @@
 # Configure Active Directory Domain
 # Create a new Active Directory Organization Unit and make it default for computer objects
 
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [string]$adminUsername,
-    [Parameter(Mandatory = $true)]
-    [string]$adminPassword,
-    [Parameter(Mandatory = $true)]
-    [string]$subscriptionId,
-    [Parameter(Mandatory = $true)]
-    [string]$resourceGroup
-)
 function NewMessage 
 {
     [CmdletBinding()]
@@ -44,9 +33,18 @@ function ConnectToAzure
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$subscriptionId
+        [string]$subscriptionId,
+        [Parameter(Mandatory = $true)]
+        [string]$spnAppId,
+        [Parameter(Mandatory = $true)]
+        [string]$spnAppPassword,
+        [Parameter(Mandatory = $true)]
+        [string]$tenant
     )
 
+    $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $spnAppPassword
+    Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential
+    
     try {
         $check = Get-AzContext -ErrorAction SilentlyContinue
         if ($null -eq $check) {
@@ -201,15 +199,15 @@ Write-Header "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-#ConnectToAzure -subscriptionId $subscriptionId
+ConnectToAzure -subscriptionId $Env:subscriptionId, $Env:spnAppId, $Env:spnAppPassword, $Env:tenant
 
 # Install Active Directory Domain Services
-InstallADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
+InstallADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
-ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $adminPassword -ErrorAction SilentlyContinue
+ConfigureADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
-NewADOU -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
+NewADOU -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 Write-Header "Configuration ends: $(Get-Date)"

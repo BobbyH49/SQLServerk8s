@@ -7,6 +7,19 @@
         },
         "adminPassword": {
             "type": "secureString"
+        },
+        "githubBranch": {
+            "type": "string",
+            "defaultValue": "main"
+        },
+        "spnAppId": {
+            "type": "string"
+        },
+        "spnPassword": {
+            "type": "secureString"
+        },
+        "tenant": {
+            "type": "string"
         }
     },
     "variables": {
@@ -18,7 +31,7 @@
         "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
         "githubBranch": "optimize_setup",
-        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', variables('githubBranch'), '/')]"
+        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]"
     },
     "resources": [
         {
@@ -582,7 +595,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/Bootstrap.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File Bootstrap.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File Bootstrap.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -spnAppId ', parameters('spnAppId'), ' -spnPassword ', parameters('spnPassword'), ' -tenant ', parameters('tenant'))]"
                 }
             }
         }
