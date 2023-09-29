@@ -5,11 +5,8 @@
 
 function NewMessage 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$message,
-        [Parameter(Mandatory = $true)]
         [string]$type
     )
     if ($type -eq "success") {
@@ -33,12 +30,13 @@ function ConnectToAzure
     param(
         [string]$subscriptionId,
         [string]$spnAppId,
-        [string]$spnAppPassword,
+        [string]$spnPassword,
         [string]$tenant
     )
 
-    $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $spnAppPassword
-    Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential
+    $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
+    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
+    Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential
     
     try {
         $check = Get-AzContext -ErrorAction SilentlyContinue
@@ -58,11 +56,8 @@ function ConnectToAzure
 # Install Active Directory Domain Services
 function InstallADDS 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup
     )
     try {
@@ -96,13 +91,9 @@ function InstallADDS
 # Configure Active Directory Domain
 function ConfigureADDS 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup,
-        [Parameter(Mandatory = $true)]
         [string]$adminPassword
     )
     try {
@@ -150,11 +141,8 @@ function ConfigureADDS
 # Create a new Active Directory Organization Unit and make it default for computer objects
 function NewADOU 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup
     )
     try {
@@ -193,13 +181,8 @@ function NewADOU
 Write-Header "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
-$subscriptionId = $Env:supscriptionId
-$spnAppId = $Env:spnAppId
-$spnAppPassword = $Env:spnAppPassword
-$tenant = $Env:spnAppPassword
-
 # Connect to Azure Subscription
-ConnectToAzure -subscriptionId $subscriptionId, $spnAppId, $spnAppPassword, $tenant
+ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant
 
 # Install Active Directory Domain Services
 InstallADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
