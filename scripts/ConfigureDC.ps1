@@ -30,15 +30,10 @@ function NewMessage
 # Connect to Azure Subscription
 function ConnectToAzure 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$subscriptionId,
-        [Parameter(Mandatory = $true)]
         [string]$spnAppId,
-        [Parameter(Mandatory = $true)]
         [string]$spnAppPassword,
-        [Parameter(Mandatory = $true)]
         [string]$tenant
     )
 
