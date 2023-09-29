@@ -198,12 +198,13 @@ function NewADOU
 Write-Header "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
-Write-Host "subscriptionId = $Env:subscriptionId"
-Write-Host "spnAppId = $Env:spnAppId"
-Write-Host "JumpboxDir = $Env:JumpboxDir"
+$subscriptionId = $Env:supscriptionId
+$spnAppId = $Env:spnAppId
+$spnAppPassword = $Env:spnAppPassword
+$tenant = $Env:spnAppPassword
 
 # Connect to Azure Subscription
-ConnectToAzure -subscriptionId $Env:subscriptionId, $Env:spnAppId, $Env:spnAppPassword, $Env:tenant
+ConnectToAzure -subscriptionId $subscriptionId, $spnAppId, $spnAppPassword, $tenant
 
 # Install Active Directory Domain Services
 InstallADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
