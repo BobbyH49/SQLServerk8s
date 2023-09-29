@@ -1,14 +1,17 @@
 param (
     [string]$adminUsername,
-    [securestring]$adminPassword,
+    [string]$adminPassword,
     [string]$subscriptionId,
     [string]$resourceGroup,
     [string]$azureLocation,
     [string]$templateBaseUrl,
     [string]$spnAppId,
-    [securestring]$spnPassword,
+    [string]$spnPassword,
     [string]$tenant
 )
+
+$adminPassword = ConvertTo-SecureString -String $adminPassword -AsPlainText -Force
+$spnPassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('adminPassword', $adminPassword, [System.EnvironmentVariableTarget]::Machine)
@@ -21,11 +24,6 @@ param (
 [System.Environment]::SetEnvironmentVariable('tenant', $tenant, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('JumpboxDir', "C:\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('JumpboxLogsDir', "$JumpboxLogsDir\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
-
-# Creating Jumpbox path
-#Write-Output "Creating Jumpbox path"
-#$Env:JumpboxDir = "C:\Jumpbox"
-#$Env:JumpboxLogsDir = "$Env:JumpboxDir\Logs"
 
 New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
