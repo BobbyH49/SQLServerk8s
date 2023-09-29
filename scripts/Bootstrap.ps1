@@ -22,8 +22,9 @@ $spnPassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
 [System.Environment]::SetEnvironmentVariable('spnAppId', $spnAppId, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('spnPassword', $spnPassword, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('tenant', $tenant, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('JumpboxDir', "C:\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('JumpboxLogsDir', "$JumpboxDir\Logs", [System.EnvironmentVariableTarget]::Machine)
+
+$Env:JumpboxDir = "C:\Jumpbox"
+$Env:JumpboxLogsDir = "$JumpboxDir\Logs"
 
 New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
