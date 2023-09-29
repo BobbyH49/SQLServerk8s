@@ -27,7 +27,7 @@ $Env:JumpboxLogsDir = "$Env:JumpboxDir\Logs"
 New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
 
-Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log
+Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log -UseMinimalHeader
 
 # Copy PowerShell Profile and Reload
 Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1

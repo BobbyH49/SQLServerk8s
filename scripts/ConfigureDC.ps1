@@ -90,7 +90,7 @@ function ConfigureADDS
     param(
         [string]$vmName,
         [string]$resourceGroup,
-        [securestring]$adminPassword
+        [string]$adminPassword
     )
     try {
             # Create a temporary file in the users TEMP directory
