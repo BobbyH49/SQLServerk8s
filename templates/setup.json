@@ -584,7 +584,7 @@
                 "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sJumpbox')]"
             ],
             "tags": {
-                "displayName": "config-choco"
+                "displayName": "setup-environment"
             },
             "properties": {
                 "publisher": "Microsoft.Compute",
