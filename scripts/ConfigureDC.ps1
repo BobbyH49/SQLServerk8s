@@ -198,6 +198,10 @@ function NewADOU
 Write-Header "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
+Write-Host "subscriptionId = $Env:subscriptionId"
+Write-Host "spnAppId = $Env:spnAppId"
+Write-Host "JumpboxDir = $Env:JumpboxDir"
+
 # Connect to Azure Subscription
 ConnectToAzure -subscriptionId $Env:subscriptionId, $Env:spnAppId, $Env:spnAppPassword, $Env:tenant
 
