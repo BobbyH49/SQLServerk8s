@@ -30,25 +30,19 @@ function ConnectToAzure
     param(
         [string]$subscriptionId,
         [string]$spnAppId,
-        [string]$spnPassword,
+        [securestring]$spnPassword,
         [string]$tenant
     )
-
-    $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
-    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
-    Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential
     
     try {
-        $check = Get-AzContext -ErrorAction SilentlyContinue
-        if ($null -eq $check) {
-            Connect-AzAccount -SubscriptionId $subscriptionId | out-null
+        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $spnPassword
+        Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential
+        $message = "Connected to Azure."
+        NewMessage -message $message -type "success"
         }
-        else {
-            Set-AzContext -SubscriptionId $subscriptionId | out-null
-        }
-    }
     catch {
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Failed to connect to Azure."
+        NewMessage -message $message -type "error"
         Exit
     }
 }
@@ -84,8 +78,9 @@ function InstallADDS
     }
     catch {
         Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
-    }
+        $message = "Error installing Active Directory."
+        NewMessage -message $message -type "error"
+}
 }   
 
 # Configure Active Directory Domain
@@ -94,15 +89,13 @@ function ConfigureADDS
     param(
         [string]$vmName,
         [string]$resourceGroup,
-        [string]$adminPassword
+        [securestring]$adminPassword
     )
     try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\ConfigureADDS.ps1"
 
-            $commands = "`$SecurePassword = ConvertTo-SecureString ""$adminPassword"" -AsPlainText -Force" + "`r`n"
-            $commands = $commands + "`r`n"
-            $commands = $commands + "#AD DS Deployment" + "`r`n"
+            $commands = "#AD DS Deployment" + "`r`n"
             $commands = $commands + "Import-Module ADDSDeployment" + "`r`n"
             $commands = $commands + "Install-ADDSForest ``" + "`r`n"
             $commands = $commands + "-CreateDnsDelegation:`$false ``" + "`r`n"
@@ -114,7 +107,7 @@ function ConfigureADDS
             $commands = $commands + "-InstallDns:`$true ``" + "`r`n"
             $commands = $commands + "-LogPath ""C:\Windows\NTDS"" ``" + "`r`n"
             $commands = $commands + "-NoRebootOnCompletion:`$false ``" + "`r`n"
-            $commands = $commands + "-SafeModeAdministratorPassword `$SecurePassword ``" + "`r`n"
+            $commands = $commands + "-SafeModeAdministratorPassword `$adminPassword ``" + "`r`n"
             $commands = $commands + "-SysvolPath ""C:\Windows\SYSVOL"" ``" + "`r`n"
             $commands = $commands + "-Force:`$true"
             $commands | Out-File -FilePath $file -force
@@ -134,7 +127,8 @@ function ConfigureADDS
     }
     catch {
         Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Error configuring Active Directory."
+        NewMessage -message $message -type "error"
     }
 }    
 
@@ -173,24 +167,29 @@ function NewADOU
     }
     catch {
         Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Error creating Organization Unit in Active Directory."
+        NewMessage -message $message -type "error"
     }
 }    
 
 # Main Code
-Write-Header "Configuration starts: $(Get-Date)"
+Write-Host "DC Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant
+Write-Host "Connecting to Azure"
+ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant -ErrorAction SilentlyContinue
 
 # Install Active Directory Domain Services
+Write-Host "Installing Active Directory"
 InstallADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
+Write-Host "Configuring Active Directory"
 ConfigureADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
+Write-Host "Adding Organization Unit to Active Directory"
 NewADOU -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
-Write-Header "Configuration ends: $(Get-Date)"
+Write-Host "Configuration ends: $(Get-Date)"

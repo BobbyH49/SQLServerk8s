@@ -3,33 +3,23 @@
 # Configure Active Directory Domain
 # Create a new Active Directory Organization Unit and make it default for computer objects
 
-[CmdletBinding()]
-param(
-    [string]$adminUser,
-    [string]$adminPassword,
-    [string]$subscriptionId,
-    [string]$resourceGroup
-)
 function NewMessage 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$message,
-        [Parameter(Mandatory = $true)]
         [string]$type
     )
     if ($type -eq "success") {
-        Write-Header $message -ForegroundColor Green
+        write-host $message -ForegroundColor Green
     }
     elseif ($type -eq "information") {
-        Write-Header $message -ForegroundColor Yellow
+        write-host $message -ForegroundColor Yellow
     }
     elseif ($type -eq "error") {
-        Write-Header $message -ForegroundColor Red
+        write-host $message -ForegroundColor Red
     }
     else {
-        Write-Header "You need to pass message type as success/warning/error."
+        write-host "You need to pass message type as success/warning/error."
         Exit
     }
 }
@@ -37,12 +27,17 @@ function NewMessage
 # Connect to Azure Subscription
 function ConnectToAzure 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$subscriptionId
+        [string]$subscriptionId,
+        [string]$spnAppId,
+        [string]$spnPassword,
+        [string]$tenant
     )
 
+    $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
+    $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
+    Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential
+    
     try {
         $check = Get-AzContext -ErrorAction SilentlyContinue
         if ($null -eq $check) {
@@ -61,11 +56,8 @@ function ConnectToAzure
 # Install Active Directory Domain Services
 function InstallADDS 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup
     )
     try {
@@ -99,13 +91,9 @@ function InstallADDS
 # Configure Active Directory Domain
 function ConfigureADDS 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup,
-        [Parameter(Mandatory = $true)]
         [string]$adminPassword
     )
     try {
@@ -153,11 +141,8 @@ function ConfigureADDS
 # Create a new Active Directory Organization Unit and make it default for computer objects
 function NewADOU 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup
     )
     try {
@@ -193,51 +178,19 @@ function NewADOU
 }    
 
 # Main Code
-[System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('adminPassword', $adminPassword, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('subscriptionId', $subscriptionId, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('resourceGroup', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('DCDir', "C:\DC", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('SuppressAzurePowerShellBreakingChangeWarnings', "$true", [System.EnvironmentVariableTarget]::Machine)
-
-# Creating DC path
-Write-Output "Creating DC path"
-$Env:DCDir = "C:\DC"
-$Env:DCLogsDir = "$Env:DCDir\Logs"
-
-New-Item -Path $Env:DCDir -ItemType directory -Force
-New-Item -Path $Env:DCLogsDir -ItemType directory -Force
-
-Start-Transcript -Path $Env:DCLogsDir\ConfigureDC.log
-
-# Copy PowerShell Profile and Reload
-Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
-.$PsHome\Profile.ps1
-
 Write-Header "Configuration starts: $(Get-Date)"
-#Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
+Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-#ConnectToAzure -subscriptionId $subscriptionId
+ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant
 
 # Install Active Directory Domain Services
-InstallADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
+InstallADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
-ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $adminPassword -ErrorAction SilentlyContinue
+ConfigureADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
-NewADOU -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
-
-# Remove DNS Server from SqlK8sJumpbox-nic
-#$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
-#$nic.DnsSettings.DnsServers.Clear()
-#$nic | Set-AzNetworkInterface
+NewADOU -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
 Write-Header "Configuration ends: $(Get-Date)"
-
-# Clean up ConfigureDC.log
-Write-Header "Clean up ConfigureDC.log"
-Stop-Transcript
-$logSuppress = Get-Content $Env:DCLogsDir\ConfigureDC.log | Where { $_ -notmatch "Host Application: powershell.exe" } 
-$logSuppress | Set-Content $Env:DCLogsDir\ConfigureDC.log -Force

@@ -1,12 +1,12 @@
 param (
     [string]$adminUsername,
-    [securestring]$adminPassword,
+    [string]$adminPassword,
     [string]$subscriptionId,
     [string]$resourceGroup,
     [string]$azureLocation,
     [string]$templateBaseUrl,
     [string]$spnAppId,
-    [securestring]$spnPassword,
+    [string]$spnPassword,
     [string]$tenant
 )
 
@@ -20,12 +20,11 @@ param (
 [System.Environment]::SetEnvironmentVariable('spnPassword', $spnPassword, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('tenant', $tenant, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('JumpboxDir', "C:\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('JumpboxLogsDir', "$JumpboxLogsDir\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
 
 # Creating Jumpbox path
-#Write-Output "Creating Jumpbox path"
-#$Env:JumpboxDir = "C:\Jumpbox"
-#$Env:JumpboxLogsDir = "$Env:JumpboxDir\Logs"
+Write-Output "Creating Jumpbox path"
+$Env:JumpboxDir = "C:\Jumpbox"
+$Env:JumpboxLogsDir = "$Env:JumpboxDir\Logs"
 
 New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
@@ -33,12 +32,10 @@ New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
 Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log
 
 # Copy PowerShell Profile and Reload
-Write-Header "Copy Powershell Profile and Reload"
 Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
 .$PsHome\Profile.ps1
 
 # Installing PowerShell Module Dependencies
-Write-Header "Installing NuGet"
 Install-PackageProvider -Name NuGet -Force
 
 # Installing tools
@@ -49,7 +46,7 @@ try {
     choco config get cacheLocation
 }
 catch {
-    Write-Host "Chocolatey not detected, trying to install now"
+    Write-Output "Chocolatey not detected, trying to install now"
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 }
 
@@ -64,6 +61,7 @@ foreach ($app in $appsToInstall) {
 }
 
 Write-Header "Fetching Artifacts for SqlServerK8s"
+#Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogonScript.ps1") -OutFile $Env:JumpboxDir\JumpboxLogonScript.ps1
 Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:JumpboxDir\ConfigureDC.ps1
 
 #Write-Header "Configuring Logon Scripts"
@@ -80,11 +78,10 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:J
 #netsh advfirewall firewall add rule name="SMB" dir=in action=allow protocol=TCP localport=445 enable=yes
 
 # Configure Domain Controller
-Write-Header "Installing and configuring Domain Controller"
+#.$Env:JumpboxDir\ConfigureDC.ps1 $adminUsername $adminPassword $subscriptionId $resourceGroup
 .$Env:JumpboxDir\ConfigureDC.ps1
 
 # Remove DNS Server from SqlK8sJumpbox-nic
-Write-Header "Removing DNS Server entry from NIC"
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
 $nic.DnsSettings.DnsServers.Clear()
 $nic | Set-AzNetworkInterface
