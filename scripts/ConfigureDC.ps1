@@ -30,12 +30,13 @@ function ConnectToAzure
     param(
         [string]$subscriptionId,
         [string]$spnAppId,
-        [securestring]$spnPassword,
+        [string]$spnPassword,
         [string]$tenant
     )
     
     try {
-        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $spnPassword
+        $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
+        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
         Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential
         $message = "Connected to Azure."
         NewMessage -message $message -type "success"
@@ -95,7 +96,9 @@ function ConfigureADDS
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\ConfigureADDS.ps1"
 
-            $commands = "#AD DS Deployment" + "`r`n"
+            $commands = "`$SecurePassword = ConvertTo-SecureString ""$adminPassword"" -AsPlainText -Force" + "`r`n"
+            $commands = $commands + "`r`n"
+            $commands = $commands + "#AD DS Deployment" + "`r`n"
             $commands = $commands + "Import-Module ADDSDeployment" + "`r`n"
             $commands = $commands + "Install-ADDSForest ``" + "`r`n"
             $commands = $commands + "-CreateDnsDelegation:`$false ``" + "`r`n"
@@ -107,7 +110,7 @@ function ConfigureADDS
             $commands = $commands + "-InstallDns:`$true ``" + "`r`n"
             $commands = $commands + "-LogPath ""C:\Windows\NTDS"" ``" + "`r`n"
             $commands = $commands + "-NoRebootOnCompletion:`$false ``" + "`r`n"
-            $commands = $commands + "-SafeModeAdministratorPassword `$adminPassword ``" + "`r`n"
+            $commands = $commands + "-SafeModeAdministratorPassword `$SecurePassword ``" + "`r`n"
             $commands = $commands + "-SysvolPath ""C:\Windows\SYSVOL"" ``" + "`r`n"
             $commands = $commands + "-Force:`$true"
             $commands | Out-File -FilePath $file -force
