@@ -23,7 +23,7 @@ $spnPassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
 [System.Environment]::SetEnvironmentVariable('spnPassword', $spnPassword, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('tenant', $tenant, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('JumpboxDir', "C:\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('JumpboxLogsDir', "$JumpboxLogsDir\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('JumpboxLogsDir', "$JumpboxDir\Logs", [System.EnvironmentVariableTarget]::Machine)
 
 New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
@@ -31,7 +31,6 @@ New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
 Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log
 
 # Copy PowerShell Profile and Reload
-Write-Header "Copy Powershell Profile and Reload"
 Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
 .$PsHome\Profile.ps1
 
