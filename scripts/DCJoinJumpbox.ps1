@@ -1,24 +1,10 @@
 # Connect to Azure Subscription
 # Join Azure VM to domain
 
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [string]$subscriptionId,
-    [Parameter(Mandatory = $true)]
-    [string]$resourceGroup,
-    [Parameter(Mandatory = $true)]
-    [string]$azureUser,
-    [Parameter(Mandatory = $true)]
-    [string]$azurePassword
-)
 function NewMessage 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$message,
-        [Parameter(Mandatory = $true)]
         [string]$type
     )
     if ($type -eq "success") {
@@ -39,23 +25,29 @@ function NewMessage
 # Connect to Azure Subscription
 function ConnectToAzure 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
-        [string]$subscriptionId
+        [string]$subscriptionId,
+        [string]$spnAppId,
+        [string]$spnPassword,
+        [string]$tenant
     )
 
     try {
         $check = Get-AzContext -ErrorAction SilentlyContinue
         if ($null -eq $check) {
-            Connect-AzAccount -SubscriptionId $subscriptionId | out-null
+            $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
+            $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
+            Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential | out-null
         }
         else {
             Set-AzContext -SubscriptionId $subscriptionId | out-null
         }
+        $message = "Connected to Azure."
+        NewMessage -message $message -type "success"
     }
     catch {
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Failed to connect to Azure."
+        NewMessage -message $message -type "error"
         Exit
     }
 }
@@ -63,17 +55,11 @@ function ConnectToAzure
 # Join Azure VM to domain
 function JoinDomain 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup,
-        [Parameter(Mandatory = $true)]
         [string]$domain,
-        [Parameter(Mandatory = $true)]
         [string]$adminUsername,
-        [Parameter(Mandatory = $true)]
         [string]$adminPassword
     )
     try {
@@ -103,7 +89,8 @@ function JoinDomain
     }
     catch {
         Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Failed to join $vmName to the domain."
+        NewMessage -message $message -type "error"
     }
 }
 
@@ -112,9 +99,11 @@ Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-ConnectToAzure -subscriptionId $subscriptionId
+Write-Host "Connecting to Azure"
+ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant -ErrorAction SilentlyContinue
 
 # Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $azureUser -adminPassword $azurePassword -ErrorAction SilentlyContinue
+Write-Host "Joining Azure VM to domain"
+JoinDomain -resourceGroup $resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $adminUsername -adminPassword $adminPassword -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"

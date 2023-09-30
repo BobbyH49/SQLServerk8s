@@ -37,10 +37,10 @@ function ConnectToAzure
     try {
         $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
         $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
-        Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential
+        Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential | out-null
         $message = "Connected to Azure."
         NewMessage -message $message -type "success"
-        }
+    }
     catch {
         $message = "Failed to connect to Azure."
         NewMessage -message $message -type "error"

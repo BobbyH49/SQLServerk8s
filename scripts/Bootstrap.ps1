@@ -27,7 +27,7 @@ $Env:JumpboxLogsDir = "$Env:JumpboxDir\Logs"
 New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
 
-Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log -UseMinimalHeader
+Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log
 
 # Copy PowerShell Profile and Reload
 Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
@@ -61,6 +61,7 @@ foreach ($app in $appsToInstall) {
 
 Write-Header "Fetching Artifacts for SqlServerK8s"
 Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:JumpboxDir\ConfigureDC.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/DCJoinJumpbox.ps1") -OutFile $Env:JumpboxDir\DCJoinJumpbox.ps1
 
 #Write-Header "Configuring Logon Scripts"
 
@@ -85,6 +86,10 @@ $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJum
 $nic.DnsSettings.DnsServers.Clear()
 $nic | Set-AzNetworkInterface
 Restart-Computer -Force
+
+# Join Jumpbox to Domain
+Write-Header "Joining Jumpbox to Domain"
+.$Env:JumpboxDir\DCJoinJumpbox.ps1
 
 # Clean up Bootstrap.log
 Write-Header "Clean up Bootstrap.log"
