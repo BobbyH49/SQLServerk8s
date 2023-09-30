@@ -93,7 +93,7 @@ $winCreds = New-Object System.Management.Automation.PSCredential ($Env:adminUser
 
 # Restarting Windows VM Network Adapter
 Write-Header "Restarting Network Adapter"
-Start-Sleep -Seconds 20
+#Start-Sleep -Seconds 20
 Invoke-Command -VMName $SqlK8sJumpbox -ScriptBlock { Get-NetAdapter | Restart-NetAdapter } -Credential $winCreds
 Start-Sleep -Seconds 5
 
