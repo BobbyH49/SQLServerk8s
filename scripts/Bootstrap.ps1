@@ -83,7 +83,7 @@ Write-Header "Installing and configuring Domain Controller"
 # Remove DNS Server from SqlK8sJumpbox-nic
 Write-Header "Removing DNS Server entry from NIC"
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
-$nic.DnsSettings.DnsServers.Clear()
+$nic.DnsSettings.DnsServers.Clear() | out-null
 $nic | Set-AzNetworkInterface
 #Restart-Computer -Force
 
@@ -94,7 +94,7 @@ $winCreds = New-Object System.Management.Automation.PSCredential ($Env:adminUser
 # Restarting Windows VM Network Adapter
 Write-Header "Restarting Network Adapter"
 #Start-Sleep -Seconds 20
-Invoke-Command -VMName $SqlK8sJumpbox -ScriptBlock { Get-NetAdapter | Restart-NetAdapter } -Credential $winCreds
+Invoke-Command -VMName "SqlK8sJumpbox" -ScriptBlock { Get-NetAdapter | Restart-NetAdapter } -Credential $winCreds
 Start-Sleep -Seconds 5
 
 # Join Jumpbox to Domain
