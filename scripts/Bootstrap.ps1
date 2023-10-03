@@ -92,20 +92,15 @@ $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJum
 $nic.DnsSettings.DnsServers.Clear() | out-null
 $nic | Set-AzNetworkInterface
 
-# Reboot Jumpbox
+# Stop logging and Reboot Jumpbox
 Write-Header "Rebooting Jumpbox"
-Restart-Computer -Force
-
-# Join Jumpbox to Domain
-Write-Header "Joining Jumpbox to Domain"
-.$Env:JumpboxDir\DCJoinJumpbox.ps1
-
 # Clean up Bootstrap.log
-Write-Header "Clean up Bootstrap.log"
+#Write-Header "Clean up Bootstrap.log"
 Stop-Transcript
 $logSuppress = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -notmatch "Host Application: powershell.exe" }
 $Env:logSuppress = $logSuppress
 $logSuppress | Set-Content $Env:JumpboxLogsDir\Bootstrap.log -Force
+Restart-Computer -Force
 
 # Add to Kerberos.md
 
