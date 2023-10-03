@@ -577,7 +577,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "SqlK8sJumpbox/Bootstrap",
+            "name": "SqlK8sJumpbox/EnvironmentSetup",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
@@ -604,7 +604,7 @@
             "type": "Microsoft.ContainerService/managedClusters",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', 'SqlK8sJumpbox', 'EnvironmentSetup')]"                
             ],
             "name": "sqlk8saks",
             "properties": {
