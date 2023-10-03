@@ -106,7 +106,7 @@ ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnP
 
 # Join Azure VM to domain
 Write-Host "Joining Azure VM to domain"
-JoinDomain -resourceGroup $resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $adminUsername -adminPassword $adminPassword -ErrorAction SilentlyContinue
+JoinDomain -resourceGroup $Env:resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"
 

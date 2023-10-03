@@ -20,6 +20,7 @@ param (
 [System.Environment]::SetEnvironmentVariable('spnPassword', $spnPassword, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('tenant', $tenant, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('JumpboxDir', "C:\Jumpbox", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('JumpboxLogsDir', "C:\Jumpbox\Logs", [System.EnvironmentVariableTarget]::Machine)
 
 $Env:JumpboxDir = "C:\Jumpbox"
 $Env:JumpboxLogsDir = "$Env:JumpboxDir\Logs"
@@ -98,6 +99,7 @@ Write-Header "Rebooting Jumpbox"
 #Write-Header "Clean up Bootstrap.log"
 Stop-Transcript
 $logSuppress = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -notmatch "Host Application: powershell.exe" }
+[System.Environment]::SetEnvironmentVariable('logSuppress', "$logSuppress", [System.EnvironmentVariableTarget]::Machine)
 $Env:logSuppress = $logSuppress
 $logSuppress | Set-Content $Env:JumpboxLogsDir\Bootstrap.log -Force
 Restart-Computer -Force
