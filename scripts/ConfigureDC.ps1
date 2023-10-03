@@ -232,8 +232,8 @@ ConfigureADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -adminPasswor
 Write-Host "Adding Organization Unit to Active Directory"
 NewADOU -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
 
-Write-Header "Add DNS Forwarder for AKS to Domain Controller"
-$dnsForwarderName = "privatelink.$Env:location.azmk8s.io"
+Write-Host "Add DNS Forwarder for AKS to Domain Controller"
+$dnsForwarderName = "privatelink.$Env:azureLocation.azmk8s.io"
 $masterServers = "168.63.129.16"
 NewDNSForwarder -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -dnsForwarderName $dnsForwarderName -masterServers $masterServers -ErrorAction SilentlyContinue
 
