@@ -74,7 +74,7 @@ function JoinDomain
             
             $commands | Out-File -FilePath $file -force
 
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file | out-null
+            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
 
             if ($result.Status -eq "Succeeded") {
                 $message = "$vmName has been joined to domain."
@@ -98,7 +98,11 @@ function JoinDomain
 Start-Transcript -Path $Env:JumpboxLogsDir\EnvironmentSetup.log -Append
 
 Write-Header "Add DNS Forwarder for AKS to Domain Controller"
-#Invoke-Command -VMName $SqlK8sDC -ScriptBlock { Add-DnsServerConditionalForwarderZone -Name privatelink.<location>.azmk8s.io -MasterServers 168.63.129.16 } -Credential $winCreds
+$DnsForwarderName = "privatelink.$Env:location.azmk8s.io"
+$MasterServers = "168.63.129.16"
+$secWindowsPassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
+$winCreds = New-Object System.Management.Automation.PSCredential ($Env:adminUsername, $secWindowsPassword)
+Invoke-Command -VMName $SqlK8sDC -ScriptBlock { Add-DnsServerConditionalForwarderZone -Name $DnsForwarderName -MasterServers $MasterServers } -Credential $winCreds
 
 Write-Header "Joining Jumpbox to the domain"
 
@@ -126,6 +130,7 @@ $Env:templateBaseUrl = $null
 $Env:spnAppId = $null
 $Env:spnPassword = $null
 $Env:tenant = $null
+Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask
 
 Stop-Transcript
 

@@ -598,12 +598,91 @@
                     "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -spnAppId ', parameters('spnAppId'), ' -spnPassword ', parameters('spnPassword'), ' -tenant ', parameters('tenant'))]"
                 }
             }
+        },
+        {
+            "apiVersion": "2022-06-01",
+            "dependsOn": [],
+            "type": "Microsoft.ContainerService/managedClusters",
+            "location": "[resourceGroup().location]",
+            "name": "sqlk8saks",
+            "properties": {
+                "kubernetesVersion": "1.25.6",
+                "enableRBAC": true,
+                "dnsPrefix": "sqlk8saks-dns",
+                "nodeResourceGroup": "[concat('MC_', resourceGroup().name, '_sqlk8saks_', resourceGroup().location)]",
+                "azureMonitorProfile": {
+                    "metrics": {
+                        "enabled": true,
+                        "kubeStateMetrics": {
+                            "metricLabelsAllowlist": "",
+                            "metricAnnotationsAllowList": ""
+                        }
+                    }
+                },
+                "agentPoolProfiles": [
+                    {
+                        "name": "agentpool",
+                        "osDiskSizeGB": 0,
+                        "count": 2,
+                        "enableAutoScaling": true,
+                        "minCount": 2,
+                        "maxCount": 4,
+                        "vmSize": "Standard_D8s_v3",
+                        "osType": "Linux",
+                        "storageProfile": "ManagedDisks",
+                        "type": "VirtualMachineScaleSets",
+                        "mode": "System",
+                        "maxPods": 110,
+                        "availabilityZones": null,
+                        "nodeLabels": {},
+                        "nodeTaints": [],
+                        "enableNodePublicIP": false,
+                        "tags": {},
+                        "vnetSubnetID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/sqlk8s-vnet/subnets/AKS')]"
+                    }
+                ],
+                "networkProfile": {
+                    "loadBalancerSku": "standard",
+                    "networkPlugin": "azure",
+                    "networkPolicy": "calico",
+                    "serviceCidr": "10.193.0.0/20",
+                    "dnsServiceIP": "10.193.0.4"
+                },
+                "autoUpgradeProfile": {
+                    "upgradeChannel": "patch"
+                },
+                "disableLocalAccounts": false,
+                "apiServerAccessProfile": {
+                    "enablePrivateCluster": true
+                },
+                "addonProfiles": {
+                    "azurepolicy": {
+                        "enabled": false
+                    },
+                    "azureKeyvaultSecretsProvider": {
+                        "enabled": false,
+                        "config": null
+                    }
+                }
+            },
+            "tags": {},
+            "sku": {
+                "name": "Basic",
+                "tier": "Paid"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            }
         }
-   ],
+    ],
     "outputs": {
         "adminUsername": {
             "type": "string",
             "value": "[parameters('adminUsername')]"
+        },
+        "controlPlaneFQDN": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', 'sqlk8saks')).privateFQDN]"
         }
     }
 }

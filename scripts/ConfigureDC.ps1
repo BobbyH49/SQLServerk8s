@@ -64,7 +64,7 @@ function InstallADDS
 
             $commands | Out-File -FilePath $file -force
 
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file | out-null
+            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
 
             if ($result.Status -eq "Succeeded") {
                 $message = "Active Directory has been enabled on $vmName."
