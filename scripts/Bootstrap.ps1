@@ -83,7 +83,7 @@ Write-Header "Installing and configuring Domain Controller"
 
 # Configure Domain Join Scripts
 Write-Header "Configuring Domain Join Scripts"
-$Trigger = New-ScheduledTaskTrigger -AtStartup
+$Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:JumpboxDir\DCJoinJumpbox.ps1
 Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force
 
