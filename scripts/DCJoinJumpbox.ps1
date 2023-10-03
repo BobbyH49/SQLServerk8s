@@ -97,13 +97,6 @@ function JoinDomain
 # Main Code
 Start-Transcript -Path $Env:JumpboxLogsDir\EnvironmentSetup.log -Append
 
-Write-Header "Add DNS Forwarder for AKS to Domain Controller"
-$DnsForwarderName = "privatelink.$Env:location.azmk8s.io"
-$MasterServers = "168.63.129.16"
-$secWindowsPassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
-$winCreds = New-Object System.Management.Automation.PSCredential ($Env:adminUsername, $secWindowsPassword)
-Invoke-Command -VMName $SqlK8sDC -ScriptBlock { Add-DnsServerConditionalForwarderZone -Name $DnsForwarderName -MasterServers $MasterServers } -Credential $winCreds
-
 Write-Header "Joining Jumpbox to the domain"
 
 Write-Host "Configuration starts: $(Get-Date)"

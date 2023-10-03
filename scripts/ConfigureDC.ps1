@@ -174,6 +174,43 @@ function NewADOU
         NewMessage -message $message -type "error"
     }
 }    
+# Create a new Active Directory Organization Unit and make it default for computer objects
+function NewDNSForwarder 
+{
+    
+    param(
+        [string]$vmName,
+        [string]$resourceGroup,
+        [string]$dnsForwarderName,
+        [string]$masterServers
+    )
+    try {
+            # Create a temporary file in the users TEMP directory
+            $file = $env:TEMP + "\NewDNSForwarder.ps1"
+
+            $commands = "# Create a DNSForwarder for the AKS cluster" + "`r`n"
+            $commands = $commands + "Add-DnsServerConditionalForwarderZone -Name ""$DnsForwarderName"" -MasterServers ""$MasterServers"""
+            $commands | Out-File -FilePath $file -force
+
+            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
+
+            if ($result.Status -eq "Succeeded") {
+                $message = "DNS Forwarder for AKS has been created on $vmName."
+                NewMessage -message $message -type "success"
+            }
+            else {
+                $message = "Failed to create DNS Forwarder on $vmName."
+                NewMessage -message $message -type "error"
+            }
+
+            Remove-Item $file
+    }
+    catch {
+        Remove-Item $file
+        $message = "Error creating DNS Forwarder."
+        NewMessage -message $message -type "error"
+    }
+}    
 
 # Main Code
 Write-Host "DC Configuration starts: $(Get-Date)"
@@ -194,5 +231,10 @@ ConfigureADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -adminPasswor
 # Create a new Active Directory Organization Unit and make it default for computer objects
 Write-Host "Adding Organization Unit to Active Directory"
 NewADOU -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
+
+Write-Header "Add DNS Forwarder for AKS to Domain Controller"
+$dnsForwarderName = "privatelink.$Env:location.azmk8s.io"
+$masterServers = "168.63.129.16"
+NewDNSForwarder -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -dnsForwarderName $dnsForwarderName -masterServers $masterServers -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"
