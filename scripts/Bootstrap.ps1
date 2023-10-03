@@ -36,7 +36,7 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\
 
 # Installing PowerShell Module Dependencies
 Write-Header "Installing NuGet"
-Install-PackageProvider -Name NuGet -Force
+Install-PackageProvider -Name NuGet -Force | out-null
 
 # Installing tools
 Write-Header "Installing Chocolatey Apps"
@@ -99,8 +99,9 @@ Write-Header "Rebooting Jumpbox"
 #Write-Header "Clean up Bootstrap.log"
 Stop-Transcript
 $logSuppress = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -notmatch "Host Application: powershell.exe" }
-[System.Environment]::SetEnvironmentVariable('logSuppress', "$logSuppress", [System.EnvironmentVariableTarget]::Machine)
-$Env:logSuppress = $logSuppress
+$logCheck = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -match "Host Application: powershell.exe" }
+[System.Environment]::SetEnvironmentVariable('logCheck', "$logCheck", [System.EnvironmentVariableTarget]::Machine)
+$Env:logCheck = $logCheck
 $logSuppress | Set-Content $Env:JumpboxLogsDir\Bootstrap.log -Force
 Restart-Computer -Force
 

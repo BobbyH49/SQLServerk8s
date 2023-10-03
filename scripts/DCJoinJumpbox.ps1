@@ -70,7 +70,7 @@ function JoinDomain
             $commands = $commands + "`$domainPassword=""$adminPassword""" + "`r`n"
             $commands = $commands + "`$SecurePassword = ConvertTo-SecureString `$domainPassword -AsPlainText -Force" + "`r`n"
             $commands = $commands + "`$credential = New-Object System.Management.Automation.PSCredential (`$domainUsername, `$SecurePassword)" + "`r`n"
-            $commands = $commands + "Add-Computer -DomainName ""$domain.local"" -Credential `$credential -Restart -Force -PassThru -ErrorAction Stop"
+            $commands = $commands + "Add-Computer -DomainName ""$domain.local"" -Credential `$credential -Force -PassThru -ErrorAction Stop"
             
             $commands | Out-File -FilePath $file -force
 
@@ -111,3 +111,9 @@ JoinDomain -resourceGroup $Env:resourceGroup -vmName "SqlK8sJumpbox" -domain "sq
 Write-Host "Configuration ends: $(Get-Date)"
 
 Stop-Transcript
+
+# Reboot SqlK8sJumpbox
+Write-Host 'SqlK8sJumpbox has been joined to the domain and will now reboot';
+Write-Host 'Close Bastion session and reconnect using Domain\Username with the same password';
+Write-Host -NoNewLine 'Press any key to continue...';
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');

@@ -60,7 +60,7 @@ function InstallADDS
             $file = $env:TEMP + "\InstallADDS.ps1"
 
             $commands = "#Install AD DS feature" + "`r`n"
-            $commands = $commands + "Install-WindowsFeature AD-Domain-Services -IncludeManagementTools -Restart" + "`r`n"
+            $commands = $commands + "Install-WindowsFeature AD-Domain-Services -IncludeManagementTools -Restart | out-null" + "`r`n"
 
             $commands | Out-File -FilePath $file -force
 
