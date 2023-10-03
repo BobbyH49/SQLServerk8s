@@ -601,9 +601,11 @@
         },
         {
             "apiVersion": "2022-06-01",
-            "dependsOn": [],
             "type": "Microsoft.ContainerService/managedClusters",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+            ],
             "name": "sqlk8saks",
             "properties": {
                 "kubernetesVersion": "1.25.6",
