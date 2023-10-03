@@ -74,7 +74,7 @@ function JoinDomain
             
             $commands | Out-File -FilePath $file -force
 
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
+            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file | out-null
 
             if ($result.Status -eq "Succeeded") {
                 $message = "$vmName has been joined to domain."
@@ -95,7 +95,12 @@ function JoinDomain
 }
 
 # Main Code
-Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log -Append
+Start-Transcript -Path $Env:JumpboxLogsDir\EnvironmentSetup.log -Append
+
+Write-Header "Add DNS Forwarder for AKS to Domain Controller"
+#Invoke-Command -VMName $SqlK8sDC -ScriptBlock { Add-DnsServerConditionalForwarderZone -Name privatelink.<location>.azmk8s.io -MasterServers 168.63.129.16 } -Credential $winCreds
+
+Write-Header "Joining Jumpbox to the domain"
 
 Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
@@ -110,10 +115,25 @@ JoinDomain -resourceGroup $Env:resourceGroup -vmName "SqlK8sJumpbox" -domain "sq
 
 Write-Host "Configuration ends: $(Get-Date)"
 
+# Cleanup
+Write-Header "Cleanup environment"
+$Env:adminUsername = $null
+$Env:adminPassword = $null
+$Env:subscriptionId = $null
+$Env:resourceGroup = $null
+$Env:azureLocation = $null
+$Env:templateBaseUrl = $null
+$Env:spnAppId = $null
+$Env:spnPassword = $null
+$Env:tenant = $null
+
 Stop-Transcript
 
 # Reboot SqlK8sJumpbox
+Write-Host "`r`n";
 Write-Host 'SqlK8sJumpbox has been joined to the domain and will now reboot';
+Write-Host "`r`n";
 Write-Host 'Close Bastion session and reconnect using Domain\Username with the same password';
 Write-Host -NoNewLine 'Press any key to continue...';
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
+Restart-Computer -Force

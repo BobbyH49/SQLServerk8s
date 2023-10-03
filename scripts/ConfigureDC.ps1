@@ -60,11 +60,11 @@ function InstallADDS
             $file = $env:TEMP + "\InstallADDS.ps1"
 
             $commands = "#Install AD DS feature" + "`r`n"
-            $commands = $commands + "Install-WindowsFeature AD-Domain-Services -IncludeManagementTools -Restart | out-null" + "`r`n"
+            $commands = $commands + "Install-WindowsFeature AD-Domain-Services -IncludeManagementTools -Restart" + "`r`n"
 
             $commands | Out-File -FilePath $file -force
 
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
+            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file | out-null
 
             if ($result.Status -eq "Succeeded") {
                 $message = "Active Directory has been enabled on $vmName."

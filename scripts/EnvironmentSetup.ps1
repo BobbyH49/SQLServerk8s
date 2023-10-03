@@ -28,7 +28,7 @@ $Env:JumpboxLogsDir = "$Env:JumpboxDir\Logs"
 New-Item -Path $Env:JumpboxDir -ItemType directory -Force
 New-Item -Path $Env:JumpboxLogsDir -ItemType directory -Force
 
-Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log
+Start-Transcript -Path $Env:JumpboxLogsDir\EnvironmentSetup.log
 
 # Copy PowerShell Profile and Reload
 Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
@@ -56,26 +56,15 @@ $appsToInstall = $chocolateyAppList -split "," | foreach { "$($_.Trim())" }
 
 foreach ($app in $appsToInstall) {
     Write-Host "Installing $app"
-    & choco install $app /y -Force | Write-Output
+    & choco install $app /y --force --no-progress | Write-Output
     
 }
 
 Write-Header "Fetching Artifacts for SqlServerK8s"
+Write-Host "Downloading scripts/ConfigureDC.ps1"
 Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:JumpboxDir\ConfigureDC.ps1
+Write-Host "Downloading scripts/DCJoinJumpbox.ps1"
 Invoke-WebRequest ($templateBaseUrl + "scripts/DCJoinJumpbox.ps1") -OutFile $Env:JumpboxDir\DCJoinJumpbox.ps1
-
-#Write-Header "Configuring Logon Scripts"
-
-# Creating scheduled task for JumpboxLogonScript.ps1
-#$Trigger = New-ScheduledTaskTrigger -AtLogOn
-#$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:JumpboxDir\JumpboxLogonScript.ps1
-#Register-ScheduledTask -TaskName "JumpboxLogonScript" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force
-
-# Disabling Windows Server Manager Scheduled Task
-#Get-ScheduledTask -TaskName ServerManager | Disable-ScheduledTask
-
-# Add firewall rule for SMB
-#netsh advfirewall firewall add rule name="SMB" dir=in action=allow protocol=TCP localport=445 enable=yes
 
 # Configure Domain Controller
 Write-Header "Installing and configuring Domain Controller"
@@ -85,24 +74,19 @@ Write-Header "Installing and configuring Domain Controller"
 Write-Header "Configuring Domain Join Scripts"
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:JumpboxDir\DCJoinJumpbox.ps1
-Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force
+Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
 
 # Remove DNS Server from SqlK8sJumpbox-nic
 Write-Header "Removing DNS Server entry from NIC"
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
-$nic.DnsSettings.DnsServers.Clear() | out-null
-$nic | Set-AzNetworkInterface
+$nic.DnsSettings.DnsServers.Clear()
+$nic | Set-AzNetworkInterface | out-null
 
 # Stop logging and Reboot Jumpbox
 Write-Header "Rebooting Jumpbox"
-# Clean up Bootstrap.log
-#Write-Header "Clean up Bootstrap.log"
 Stop-Transcript
-$logSuppress = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -notmatch "Host Application: powershell.exe" }
-$logCheck = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -match "Host Application: powershell.exe" }
-[System.Environment]::SetEnvironmentVariable('logCheck', "$logCheck", [System.EnvironmentVariableTarget]::Machine)
-$Env:logCheck = $logCheck
-$logSuppress | Set-Content $Env:JumpboxLogsDir\Bootstrap.log -Force
+$logSuppress = Get-Content $Env:JumpboxLogsDir\EnvironmentSetup.log | Where { $_ -notmatch "Host Application: powershell.exe" }
+$logSuppress | Set-Content $Env:JumpboxLogsDir\EnvironmentSetup.log -Force
 Restart-Computer -Force
 
 # Add to Kerberos.md
