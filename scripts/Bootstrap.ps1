@@ -80,22 +80,21 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/DCJoinJumpbox.ps1") -OutFile $Env
 Write-Header "Installing and configuring Domain Controller"
 .$Env:JumpboxDir\ConfigureDC.ps1
 
+# Configure Domain Join Scripts
+Write-Header "Configuring Domain Join Scripts"
+$Trigger = New-ScheduledTaskTrigger -AtStartup
+$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:JumpboxDir\DCJoinJumpbox.ps1
+Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force
+
 # Remove DNS Server from SqlK8sJumpbox-nic
 Write-Header "Removing DNS Server entry from NIC"
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
 $nic.DnsSettings.DnsServers.Clear() | out-null
 $nic | Set-AzNetworkInterface
-#Restart-Computer -Force
 
-# Create Windows credential object
-$secWindowsPassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
-$winCreds = New-Object System.Management.Automation.PSCredential ($Env:adminUsername, $secWindowsPassword)
-
-# Restarting Windows VM Network Adapter
-Write-Header "Restarting Network Adapter"
-#Start-Sleep -Seconds 20
-Invoke-Command -VMName "SqlK8sJumpbox" -ScriptBlock { Get-NetAdapter | Restart-NetAdapter } -Credential $winCreds
-Start-Sleep -Seconds 5
+# Reboot Jumpbox
+Write-Header "Rebooting Jumpbox"
+Restart-Computer -Force
 
 # Join Jumpbox to Domain
 Write-Header "Joining Jumpbox to Domain"
@@ -104,7 +103,8 @@ Write-Header "Joining Jumpbox to Domain"
 # Clean up Bootstrap.log
 Write-Header "Clean up Bootstrap.log"
 Stop-Transcript
-$logSuppress = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -notmatch "Host Application: powershell.exe" } 
+$logSuppress = Get-Content $Env:JumpboxLogsDir\Bootstrap.log | Where { $_ -notmatch "Host Application: powershell.exe" }
+$Env:logSuppress = $logSuppress
 $logSuppress | Set-Content $Env:JumpboxLogsDir\Bootstrap.log -Force
 
 # Add to Kerberos.md

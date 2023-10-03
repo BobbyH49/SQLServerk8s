@@ -95,6 +95,8 @@ function JoinDomain
 }
 
 # Main Code
+Start-Transcript -Path $Env:JumpboxLogsDir\Bootstrap.log -Append
+
 Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
@@ -107,3 +109,5 @@ Write-Host "Joining Azure VM to domain"
 JoinDomain -resourceGroup $resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $adminUsername -adminPassword $adminPassword -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"
+
+Stop-Transcript
