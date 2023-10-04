@@ -58,7 +58,8 @@ function JoinDomain
     param(
         [string]$vmName,
         [string]$resourceGroup,
-        [string]$domain,
+        [string]$netbiosName,
+        [string]$domainSuffix,
         [string]$adminUsername,
         [string]$adminPassword
     )
@@ -66,11 +67,11 @@ function JoinDomain
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\JoinDomain.ps1"
 
-            $commands = "`$domainUsername=""$domain\$adminUsername""" + "`r`n"
+            $commands = "`$domainUsername=""$netbiosName\$adminUsername""" + "`r`n"
             $commands = $commands + "`$domainPassword=""$adminPassword""" + "`r`n"
             $commands = $commands + "`$SecurePassword = ConvertTo-SecureString `$domainPassword -AsPlainText -Force" + "`r`n"
             $commands = $commands + "`$credential = New-Object System.Management.Automation.PSCredential (`$domainUsername, `$SecurePassword)" + "`r`n"
-            $commands = $commands + "Add-Computer -DomainName ""$domain.local"" -Credential `$credential -Force -PassThru -ErrorAction Stop"
+            $commands = $commands + "Add-Computer -DomainName ""$netbiosName.$domainSuffix"" -Credential `$credential -Force -PassThru -ErrorAction Stop"
             
             $commands | Out-File -FilePath $file -force
 
@@ -95,9 +96,9 @@ function JoinDomain
 }
 
 # Main Code
-Start-Transcript -Path $Env:JumpboxLogsDir\EnvironmentSetup.log -Append
+Start-Transcript -Path $Env:DeploymentLogsDir\EnvironmentSetup.log -Append
 
-Write-Header "Joining Jumpbox to the domain"
+Write-Header "Joining $Env:jumpboxVM to the domain"
 
 Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
@@ -107,31 +108,22 @@ Write-Host "Connecting to Azure"
 ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant -ErrorAction SilentlyContinue
 
 # Join Azure VM to domain
-Write-Host "Joining Azure VM to domain"
-JoinDomain -resourceGroup $Env:resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
+Write-Host "Joining $Env:jumpboxVM to domain"
+JoinDomain -resourceGroup $Env:resourceGroup -vmName $Env:jumpboxVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"
 
 # Cleanup
 Write-Header "Cleanup environment"
-$Env:adminUsername = $null
-$Env:adminPassword = $null
-$Env:subscriptionId = $null
-$Env:resourceGroup = $null
-$Env:azureLocation = $null
-$Env:templateBaseUrl = $null
-$Env:spnAppId = $null
-$Env:spnPassword = $null
-$Env:tenant = $null
-Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask
+Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Force
 
 Stop-Transcript
 
 # Reboot SqlK8sJumpbox
 Write-Host "`r`n";
-Write-Host 'SqlK8sJumpbox has been joined to the domain and will now reboot';
+Write-Host '$Env:jumpboxVM has been joined to the domain and will now reboot';
 Write-Host "`r`n";
-Write-Host 'Close Bastion session and reconnect using Domain\Username with the same password';
+Write-Host 'Close Bastion session and reconnect using $Env:netbiosName.toUpper()\$Env:adminUsername with the same password';
 Write-Host -NoNewLine 'Press any key to continue...';
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 Restart-Computer -Force

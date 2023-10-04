@@ -90,6 +90,8 @@ function ConfigureADDS
     param(
         [string]$vmName,
         [string]$resourceGroup,
+        [string]$netbiosName,
+        [string]$domainSuffix,
         [string]$adminPassword
     )
     try {
@@ -104,8 +106,8 @@ function ConfigureADDS
             $commands = $commands + "-CreateDnsDelegation:`$false ``" + "`r`n"
             $commands = $commands + "-DatabasePath ""C:\Windows\NTDS"" ``" + "`r`n"
             $commands = $commands + "-DomainMode ""WinThreshold"" ``" + "`r`n"
-            $commands = $commands + "-DomainName ""sqlk8s.local"" ``" + "`r`n"
-            $commands = $commands + "-DomainNetbiosName ""SQLK8S"" ``" + "`r`n"
+            $commands = $commands + "-DomainName ""$netbiosName.$domainSuffix"" ``" + "`r`n"
+            $commands = $commands + "-DomainNetbiosName ""$netbiosName.toUpper()"" ``" + "`r`n"
             $commands = $commands + "-ForestMode ""WinThreshold"" ``" + "`r`n"
             $commands = $commands + "-InstallDns:`$true ``" + "`r`n"
             $commands = $commands + "-LogPath ""C:\Windows\NTDS"" ``" + "`r`n"
@@ -140,15 +142,18 @@ function NewADOU
 {
     param(
         [string]$vmName,
-        [string]$resourceGroup
+        [string]$resourceGroup,
+        [string]$netbiosName,
+        [string]$domainSuffix,
+        [string]$ouName
     )
     try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\NewADOU.ps1"
 
             $commands = "#Create an OU and make it default computer objects OU" + "`r`n"
-            $commands = $commands + "New-ADOrganizationalUnit -Name ""ComputersOU"" -Path ""DC=SQLK8S,DC=LOCAL""" + "`r`n"
-            $commands = $commands + "redircmp ""OU=ComputersOU,DC=SQLK8S,DC=LOCAL"""
+            $commands = $commands + "New-ADOrganizationalUnit -Name ""$ouName"" -Path ""DC=$netbiosName.toUpper(),DC=$domainSuffix.toUpper()""" + "`r`n"
+            $commands = $commands + "redircmp ""OU=$ouName,DC=$netbiosName.toUpper(),DC=$domainSuffix.toUpper()"""
             $commands | Out-File -FilePath $file -force
 
             $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
@@ -222,19 +227,20 @@ ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnP
 
 # Install Active Directory Domain Services
 Write-Host "Installing Active Directory"
-InstallADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
+InstallADDS -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
 Write-Host "Configuring Active Directory"
-ConfigureADDS -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
+ConfigureADDS -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
 Write-Host "Adding Organization Unit to Active Directory"
-NewADOU -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
+$ouName = "SetupOU"
+NewADOU -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -ouName $ouName -ErrorAction SilentlyContinue
 
 Write-Host "Add DNS Forwarder for AKS to Domain Controller"
 $dnsForwarderName = "privatelink.$Env:azureLocation.azmk8s.io"
 $masterServers = "168.63.129.16"
-NewDNSForwarder -resourceGroup $Env:resourceGroup -vmName "SqlK8sDC" -dnsForwarderName $dnsForwarderName -masterServers $masterServers -ErrorAction SilentlyContinue
+NewDNSForwarder -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -dnsForwarderName $dnsForwarderName -masterServers $masterServers -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"

@@ -20,22 +20,37 @@
         },
         "tenant": {
             "type": "string"
+        },
+        "ipAddressRange_10.X.0.0": {
+            "type": "int",
+            "defaultValue": 0,
+            "minValue": 0,
+            "maxValue": 255
         }
     },
     "variables": {
-        "vmsNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SqlK8sVMs-nsg')]",
-        "bastionNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SqlK8sAzureBastionSubnet-nsg')]",
-        "aksNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SqlK8sAKS-nsg')]",
-        "jumpboxNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', 'SqlK8sJumpbox-nsg')]",
-        "vnetName": "SqlK8s-vnet",
+        "netbiosName": "SqlK8s",
+        "domainSuffix": "local",
+        "dcVM": "SqlK8sDC",
+        "linuxVM": "SqlK8sLinux",
+        "jumpboxVM": "SqlK8sJumpbox",
+        "vmsNsgName": "[concat(variables('netbiosName'), 'VMs-nsg')]",
+        "vmsNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('vmsNsgName'))]",
+        "bastionNsgName": "[concat(variables('netbiosName'), 'AzureBastionSubnet-nsg')]",
+        "bastionNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('bastionNsgName'))]",
+        "aksNsgName": "[concat(variables('netbiosName'), 'AKS-nsg')]",
+        "aksNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('aksNsgName'))]",
+        "vnetName": "[concat(variables('netbiosName'), '-vnet')]",
         "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-        "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
-        "githubBranch": "optimize_setup",
-        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]"
+        "vnetIpAddressRangeStr": "[string('ipAddressRange_10.X.0.0')]",
+        "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
+        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
+        "aksCluster": "sqlk8saks",
+        "aksVersion": "1.26.6"
     },
     "resources": [
         {
-            "name": "SqlK8sDC-nic",
+            "name": "[concat(variables('dcVM'), '-nic')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2021-03-01",
             "location": "[resourceGroup().location]",
@@ -48,10 +63,10 @@
                         "name": "ipconfig1",
                         "properties": {
                             "subnet": {
-                                "id": "[variables('subnetRef')]"
+                                "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.16.4"
+                            "privateIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.4')]"
                         }
                     }
                 ],
@@ -59,7 +74,7 @@
             }
         },
         {
-            "name": "SqlK8sLinux-nic",
+            "name": "[concat(variables('linuxVM'), '-nic')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2021-03-01",
             "location": "[resourceGroup().location]",
@@ -72,10 +87,10 @@
                         "name": "ipconfig1",
                         "properties": {
                             "subnet": {
-                                "id": "[variables('subnetRef')]"
+                                "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.16.5"
+                            "privateIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.5')]"
                         }
                     }
                 ],
@@ -83,14 +98,14 @@
             }
         },
         {
-            "name": "SqlK8sJumpbox-nic",
+            "name": "[concat(variables('jumpboxVM'), '-nic')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2021-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sJumpbox-nsg')]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', concat(variables('jumpboxVM'), '-nsg'))]",
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/publicIpAddresses/', 'SqlK8sJumpbox-ip')]"
+                "[concat('Microsoft.Network/publicIpAddresses/', concat(variables('jumpboxVM'), '-ip'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -98,12 +113,12 @@
                         "name": "ipconfig1",
                         "properties": {
                             "subnet": {
-                                "id": "[variables('subnetRef')]"
+                                "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "10.192.16.6",
+                            "privateIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.6')]",
                             "publicIpAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8sJumpbox-ip')]",
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('jumpboxVM'), '-ip'))]",
                                 "properties": {
                                     "deleteOption": "Detach"
                                 }
@@ -118,18 +133,18 @@
                 },
                 "enableAcceleratedNetworking": true,
                 "networkSecurityGroup": {
-                    "id": "[variables('jumpboxnsgId')]"
+                    "id": "[concat(variables('jumpboxVM'), '-nsg')]"
                 }
             }
         },
         {
-            "name": "SqlK8sVMs-nsg",
+            "name": "[variables('vmsNsgName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]"
         },
         {
-            "name": "SqlK8sAzureBastionSubnet-nsg",
+            "name": "[variables('bastionNsgName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]",
@@ -137,7 +152,7 @@
                 "securityRules": [
                     {
                         "name": "AllowGatewayManager",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowGatewayManager')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowGatewayManager')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "Allow GatewayManager",
@@ -157,7 +172,7 @@
                     },
                     {
                         "name": "AllowHttpsInBound",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowHttpsInBound')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowHttpsInBound')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "Allow HTTPs",
@@ -177,7 +192,7 @@
                     },
                     {
                         "name": "AllowSshRdpOutbound",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowSshRdpOutbound')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowSshRdpOutbound')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "protocol": "*",
@@ -198,7 +213,7 @@
                     },
                     {
                         "name": "AllowAzureCloudOutbound",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowAzureCloudOutbound')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowAzureCloudOutbound')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "protocol": "TCP",
@@ -217,7 +232,7 @@
                     },
                     {
                         "name": "AllowCorpnet",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowCorpnet')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowCorpnet')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "CSS Governance Security Rule.  Allow Corpnet inbound.  https://aka.ms/casg",
@@ -237,7 +252,7 @@
                     },
                     {
                         "name": "AllowSAW",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAzureBastionSubnet-nsg', 'AllowSAW')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowSAW')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "CSS Governance Security Rule.  Allow SAW inbound.  https://aka.ms/casg",
@@ -259,7 +274,7 @@
             }
         },
         {
-            "name": "SqlK8sAKS-nsg",
+            "name": "[variables('aksNsgName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]",
@@ -267,7 +282,7 @@
                 "securityRules": [
                     {
                         "name": "AllowCorpnet",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAKS-nsg', 'AllowCorpnet')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('aksNsgName'), 'AllowCorpnet')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "CSS Governance Security Rule.  Allow Corpnet inbound.  https://aka.ms/casg",
@@ -287,7 +302,7 @@
                     },
                     {
                         "name": "AllowSAW",
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', 'SqlK8sAKS-nsg', 'AllowSAW')]",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('aksNsgName'), 'AllowSAW')]",
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
                         "properties": {
                             "description": "CSS Governance Security Rule.  Allow SAW inbound.  https://aka.ms/casg",
@@ -309,35 +324,35 @@
             }
         },
         {
-            "name": "SqlK8sJumpbox-nsg",
+            "name": "[concat(variables('jumpboxVM'), '-nsg')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[resourceGroup().location]"
         },
         {
-            "name": "SqlK8s-vnet",
+            "name": "[variables('vnetName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2020-11-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sVMs-nsg')]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sAzureBastionSubnet-nsg')]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', 'SqlK8sAKS-nsg')]"
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('vmsNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('bastionNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('aksNsgName'))]"
             ],
             "properties": {
                 "addressSpace": {
-                    "addressPrefixes": ["10.192.0.0/16"]
+                    "addressPrefixes": ["[concat('10.', variables('vnetIpAddressRangeStr'), '.0.0/16')]"]
                 },
                 "dhcpOptions": {
                     "dnsServers": [
-                        "10.192.16.4"
+                        "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.4')]"
                     ]
                 },
                 "subnets": [
                     {
                         "name": "AKS",
                         "properties": {
-                            "addressPrefix": "10.192.0.0/20",
+                            "addressPrefix": "[concat('10.', variables('vnetIpAddressRangeStr'), '.0.0/20')]",
                             "networkSecurityGroup": {
                                 "id": "[variables('aksnsgId')]"
                             }
@@ -346,7 +361,7 @@
                     {
                         "name": "VMs",
                         "properties": {
-                            "addressPrefix": "10.192.16.0/26",
+                            "addressPrefix": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.0/26')]",
                             "networkSecurityGroup": {
                                 "id": "[variables('vmsnsgId')]"
                             }
@@ -355,7 +370,7 @@
                     {
                         "name": "AzureBastionSubnet",
                         "properties": {
-                            "addressPrefix": "10.192.16.64/26",
+                            "addressPrefix": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.64/26')]",
                             "networkSecurityGroup": {
                                 "id": "[variables('bastionnsgId')]"
                             }
@@ -367,7 +382,7 @@
         {
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-08-01",
-            "name": "SqlK8s-bastion-ip",
+            "name": "[concat(variables('netbiosName'), '-bastion-ip')]",
             "location": "[resourceGroup().location]",
             "sku": {
                 "name": "Standard"
@@ -379,12 +394,12 @@
         {
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2019-04-01",
-            "name": "SqlK8s-bastion",
+            "name": "[concat(variables('netbiosName'), '-bastion')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8s-bastion-ip')]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sJumpbox')]"
+                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('netbiosName'), '-bastion-ip'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -395,7 +410,7 @@
                                 "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureBastionSubnet')]"
                             },
                             "publicIPAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', 'SqlK8s-bastion-ip')]"
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('netbiosName'), '-bastion-ip'))]"
                             }
                         }
                     }
@@ -403,13 +418,13 @@
             }
         },
         {
-            "name": "SqlK8sDC",
+            "name": "[variables('dcVM')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sDC-nic')]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('dcVM'), '-nic')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -433,7 +448,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'SqlK8sDC-nic')]",
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('dcVM'), '-nic'))]",
                             "properties": {
                                 "deleteOption": "Detach"
                             }
@@ -441,7 +456,7 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "SqlK8sDC",
+                    "computerName": "[variables('dcVM')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
                     "windowsConfiguration": {
@@ -457,14 +472,14 @@
             }
         },
         {
-            "name": "SqlK8sLinux",
+            "name": "[variables('linuxVM')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sLinux-nic')]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sDC')]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('linuxVM'), '-nic')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('dcVM'))]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -488,7 +503,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'SqlK8sLinux-nic')]",
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('linuxVM'), '-nic'))]",
                             "properties": {
                                 "deleteOption": "Detach"
                             }
@@ -496,7 +511,7 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "SqlK8sLinux",
+                    "computerName": "[variables('linuxVM')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
                     "linuxConfiguration": {
@@ -508,7 +523,7 @@
             }
         },
         {
-            "name": "SqlK8sJumpbox-ip",
+            "name": "[concat(variables('jumpboxVM'), '-ip')]",
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-08-01",
             "location": "[resourceGroup().location]",
@@ -520,15 +535,15 @@
             }
         },
         {
-            "name": "SqlK8sJumpbox",
+            "name": "[variables('jumpboxVM')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', 'SqlK8sJumpbox-nic')]",
-                "[concat('Microsoft.Network/publicIpAddresses/', 'SqlK8sJumpbox-ip')]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sLinux')]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('jumpboxVM'), '-nic')]",
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('jumpboxVM'), '-ip')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('linuxVM'))]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -552,7 +567,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'SqlK8sJumpbox-nic')]",
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('jumpboxVM'), '-nic'))]",
                             "properties": {
                                 "deleteOption": "Detach"
                             }
@@ -560,7 +575,7 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "SqlK8sJumpbox",
+                    "computerName": "[variables('jumpboxVM')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
                     "windowsConfiguration": {
@@ -577,11 +592,11 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "SqlK8sJumpbox/EnvironmentSetup",
+            "name": "[concat(variables('jumpboxVM'), '/EnvironmentSetup')]",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', 'SqlK8sJumpbox')]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]"
             ],
             "tags": {
                 "displayName": "setup-environment"
@@ -595,7 +610,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -spnAppId ', parameters('spnAppId'), ' -spnPassword ', parameters('spnPassword'), ' -tenant ', parameters('tenant'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -spnAppId ', parameters('spnAppId'), ' -spnPassword ', parameters('spnPassword'), ' -tenant ', parameters('tenant'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
                 }
             }
         },
@@ -606,12 +621,12 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/extensions', 'SqlK8sJumpbox', 'EnvironmentSetup')]"                
             ],
-            "name": "sqlk8saks",
+            "name": "[variables('aksCluster')]",
             "properties": {
-                "kubernetesVersion": "1.25.6",
+                "kubernetesVersion": "[variables('aksVersion')]",
                 "enableRBAC": true,
-                "dnsPrefix": "sqlk8saks-dns",
-                "nodeResourceGroup": "[concat('MC_', resourceGroup().name, '_sqlk8saks_', resourceGroup().location)]",
+                "dnsPrefix": "[concat(variables('aksCluster'), 'dns')]",
+                "nodeResourceGroup": "[concat('MC_', resourceGroup().name, '_', variables('aksCluster'), '_', resourceGroup().location)]",
                 "azureMonitorProfile": {
                     "metrics": {
                         "enabled": true,
@@ -640,7 +655,7 @@
                         "nodeTaints": [],
                         "enableNodePublicIP": false,
                         "tags": {},
-                        "vnetSubnetID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/sqlk8s-vnet/subnets/AKS')]"
+                        "vnetSubnetID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('vnetName'), '/subnets/AKS')]"
                     }
                 ],
                 "networkProfile": {
@@ -684,7 +699,7 @@
         },
         "controlPlaneFQDN": {
             "type": "string",
-            "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', 'sqlk8saks')).privateFQDN]"
+            "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', variables('aksCluster'))).privateFQDN]"
         }
     }
 }
