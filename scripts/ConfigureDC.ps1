@@ -94,6 +94,8 @@ function ConfigureADDS
         [string]$domainSuffix,
         [string]$adminPassword
     )
+    $netbiosNameLower = $netbiosName.toLower()
+    $netbiosNameUpper = $netbiosName.toUpper()
     try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\ConfigureADDS.ps1"
@@ -106,8 +108,8 @@ function ConfigureADDS
             $commands = $commands + "-CreateDnsDelegation:`$false ``" + "`r`n"
             $commands = $commands + "-DatabasePath ""C:\Windows\NTDS"" ``" + "`r`n"
             $commands = $commands + "-DomainMode ""WinThreshold"" ``" + "`r`n"
-            $commands = $commands + "-DomainName ""$netbiosName.$domainSuffix"" ``" + "`r`n"
-            $commands = $commands + "-DomainNetbiosName ""$netbiosName.toUpper()"" ``" + "`r`n"
+            $commands = $commands + "-DomainName ""$netbiosNameLower.$domainSuffix"" ``" + "`r`n"
+            $commands = $commands + "-DomainNetbiosName ""$netbiosNameUpper"" ``" + "`r`n"
             $commands = $commands + "-ForestMode ""WinThreshold"" ``" + "`r`n"
             $commands = $commands + "-InstallDns:`$true ``" + "`r`n"
             $commands = $commands + "-LogPath ""C:\Windows\NTDS"" ``" + "`r`n"
@@ -147,13 +149,15 @@ function NewADOU
         [string]$domainSuffix,
         [string]$ouName
     )
+    $netbiosNameUpper = $netbiosName.toUpper()
+    $domainSuffixUpper = $domainSuffix.toUpper()
     try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\NewADOU.ps1"
 
             $commands = "#Create an OU and make it default computer objects OU" + "`r`n"
-            $commands = $commands + "New-ADOrganizationalUnit -Name ""$ouName"" -Path ""DC=$netbiosName.toUpper(),DC=$domainSuffix.toUpper()""" + "`r`n"
-            $commands = $commands + "redircmp ""OU=$ouName,DC=$netbiosName.toUpper(),DC=$domainSuffix.toUpper()"""
+            $commands = $commands + "New-ADOrganizationalUnit -Name ""$ouName"" -Path ""DC=$netbiosNameUpper,DC=$domainSuffixUpper""" + "`r`n"
+            $commands = $commands + "redircmp ""OU=$ouName,DC=$netbiosNameUpper,DC=$domainSuffixUpper"""
             $commands | Out-File -FilePath $file -force
 
             $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file

@@ -44,6 +44,7 @@ New-Item -Path "$Env:DeploymentDir\yaml\Monitor" -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\yaml\Monitor\Grafana" -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\yaml\Monitor\InfluxDB" -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\yaml\Monitor\Telegraf" -ItemType directory -Force
+New-Item -Path "$Env:DeploymentDir\backups" -ItemType directory -Force
 
 Start-Transcript -Path $Env:DeploymentLogsDir\EnvironmentSetup.log
 

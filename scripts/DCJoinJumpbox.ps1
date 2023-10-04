@@ -63,15 +63,17 @@ function JoinDomain
         [string]$adminUsername,
         [string]$adminPassword
     )
+    $netbiosNameLower = $netbiosName.toLower()
+    $netbiosNameUpper = $netbiosName.toUpper()
     try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\JoinDomain.ps1"
 
-            $commands = "`$domainUsername=""$netbiosName\$adminUsername""" + "`r`n"
+            $commands = "`$domainUsername=""$netbiosNameUpper\$adminUsername""" + "`r`n"
             $commands = $commands + "`$domainPassword=""$adminPassword""" + "`r`n"
             $commands = $commands + "`$SecurePassword = ConvertTo-SecureString `$domainPassword -AsPlainText -Force" + "`r`n"
             $commands = $commands + "`$credential = New-Object System.Management.Automation.PSCredential (`$domainUsername, `$SecurePassword)" + "`r`n"
-            $commands = $commands + "Add-Computer -DomainName ""$netbiosName.$domainSuffix"" -Credential `$credential -Force -PassThru -ErrorAction Stop"
+            $commands = $commands + "Add-Computer -DomainName ""$netbiosNameLower.$domainSuffix"" -Credential `$credential -Force -PassThru -ErrorAction Stop"
             
             $commands | Out-File -FilePath $file -force
 

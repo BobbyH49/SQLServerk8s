@@ -34,6 +34,7 @@
         "dcVM": "SqlK8sDC",
         "linuxVM": "SqlK8sLinux",
         "jumpboxVM": "SqlK8sJumpbox",
+        "jumpboxNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', concat(variables('jumpboxVM'), '-nsg'))]",
         "vmsNsgName": "[concat(variables('netbiosName'), 'VMs-nsg')]",
         "vmsNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('vmsNsgName'))]",
         "bastionNsgName": "[concat(variables('netbiosName'), 'AzureBastionSubnet-nsg')]",
@@ -133,7 +134,7 @@
                 },
                 "enableAcceleratedNetworking": true,
                 "networkSecurityGroup": {
-                    "id": "[concat(variables('jumpboxVM'), '-nsg')]"
+                    "id": "[variables('jumpboxNsgId')]"
                 }
             }
         },
