@@ -112,15 +112,8 @@ Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/storage.yaml") -Out
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\config.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\deployment.yaml
 
-Write-Host "Downloading AdventureWorks2019 backup files"
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019_1.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019_1.bak
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019_2.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019_2.bak
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019_3.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019_3.bak
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019_4.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019_4.bak
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019_5.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019_5.bak
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019_6.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019_6.bak
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019_7.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019_7.bak
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019_8.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019_8.bak
+Write-Host "Downloading AdventureWorks2019 backup file"
+Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019.bak
 
 # Configure Domain Controller
 Write-Header "Installing and configuring Domain Controller"
