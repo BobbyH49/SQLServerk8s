@@ -122,10 +122,11 @@ Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Force
 Stop-Transcript
 
 # Reboot SqlK8sJumpbox
+$netbiosNameUpper = $Env:netbiosName.toUpper()
 Write-Host "`r`n";
-Write-Host '$Env:jumpboxVM has been joined to the domain and will now reboot';
+Write-Host "$Env:jumpboxVM has been joined to the domain and will now reboot";
 Write-Host "`r`n";
-Write-Host 'Close Bastion session and reconnect using $Env:netbiosName.toUpper()\$Env:adminUsername with the same password';
-Write-Host -NoNewLine 'Press any key to continue...';
+Write-Host "Close Bastion session and reconnect using $netbiosNameUpper\$Env:adminUsername with the same password";
+Write-Host -NoNewLine "Press any key to continue...";
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 Restart-Computer -Force
