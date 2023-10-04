@@ -42,7 +42,7 @@
         "aksNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('aksNsgName'))]",
         "vnetName": "[concat(variables('netbiosName'), '-vnet')]",
         "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-        "vnetIpAddressRangeStr": "[string('ipAddressRange_10.X.0.0')]",
+        "vnetIpAddressRangeStr": "[string(parameters('ipAddressRange_10.X.0.0'))]",
         "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
         "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
         "aksCluster": "sqlk8saks",
