@@ -117,7 +117,7 @@ Write-Host "Configuration ends: $(Get-Date)"
 
 # Cleanup
 Write-Header "Cleanup environment"
-Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Force
+Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Confirm:$false
 
 Stop-Transcript
 
