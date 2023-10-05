@@ -12,6 +12,15 @@
             "type": "string",
             "defaultValue": "main"
         },
+        "spnAppId": {
+            "type": "string"
+        },
+        "spnPassword": {
+            "type": "secureString"
+        },
+        "tenant": {
+            "type": "string"
+        },
         "ipAddressRange_10.X.0.0": {
             "type": "int",
             "defaultValue": 0,
@@ -35,7 +44,6 @@
         "vnetName": "[concat(variables('netbiosName'), '-vnet')]",
         "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
         "vnetIpAddressRangeStr": "[string(parameters('ipAddressRange_10.X.0.0'))]",
-        "dnsIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr') , '.16.4')]",
         "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
         "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
         "aksCluster": "sqlk8saks",
@@ -59,7 +67,7 @@
                                 "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "[variables('dnsIpAddress')]"
+                            "privateIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.4')]"
                         }
                     }
                 ],
@@ -338,7 +346,7 @@
                 },
                 "dhcpOptions": {
                     "dnsServers": [
-                        "[variables('dnsIpAddress')]"
+                        "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.4')]"
                     ]
                 },
                 "subnets": [
@@ -603,7 +611,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -dnsIpAddress ', variables('dnsIpAddress'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -spnAppId ', parameters('spnAppId'), ' -spnPassword ', parameters('spnPassword'), ' -tenant ', parameters('tenant'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
                 }
             }
         },

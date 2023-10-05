@@ -24,38 +24,12 @@ function NewMessage
     }
 }
 
-# Connect to Azure Subscription
-function ConnectToAzure 
-{
-    param(
-        [string]$subscriptionId,
-        [string]$spnAppId,
-        [string]$spnPassword,
-        [string]$tenant
-    )
-    
-    try {
-        $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
-        $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
-        Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential | out-null
-        $message = "Connected to Azure."
-        NewMessage -message $message -type "success"
-    }
-    catch {
-        $message = "Failed to connect to Azure."
-        NewMessage -message $message -type "error"
-        Exit
-    }
-}
-
 # Install Active Directory Domain Services
 function InstallADDS 
 {
     param(
-        [string]$vmName,
-        [string]$resourceGroup,
-        [string]$adminUsername,
-        [string]$adminPassword
+        [string]$computerIP,
+        [System.Management.Automation.PSCredential]$winCreds
     )
     try {
             # Create a temporary file in the users TEMP directory
@@ -66,17 +40,14 @@ function InstallADDS
 
             $commands | Out-File -FilePath $file -force
 
-            #$result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
-            $secWindowsPassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
-            $winCreds = New-Object System.Management.Automation.PSCredential ($adminUsername, $secWindowsPassword)
-            $result = Invoke-Command -VMName $vmName -ScriptBlock { powershell.exe -File $file } -Credential $winCreds
+            $result = Invoke-Command -ComputerName $computerIP -FilePath $file -Credential $winCreds
             
-            if ($result.Status -eq "Succeeded") {
-                $message = "Active Directory has been enabled on $vmName."
+            if ($result.Success -eq $true) {
+                $message = "Active Directory has been enabled on Domain Controller."
                 NewMessage -message $message -type "success"
             }
             else {
-                $message = "Active Directory couldn't be enabled on $vmName."
+                $message = "Active Directory could not be enabled on Domain Controller."
                 NewMessage -message $message -type "error"
             }
 
@@ -86,18 +57,18 @@ function InstallADDS
         Remove-Item $file
         $message = "Error installing Active Directory."
         NewMessage -message $message -type "error"
-}
+    }
 }   
 
 # Configure Active Directory Domain
 function ConfigureADDS 
 {
     param(
-        [string]$vmName,
-        [string]$resourceGroup,
+        [string]$computerIP,
         [string]$netbiosName,
         [string]$domainSuffix,
-        [string]$adminPassword
+        [string]$adminPassword,
+        [System.Management.Automation.PSCredential]$winCreds
     )
     $netbiosNameLower = $netbiosName.toLower()
     $netbiosNameUpper = $netbiosName.toUpper()
@@ -124,14 +95,14 @@ function ConfigureADDS
             $commands = $commands + "-Force:`$true"
             $commands | Out-File -FilePath $file -force
 
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
-
-            if ($result.Status -eq "Succeeded") {
-                $message = "Active Directory has been configured on $vmName."
+            $result = Invoke-Command -ComputerName $computerIP -FilePath $file -Credential $winCreds
+            
+            if ($result.Status -eq "Success") {
+                $message = "Active Directory has been configured."
                 NewMessage -message $message -type "success"
             }
             else {
-                $message = "Active Directory couldn't be configured on $vmName."
+                $message = "Active Directory could not be configured."
                 NewMessage -message $message -type "error"
             }
 
@@ -148,11 +119,11 @@ function ConfigureADDS
 function NewADOU 
 {
     param(
-        [string]$vmName,
-        [string]$resourceGroup,
+        [string]$computerIP,
         [string]$netbiosName,
         [string]$domainSuffix,
-        [string]$ouName
+        [string]$ouName,
+        [System.Management.Automation.PSCredential]$winCreds
     )
     $netbiosNameUpper = $netbiosName.toUpper()
     $domainSuffixUpper = $domainSuffix.toUpper()
@@ -165,18 +136,18 @@ function NewADOU
             $commands = $commands + "redircmp ""OU=$ouName,DC=$netbiosNameUpper,DC=$domainSuffixUpper"""
             $commands | Out-File -FilePath $file -force
 
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
-
-            while ($result.value.Message -like '*error*') {
-                $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
+            $result = Invoke-Command -ComputerName $computerIP -FilePath $file -Credential $winCreds
+            
+            while ($result -like '*error*') {
+                $result = Invoke-Command -ComputerName $computerIP -FilePath $file -Credential $winCreds
             }
 
-            if ($result.Status -eq "Succeeded") {
-                $message = "Active Directory Organization Unit has been created on $vmName."
+            if ($result -notlike '*successful*') {
+                $message = "Active Directory Organization Unit has been created."
                 NewMessage -message $message -type "success"
             }
             else {
-                $message = "Active Directory Organization Unit couldn't be created on $vmName."
+                $message = "Active Directory Organization Unit could not be created."
                 NewMessage -message $message -type "error"
             }
 
@@ -187,16 +158,17 @@ function NewADOU
         $message = "Error creating Organization Unit in Active Directory."
         NewMessage -message $message -type "error"
     }
-}    
+}
+
 # Create a new Active Directory Organization Unit and make it default for computer objects
 function NewDNSForwarder 
 {
     
     param(
-        [string]$vmName,
-        [string]$resourceGroup,
+        [string]$computerIP,
         [string]$dnsForwarderName,
-        [string]$masterServers
+        [string]$masterServers,
+        [System.Management.Automation.PSCredential]$winCreds
     )
     try {
             # Create a temporary file in the users TEMP directory
@@ -206,17 +178,8 @@ function NewDNSForwarder
             $commands = $commands + "Add-DnsServerConditionalForwarderZone -Name ""$DnsForwarderName"" -MasterServers ""$MasterServers"""
             $commands | Out-File -FilePath $file -force
 
-            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
-
-            if ($result.Status -eq "Succeeded") {
-                $message = "DNS Forwarder for AKS has been created on $vmName."
-                NewMessage -message $message -type "success"
-            }
-            else {
-                $message = "Failed to create DNS Forwarder on $vmName."
-                NewMessage -message $message -type "error"
-            }
-
+            Invoke-Command -ComputerName $computerIP -FilePath $file -Credential $winCreds
+            
             Remove-Item $file
     }
     catch {
@@ -230,26 +193,32 @@ function NewDNSForwarder
 Write-Host "DC Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
-# Connect to Azure Subscription
-#Write-Host "Connecting to Azure"
-#ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant -ErrorAction SilentlyContinue
+# Start WinRM service and add IP Address for Domain Controller as a trusted host
+Write-Host "Starting WinRM service and addding IP Address for $Env:dcVM as a trusted host"
+Start-Service WinRm
+Set-Item WSMan:localhost\client\trustedhosts -value $Env:dnsIpAddress -Force
+
+# Getting Windows Credentials
+Write-Host "Getting Windows Credentials"
+$secWindowsPassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
+$winCreds = New-Object System.Management.Automation.PSCredential ($Env:adminUsername, $secWindowsPassword)
 
 # Install Active Directory Domain Services
 Write-Host "Installing Active Directory"
-InstallADDS -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
+InstallADDS -computerIP $Env:dnsIpAddress -winCreds $winCreds -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
 Write-Host "Configuring Active Directory"
-ConfigureADDS -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
+ConfigureADDS -computerIP $Env:dnsIpAddress -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -adminPassword $Env:adminPassword -winCreds $winCreds -ErrorAction SilentlyContinue
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
 Write-Host "Adding Organization Unit to Active Directory"
 $ouName = "SetupOU"
-NewADOU -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -ouName $ouName -ErrorAction SilentlyContinue
+NewADOU -computerIP $Env:dnsIpAddress -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -ouName $ouName -winCreds $winCreds -ErrorAction SilentlyContinue
 
 Write-Host "Add DNS Forwarder for AKS to Domain Controller"
 $dnsForwarderName = "privatelink.$Env:azureLocation.azmk8s.io"
 $masterServers = "168.63.129.16"
-NewDNSForwarder -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -dnsForwarderName $dnsForwarderName -masterServers $masterServers -ErrorAction SilentlyContinue
+NewDNSForwarder -computerIP $Env:dnsIpAddress -dnsForwarderName $dnsForwarderName -masterServers $masterServers -winCreds $winCreds -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"
