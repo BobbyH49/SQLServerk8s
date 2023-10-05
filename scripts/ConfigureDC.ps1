@@ -31,7 +31,7 @@ function InstallADDS
         [string]$computerIP,
         [System.Management.Automation.PSCredential]$winCreds
     )
-    try {
+#    try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\InstallADDS.ps1"
 
@@ -41,6 +41,12 @@ function InstallADDS
             $commands | Out-File -FilePath $file -force
 
             $result = Invoke-Command -ComputerName $computerIP -FilePath $file -Credential $winCreds
+
+            Write-Host "computerIP = $computerIP"
+            Write-Host "winCreds = $winCreds"
+            Write-Host "file = $file"
+            Write-Host "commands = $commands"            
+            Write-Host "result = $result"            
             
             if ($result.Success -eq $true) {
                 $message = "Active Directory has been enabled on Domain Controller."
@@ -52,12 +58,12 @@ function InstallADDS
             }
 
             Remove-Item $file
-    }
-    catch {
-        Remove-Item $file
-        $message = "Error installing Active Directory."
-        NewMessage -message $message -type "error"
-    }
+#    }
+#    catch {
+#        Remove-Item $file
+#        $message = "Error installing Active Directory."
+#        NewMessage -message $message -type "error"
+#    }
 }   
 
 # Configure Active Directory Domain
@@ -202,6 +208,12 @@ Set-Item WSMan:localhost\client\trustedhosts -value $Env:dnsIpAddress -Force
 Write-Host "Getting Windows Credentials"
 $secWindowsPassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 $winCreds = New-Object System.Management.Automation.PSCredential ($Env:adminUsername, $secWindowsPassword)
+
+Write-Host "computerIP = $Env:dnsIpAddress"
+Write-Host "adminUsername = $Env:adminUsername"
+Write-Host "adminPassword = $Env:adminPassword"
+Write-Host "secWindowsPassword = $secWindowsPassword"
+Write-Host "winCreds = $winCreds"
 
 # Install Active Directory Domain Services
 Write-Host "Installing Active Directory"
