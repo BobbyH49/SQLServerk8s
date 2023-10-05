@@ -4,14 +4,14 @@
 
 ## Prerequisites
 
-* An [Azure account](https://azure.microsoft.com/free/) with an active subscription.
-* Owner permissions within a Resource Group to create resources and manage role assignments.
+* An [Azure account](https://azure.microsoft.com/free/) with owner permissions of an active subscription.
+* Permissions to create Azure AD Service Principals.
 
 ## Azure Resources
 
 The following resources will be deployed (expensive to keep running)
 
-### Deployment 1
+### Deployment
 
 * Virtual Network (SqlK8s-vnet)
 * 3 subnets (AKS, VMs, AzureBastionSubnet)
@@ -22,14 +22,16 @@ The following resources will be deployed (expensive to keep running)
     * SqlK8sJumpbox (Client used to run scripts with 1 Nic and 1 OS Disk)
 * 4 Network Security Groups (1 for each subnet and 1 for Nic on SqlK8sJumpbox)
 * 2 Public IP Addresses (1 for Bastion and 1 for Jumpbox)
+* Azure Kubernetes Cluster (VM Scale Set with 2 - 3 Standard_D8s_v3 VMs)
 
-### Deployment 2
+    **NB: The Scale set has a minimum of 2 VMs to handle either of the SQL Server 2019 or 2022 deployments.  But it can scale to a maximum of 3 VMs if you wish to deploy both.** 
 
-* Azure Kubernetes Cluster (VM Scale Set with 2 Standard_D8s_v3 VMs)
+## Create Service Principal
 
-    **NB: The Scale set has a minimum of 2 VMs to handle either of the SQL Server 2019 or 2022 deployments.  But it can scale to a maximum of 4 VMs if you wish to deploy both.** 
+1. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
 
-## Deploy Azure Resources (Deployment 1)
+
+## Deploy Azure Resources
 
 1. Right-click or `Ctrl + click` the button below to open the Azure Portal in a new window.
 

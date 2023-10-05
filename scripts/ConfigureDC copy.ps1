@@ -53,10 +53,7 @@ function InstallADDS
 {
     param(
         [string]$vmName,
-        [string]$resourceGroup,
-        [string]$adminUsername,
-        [string]$adminPassword,
-        [string]$dcVM
+        [string]$resourceGroup
     )
     try {
             # Create a temporary file in the users TEMP directory
@@ -67,11 +64,8 @@ function InstallADDS
 
             $commands | Out-File -FilePath $file -force
 
-            #$result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
-            $secWindowsPassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
-            $winCreds = New-Object System.Management.Automation.PSCredential ($adminUsername, $secWindowsPassword)
-            $result = Invoke-Command -VMName $dcVM -ScriptBlock { powershell.exe -File $file } -Credential $winCreds
-            
+            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
+
             if ($result.Status -eq "Succeeded") {
                 $message = "Active Directory has been enabled on $vmName."
                 NewMessage -message $message -type "success"
@@ -232,8 +226,8 @@ Write-Host "DC Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-#Write-Host "Connecting to Azure"
-#ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant -ErrorAction SilentlyContinue
+Write-Host "Connecting to Azure"
+ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant -ErrorAction SilentlyContinue
 
 # Install Active Directory Domain Services
 Write-Host "Installing Active Directory"
