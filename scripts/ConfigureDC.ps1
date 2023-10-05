@@ -55,8 +55,7 @@ function InstallADDS
         [string]$vmName,
         [string]$resourceGroup,
         [string]$adminUsername,
-        [string]$adminPassword,
-        [string]$dcVM
+        [string]$adminPassword
     )
     try {
             # Create a temporary file in the users TEMP directory
@@ -70,7 +69,7 @@ function InstallADDS
             #$result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
             $secWindowsPassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
             $winCreds = New-Object System.Management.Automation.PSCredential ($adminUsername, $secWindowsPassword)
-            $result = Invoke-Command -VMName $dcVM -ScriptBlock { powershell.exe -File $file } -Credential $winCreds
+            $result = Invoke-Command -VMName $vmName -ScriptBlock { powershell.exe -File $file } -Credential $winCreds
             
             if ($result.Status -eq "Succeeded") {
                 $message = "Active Directory has been enabled on $vmName."
@@ -237,7 +236,7 @@ Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Install Active Directory Domain Services
 Write-Host "Installing Active Directory"
-InstallADDS -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -ErrorAction SilentlyContinue
+InstallADDS -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
 Write-Host "Configuring Active Directory"
