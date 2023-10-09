@@ -70,6 +70,11 @@
                         }
                     }
                 ],
+                "dnsSettings": {
+                    "dnsServers": [
+                        "168.63.129.16"
+                    ]
+                },
                 "enableAcceleratedNetworking": true
             }
         },
@@ -657,7 +662,7 @@
             "type": "Microsoft.ContainerService/managedClusters",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', 'SqlK8sJumpbox', 'EnvironmentSetup')]"                
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('jumpboxVM'), 'EnvironmentSetup')]"                
             ],
             "name": "[variables('aksCluster')]",
             "properties": {

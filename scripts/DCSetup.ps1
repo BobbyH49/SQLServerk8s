@@ -51,9 +51,10 @@ Write-Header "Installing and configuring Domain Controller"
 
 # Remove DNS Server from Jumpbox Nic
 #Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
-#$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpboxNic
-#$nic.DnsSettings.DnsServers.Clear()
-#$nic | Set-AzNetworkInterface | out-null
+$dcNic = "$Env:dcVM-nic"
+$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $dcNic
+$nic.DnsSettings.DnsServers.Clear()
+$nic | Set-AzNetworkInterface | out-null
 
 # Stop logging and Reboot Jumpbox
 #Write-Header "Rebooting $Env:jumpboxVM"
