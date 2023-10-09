@@ -585,11 +585,36 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('dcVM'), '/DCSetup')]",
+            "apiVersion": "2022-03-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('dcVM'))]"
+            ],
+            "tags": {
+                "displayName": "setup-dc"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.10",
+                "autoUpgradeMinorVersion": true,
+                "protectedSettings": {
+                    "fileUris": [
+                        "[uri(variables('templateBaseUrl'), 'scripts/DCSetup.ps1')]"
+                    ],
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File DCSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -dnsIpAddress ', variables('dnsIpAddress'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('jumpboxVM'), '/EnvironmentSetup')]",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', 'SqlK8sDC', 'DCSetup')]"                
             ],
             "tags": {
                 "displayName": "setup-environment"

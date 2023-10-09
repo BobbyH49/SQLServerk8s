@@ -115,19 +115,20 @@ Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019.bak") -OutFile
 
 # Configure Domain Controller
 Write-Header "Installing and configuring Domain Controller"
-.$Env:DeploymentDir\scripts\ConfigureDC.ps1
+#.$Env:DeploymentDir\scripts\ConfigureDC.ps1
+.$Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
 
 # Configure Domain Join Scripts
-Write-Header "Configuring Domain Join Scripts"
-$Trigger = New-ScheduledTaskTrigger -AtLogOn
-$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
-Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
+#Write-Header "Configuring Domain Join Scripts"
+#$Trigger = New-ScheduledTaskTrigger -AtLogOn
+#$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
+#Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
 
 # Remove DNS Server from Jumpbox Nic
-Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
-$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpboxNic
-$nic.DnsSettings.DnsServers.Clear()
-$nic | Set-AzNetworkInterface | out-null
+#Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
+#$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpboxNic
+#$nic.DnsSettings.DnsServers.Clear()
+#$nic | Set-AzNetworkInterface | out-null
 
 # Stop logging and Reboot Jumpbox
 Write-Header "Rebooting $Env:jumpboxVM"
