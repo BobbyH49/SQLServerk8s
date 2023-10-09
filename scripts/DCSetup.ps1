@@ -61,3 +61,7 @@ Write-Header "Installing and configuring Domain Controller"
 #$logSuppress = Get-Content $Env:DeploymentLogsDir\EnvironmentSetup.log | Where { $_ -notmatch "Host Application: powershell.exe" }
 #$logSuppress | Set-Content $Env:DeploymentLogsDir\EnvironmentSetup.log -Force
 #Restart-Computer -Force
+
+$publicIpAddress = "$Env:dcVM-ip"
+Remove-AzPublicIpAddress -Name $publicIpAddress -ResourceGroupName $resourceGroup -Force
+Restart-Computer -Force

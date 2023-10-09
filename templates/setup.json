@@ -48,7 +48,8 @@
             "apiVersion": "2021-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', concat(variables('dcVM'), '-ip'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -59,7 +60,13 @@
                                 "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "[variables('dnsIpAddress')]"
+                            "privateIpAddress": "[variables('dnsIpAddress')]",
+                            "publicIpAddress": {
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('dcVM'), '-ip'))]",
+                                "properties": {
+                                    "deleteOption": "Detach"
+                                }
+                            }
                         }
                     }
                 ],
@@ -411,13 +418,26 @@
             }
         },
         {
+            "name": "[concat(variables('dcVM'), '-ip')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2020-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIpAllocationMethod": "Static"
+            },
+            "sku": {
+                "name": "Standard"
+            }
+        },
+        {
             "name": "[variables('dcVM')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('dcVM'), '-nic')]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('dcVM'), '-nic')]",
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('dcVM'), '-ip')]"
             ],
             "properties": {
                 "hardwareProfile": {
