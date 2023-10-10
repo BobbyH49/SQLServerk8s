@@ -12,6 +12,15 @@
             "type": "string",
             "defaultValue": "main"
         },
+        "spnAppId": {
+            "type": "string"
+        },
+        "spnPassword": {
+            "type": "secureString"
+        },
+        "tenant": {
+            "type": "string"
+        },
         "ipAddressRange_10.X.0.0": {
             "type": "int",
             "defaultValue": 0,
@@ -537,12 +546,6 @@
                 "[concat('Microsoft.Network/publicIpAddresses/', variables('jumpboxVM'), '-ip')]",
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('linuxVM'))]"
             ],
-            "identity": {
-                "type": "userAssigned",
-                "userAssignedIdentities": {
-                    "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/',concat(variables('jumpboxVM'), '-identity'))]": {}
-                }
-            },
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "Standard_D2s_v3"
@@ -589,15 +592,6 @@
             }
         },
         {
-            "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id)]",
-            "properties": {
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
-                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('jumpboxVM')), '2022-03-01', 'Full').identity.principalId]"
-            }
-        },
-        {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('jumpboxVM'), '/EnvironmentSetup')]",
             "apiVersion": "2022-03-01",
@@ -617,7 +611,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -jumpboxIdentity ', reference(resourceId('Microsoft.Compute/virtualMachines', variables('jumpboxVM')), '2022-03-01', 'Full').identity.principalId, ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -spnAppId ', parameters('spnAppId'), ' -spnPassword ', parameters('spnPassword'), ' -tenant ', parameters('tenant'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
                 }
             }
         },

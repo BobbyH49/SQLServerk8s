@@ -26,11 +26,22 @@ function NewMessage
 function ConnectToAzure 
 {
     param(
-        [string]$managedIdentity
+        [string]$subscriptionId,
+        [string]$spnAppId,
+        [string]$spnPassword,
+        [string]$tenant
     )
-    
+
     try {
-        Connect-AzAccount -Identity $managedIdentity | out-null
+        $check = Get-AzContext -ErrorAction SilentlyContinue
+        if ($null -eq $check) {
+            $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
+            $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
+            Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential | out-null
+        }
+        else {
+            Set-AzContext -SubscriptionId $subscriptionId | out-null
+        }
         $message = "Connected to Azure."
         NewMessage -message $message -type "success"
     }
@@ -96,7 +107,7 @@ Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
 Write-Host "Connecting to Azure"
-ConnectToAzure -managedIdentity $Env:jumpboxIdentity -ErrorAction SilentlyContinue
+ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant -ErrorAction SilentlyContinue
 
 # Join Azure VM to domain
 Write-Host "Joining $Env:jumpboxVM to domain"
