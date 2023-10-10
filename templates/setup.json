@@ -12,6 +12,15 @@
             "type": "string",
             "defaultValue": "main"
         },
+        "spnAppId": {
+            "type": "string"
+        },
+        "spnPassword": {
+            "type": "secureString"
+        },
+        "tenant": {
+            "type": "string"
+        },
         "ipAddressRange_10.X.0.0": {
             "type": "int",
             "defaultValue": 0,
@@ -35,7 +44,6 @@
         "vnetName": "[concat(variables('netbiosName'), '-vnet')]",
         "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
         "vnetIpAddressRangeStr": "[string(parameters('ipAddressRange_10.X.0.0'))]",
-        "dnsIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr') , '.16.4')]",
         "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
         "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
         "aksCluster": "sqlk8saks",
@@ -48,8 +56,7 @@
             "apiVersion": "2021-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/publicIpAddresses/', concat(variables('dcVM'), '-ip'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -60,21 +67,10 @@
                                 "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "[variables('dnsIpAddress')]",
-                            "publicIpAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('dcVM'), '-ip'))]",
-                                "properties": {
-                                    "deleteOption": "Detach"
-                                }
-                            }
+                            "privateIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.4')]"
                         }
                     }
                 ],
-                "dnsSettings": {
-                    "dnsServers": [
-                        "168.63.129.16"
-                    ]
-                },
                 "enableAcceleratedNetworking": true
             }
         },
@@ -350,7 +346,7 @@
                 },
                 "dhcpOptions": {
                     "dnsServers": [
-                        "[variables('dnsIpAddress')]"
+                        "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.4')]"
                     ]
                 },
                 "subnets": [
@@ -423,26 +419,13 @@
             }
         },
         {
-            "name": "[concat(variables('dcVM'), '-ip')]",
-            "type": "Microsoft.Network/publicIpAddresses",
-            "apiVersion": "2020-08-01",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "publicIpAllocationMethod": "Static"
-            },
-            "sku": {
-                "name": "Standard"
-            }
-        },
-        {
             "name": "[variables('dcVM')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('dcVM'), '-nic')]",
-                "[concat('Microsoft.Network/publicIpAddresses/', variables('dcVM'), '-ip')]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('dcVM'), '-nic')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -610,36 +593,11 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('dcVM'), '/DCSetup')]",
-            "apiVersion": "2022-03-01",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('dcVM'))]"
-            ],
-            "tags": {
-                "displayName": "setup-dc"
-            },
-            "properties": {
-                "publisher": "Microsoft.Compute",
-                "type": "CustomScriptExtension",
-                "typeHandlerVersion": "1.10",
-                "autoUpgradeMinorVersion": true,
-                "protectedSettings": {
-                    "fileUris": [
-                        "[uri(variables('templateBaseUrl'), 'scripts/DCSetup.ps1')]"
-                    ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File DCSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -dnsIpAddress ', variables('dnsIpAddress'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'))]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('jumpboxVM'), '/EnvironmentSetup')]",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]",
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', 'SqlK8sDC', 'DCSetup')]"                
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]"
             ],
             "tags": {
                 "displayName": "setup-environment"
@@ -653,7 +611,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -dnsIpAddress ', variables('dnsIpAddress'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -spnAppId ', parameters('spnAppId'), ' -spnPassword ', parameters('spnPassword'), ' -tenant ', parameters('tenant'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
                 }
             }
         },

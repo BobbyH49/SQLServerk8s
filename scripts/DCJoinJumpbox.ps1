@@ -22,11 +22,42 @@ function NewMessage
     }
 }
 
+# Connect to Azure Subscription
+function ConnectToAzure 
+{
+    param(
+        [string]$subscriptionId,
+        [string]$spnAppId,
+        [string]$spnPassword,
+        [string]$tenant
+    )
+
+    try {
+        $check = Get-AzContext -ErrorAction SilentlyContinue
+        if ($null -eq $check) {
+            $securePassword = ConvertTo-SecureString -String $spnPassword -AsPlainText -Force
+            $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $spnAppId, $securePassword
+            Connect-AzAccount -ServicePrincipal -TenantId $tenant -Credential $credential | out-null
+        }
+        else {
+            Set-AzContext -SubscriptionId $subscriptionId | out-null
+        }
+        $message = "Connected to Azure."
+        NewMessage -message $message -type "success"
+    }
+    catch {
+        $message = "Failed to connect to Azure."
+        NewMessage -message $message -type "error"
+        Exit
+    }
+}
+
 # Join Azure VM to domain
 function JoinDomain 
 {
     param(
         [string]$vmName,
+        [string]$resourceGroup,
         [string]$netbiosName,
         [string]$domainSuffix,
         [string]$adminUsername,
@@ -46,8 +77,7 @@ function JoinDomain
             
             $commands | Out-File -FilePath $file -force
 
-            $result = Invoke-Command -computerName $vmName -FilePath $file
-            $result
+            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
 
             if ($result.Status -eq "Succeeded") {
                 $message = "$vmName has been joined to domain."
@@ -75,9 +105,13 @@ Write-Header "Joining $Env:jumpboxVM to the domain"
 Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
+# Connect to Azure Subscription
+Write-Host "Connecting to Azure"
+ConnectToAzure -subscriptionId $Env:subscriptionId -spnAppId $Env:spnAppId -spnPassword $Env:spnPassword -tenant $Env:tenant -ErrorAction SilentlyContinue
+
 # Join Azure VM to domain
 Write-Host "Joining $Env:jumpboxVM to domain"
-JoinDomain -vmName $Env:jumpboxVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
+JoinDomain -resourceGroup $Env:resourceGroup -vmName $Env:jumpboxVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"
 
