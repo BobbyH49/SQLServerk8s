@@ -8,9 +8,7 @@ param (
     [string]$dnsIpAddress,
     [string]$netbiosName,
     [string]$domainSuffix,
-    [string]$dcVM,
-    [string]$jumpboxVM,
-    [string]$jumpboxNic
+    [string]$dcVM
 )
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
@@ -23,8 +21,6 @@ param (
 [System.Environment]::SetEnvironmentVariable('netbiosName', $netbiosName, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('domainSuffix', $domainSuffix, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dcVM', $dcVM, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('jumpboxVM', $jumpboxVM, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('jumpboxNic', $jumpboxNic, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "C:\Deployment", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "C:\Deployment\Logs", [System.EnvironmentVariableTarget]::Machine)
 
@@ -35,7 +31,7 @@ New-Item -Path $Env:DeploymentDir -ItemType directory -Force
 New-Item -Path $Env:DeploymentLogsDir -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\scripts" -ItemType directory -Force
 
-Start-Transcript -Path $Env:DeploymentLogsDir\EnvironmentSetup.log
+Start-Transcript -Path $Env:DeploymentLogsDir\DCSetup.log
 
 # Copy PowerShell Profile and Reload
 Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
@@ -49,9 +45,9 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:D
 Write-Header "Installing and configuring Domain Controller"
 .$Env:DeploymentDir\scripts\ConfigureDC.ps1
 
-# Remove DNS Server from Jumpbox Nic
-#Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
+# Remove DNS Server from Domain Controller Nic
 $dcNic = "$Env:dcVM-nic"
+Write-Header "Removing DNS Server entry from $dcNic"
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $dcNic
 $nic.DnsSettings.DnsServers.Clear()
 $nic | Set-AzNetworkInterface | out-null
@@ -63,6 +59,6 @@ $nic | Set-AzNetworkInterface | out-null
 #$logSuppress | Set-Content $Env:DeploymentLogsDir\EnvironmentSetup.log -Force
 #Restart-Computer -Force
 
-$publicIpAddress = "$Env:dcVM-ip"
-Remove-AzPublicIpAddress -Name $publicIpAddress -ResourceGroupName $resourceGroup -Force
-Restart-Computer -Force
+#$publicIpAddress = "$Env:dcVM-ip"
+#Remove-AzPublicIpAddress -Name $publicIpAddress -ResourceGroupName $resourceGroup -Force
+#Restart-Computer -Force
