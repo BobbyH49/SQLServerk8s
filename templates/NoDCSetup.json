@@ -22,6 +22,7 @@
     "variables": {
         "netbiosName": "SqlK8s",
         "domainSuffix": "local",
+        "contributorRole": "b24988ac-6180-42a0-ab88-20f7382dd24c",
         "dcVM": "SqlK8sDC",
         "linuxVM": "SqlK8sLinux",
         "jumpboxVM": "SqlK8sJumpbox",
@@ -590,7 +591,7 @@
             "apiVersion": "2022-04-01",
             "name": "[guid(resourceGroup().id)]",
             "properties": {
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRole'))]",
                 "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('jumpboxVM')), '2022-03-01', 'Full').identity.principalId]"
             }
         },
@@ -614,7 +615,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -subscriptionId ', subscription().subscriptionId, ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -jumpboxIdentity ', reference(resourceId('Microsoft.Compute/virtualMachines', variables('jumpboxVM')), '2022-03-01', 'Full').identity.principalId, ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
                 }
             }
         },

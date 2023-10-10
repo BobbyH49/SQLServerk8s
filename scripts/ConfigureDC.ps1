@@ -27,10 +27,6 @@ function NewMessage
 # Connect to Azure Subscription
 function ConnectToAzure 
 {
-    param(
-        [string]$managedIdentity
-    )
-    
     try {
         Connect-AzAccount -Identity | out-null
         $message = "Connected to Azure."
@@ -222,7 +218,7 @@ Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
 Write-Host "Connecting to Azure"
-ConnectToAzure -managedIdentity $Env:jumpboxIdentity -ErrorAction SilentlyContinue
+ConnectToAzure -ErrorAction SilentlyContinue
 
 # Install Active Directory Domain Services
 Write-Host "Installing Active Directory"

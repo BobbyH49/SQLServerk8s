@@ -1,11 +1,9 @@
 param (
     [string]$adminUsername,
     [string]$adminPassword,
-    [string]$subscriptionId,
     [string]$resourceGroup,
     [string]$azureLocation,
     [string]$templateBaseUrl,
-    [string]$jumpboxIdentity,
     [string]$netbiosName,
     [string]$domainSuffix,
     [string]$dcVM,
@@ -15,11 +13,9 @@ param (
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('adminPassword', $adminPassword, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('subscriptionId', $subscriptionId, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('resourceGroup', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('azureLocation', $azureLocation, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('jumpboxIdentity', $jumpboxIdentity, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('netbiosName', $netbiosName, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('domainSuffix', $domainSuffix, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dcVM', $dcVM, [System.EnvironmentVariableTarget]::Machine)

@@ -25,10 +25,6 @@ function NewMessage
 # Connect to Azure Subscription
 function ConnectToAzure 
 {
-    param(
-        [string]$managedIdentity
-    )
-    
     try {
         Connect-AzAccount -Identity | out-null
         $message = "Connected to Azure."
@@ -96,7 +92,7 @@ Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
 Write-Host "Connecting to Azure"
-ConnectToAzure -managedIdentity $Env:jumpboxIdentity -ErrorAction SilentlyContinue
+ConnectToAzure -ErrorAction SilentlyContinue
 
 # Join Azure VM to domain
 Write-Host "Joining $Env:jumpboxVM to domain"
@@ -116,6 +112,18 @@ Write-Host "`r`n";
 Write-Host "$Env:jumpboxVM has been joined to the domain and will now reboot";
 Write-Host "`r`n";
 Write-Host "Close Bastion session and reconnect using $Env:adminUsername@$netbiosNameLower.$Env:domainSuffix with the same password";
+
+$Env:adminUsername = $null
+$Env:adminPassword = $null
+$Env:resourceGroup = $null
+$Env:azureLocation = $null
+$Env:templateBaseUrl = $null
+$Env:netbiosName = $null
+$Env:domainSuffix = $null
+$Env:dcVM = $null
+$Env:jumpboxVM = $null
+$Env:jumpboxNic = $null
+
 Write-Host -NoNewLine "Press any key to continue...";
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 Restart-Computer -Force
