@@ -35,7 +35,7 @@ function ConfigureADDS
     try {
         $domainName = $netbiosName.toLower() + "." + $domainSuffix
         $domainNetbiosName = $netbiosName.toUpper()
-        $SecurePassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
+        $SecurePassword = ConvertTo-SecureString -String $adminPassword -AsPlainText -Force
 
         #AD DS Deployment
         Import-Module ADDSDeployment

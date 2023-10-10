@@ -37,6 +37,32 @@ Start-Transcript -Path $Env:DeploymentLogsDir\DCSetup.log
 Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
 .$PsHome\Profile.ps1
 
+# Installing PowerShell Module Dependencies
+Write-Header "Installing NuGet"
+Install-PackageProvider -Name NuGet -Force | out-null
+
+# Installing tools
+Write-Header "Installing Chocolatey Apps"
+$chocolateyAppList = 'az.powershell'
+
+try {
+    choco config get cacheLocation
+}
+catch {
+    Write-Host "Chocolatey not detected, trying to install now"
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+}
+
+Write-Header "Chocolatey Apps Specified"
+
+$appsToInstall = $chocolateyAppList -split "," | foreach { "$($_.Trim())" }
+
+foreach ($app in $appsToInstall) {
+    Write-Host "Installing $app"
+    & choco install $app /y --force --no-progress | Write-Output
+    
+}
+
 Write-Header "Fetching Artifacts for SqlServerK8s"
 Write-Host "Downloading scripts"
 Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:DeploymentDir\scripts\ConfigureDC.ps1
