@@ -59,6 +59,6 @@ $nic | Set-AzNetworkInterface | out-null
 #$logSuppress | Set-Content $Env:DeploymentLogsDir\EnvironmentSetup.log -Force
 #Restart-Computer -Force
 
-#$publicIpAddress = "$Env:dcVM-ip"
-#Remove-AzPublicIpAddress -Name $publicIpAddress -ResourceGroupName $resourceGroup -Force
-#Restart-Computer -Force
+$publicIpAddress = "$Env:dcVM-ip"
+Remove-AzPublicIpAddress -Name $publicIpAddress -ResourceGroupName $resourceGroup -Force
+Restart-Computer -Force
