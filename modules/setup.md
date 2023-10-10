@@ -102,36 +102,4 @@ The following resources will be deployed for testing without joining a domain or
 
     ![Open Powershell](media/OpenPowershell.jpg)
 
-
-
-
-10. Configure your AKS Principal with permissions to the AKS subnet (providing your subscriptionId and resourceGroup)
-
-    ```text
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$subscriptionId,
-        [Parameter(Mandatory = $true)]
-        [string]$resourceGroup
-    )
-    Connect-AzAccount
-    Set-AzContext -Subscription $subscriptionId
-    az login
-    az account set --subscription $subscriptionId
-    $objectid = (Get-AzADServicePrincipal -DisplayName "sqlk8saks").id
-    az role assignment create --assignee $objectid --role "Network Contributor" --scope "/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.Network/virtualNetworks/sqlk8s-vnet/subnets/AKS"
-    ```
-
-    **NB: You will need to sign in to Azure twice. The previous sign in was was via Azure Powershell under your local account session whereas these two sign ins are for Azure Powershell and Azure CLI under your domain account session. Azure Powershell will produce a popup but Azure CLI will open via Edge**
-
-    ![Azure Powershell Signin](media/AzurePowershellSignin.jpg)
-
-    ![Azure CLI Signin](media/AzureCLISignin.jpg)
-
-    ![Azure CLI SignedIn](media/AzureCLISignedIn.jpg)
-
-    ![Configure AKS Permissions 1](media/ConfigureAKSPermissions1.jpg)
-
-    ![Configure AKS Permissions 2](media/ConfigureAKSPermissions2.jpg)
-
 [Continue >](../modules/kerberos.md)

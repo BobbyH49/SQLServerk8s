@@ -23,6 +23,7 @@
         "netbiosName": "SqlK8s",
         "domainSuffix": "local",
         "contributorRole": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+        "networkContributorRole": "4d97b98b-1d4f-4787-a291-c67834d212e7",
         "dcVM": "SqlK8sDC",
         "linuxVM": "SqlK8sLinux",
         "jumpboxVM": "SqlK8sJumpbox",
@@ -39,7 +40,9 @@
         "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
         "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
         "aksCluster": "sqlk8saks",
-        "aksVersion": "1.26.6"
+        "aksVersion": "1.26.6",
+        "resourceGroupRoleGuid": "[guid(resourceGroup().id)]",
+        "aksSubnetRoleGuid": "[guid(resourceGroup().id, 'AKS')]"
     },
     "resources": [
         {
@@ -589,7 +592,10 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id)]",
+            "name": "[variables('resourceGroupRoleGuid')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]"
+            ],
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRole'))]",
                 "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', variables('jumpboxVM')), '2022-03-01', 'Full').identity.principalId]"
@@ -601,7 +607,8 @@
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]",
+                "[resourceId('Microsoft.Authorization/roleAssignments/', variables('resourceGroupRoleGuid'))]"
             ],
             "tags": {
                 "displayName": "setup-environment"
@@ -667,8 +674,8 @@
                     "loadBalancerSku": "standard",
                     "networkPlugin": "azure",
                     "networkPolicy": "calico",
-                    "serviceCidr": "10.0.0.0/20",
-                    "dnsServiceIP": "10.0.0.4"
+                    "serviceCidr": "192.168.0.0/20",
+                    "dnsServiceIP": "192.168.0.4"
                 },
                 "autoUpgradeProfile": {
                     "upgradeChannel": "patch"
@@ -694,6 +701,19 @@
             },
             "identity": {
                 "type": "SystemAssigned"
+            }
+        },
+       {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('aksSubnetRoleGuid')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', variables('aksCluster'))]"                
+            ],
+            "scope": "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName') ,'/subnets/AKS')]",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('networkContributorRole'))]",
+                "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('aksCluster')), '2022-06-01', 'Full').identity.principalId]"
             }
         }
     ],
