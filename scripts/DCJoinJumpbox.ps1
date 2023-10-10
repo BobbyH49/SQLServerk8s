@@ -30,7 +30,7 @@ function ConnectToAzure
     )
     
     try {
-        Connect-AzAccount -Identity $managedIdentity | out-null
+        Connect-AzAccount -Identity | out-null
         $message = "Connected to Azure."
         NewMessage -message $message -type "success"
     }
