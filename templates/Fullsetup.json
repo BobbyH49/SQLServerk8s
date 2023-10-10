@@ -23,6 +23,7 @@
         "netbiosName": "SqlK8s",
         "domainSuffix": "local",
         "contributorRole": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+        "networkContributorRole": "4d97b98b-1d4f-4787-a291-c67834d212e7",
         "dcVM": "SqlK8sDC",
         "linuxVM": "SqlK8sLinux",
         "jumpboxVM": "SqlK8sJumpbox",
@@ -699,9 +700,9 @@
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id)]",
+            "name": "[guid(resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AKS'))]",
             "properties": {
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('contributorRole'))]",
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('networkContributorRole'))]",
                 "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('aksCluster')), '2022-06-01', 'Full').identity.principalId]"
             }
         }
