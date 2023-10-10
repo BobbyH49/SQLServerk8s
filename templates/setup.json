@@ -538,10 +538,7 @@
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('linuxVM'))]"
             ],
             "identity": {
-                "type": "userAssigned",
-                "userAssignedIdentities": {
-                    "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/',concat(variables('jumpboxVM'), '-identity'))]": {}
-                }
+                "type": "systemAssigned"
             },
             "properties": {
                 "hardwareProfile": {
