@@ -8,7 +8,7 @@
 
 ## Full Deployment
 
-The following resources will be deployed for full testing (expensive to keep running).
+The following resources will be deployed for full testing (expensive to keep running and takes around 40 minutes to deploy).
 
 * Virtual Network (SqlK8s-vnet)
 * 3 subnets (AKS, VMs, AzureBastionSubnet)
@@ -23,7 +23,7 @@ The following resources will be deployed for full testing (expensive to keep run
 
     **NB: The Scale set has a minimum of 2 VMs to handle either of the SQL Server 2019 or 2022 deployments.  But it can scale to a maximum of 3 VMs if you wish to deploy both.** 
 
-    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2FFullsetup.json)
+    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Foptimize_setup%2Ftemplates%2FFullsetup.json)
 
 ## Deploy without Domain Controller
 
@@ -65,6 +65,8 @@ The following resources will be deployed for testing without joining a domain or
 1. Right-click or `Ctrl + click` the button that relates to your chosen deployment.  This will open the Azure Portal in a new window.
 
 2. Complete the form and then click **Review + create**
+
+    * 
 
     ![Deploy Resources](media/DeployResources.jpg)
 
