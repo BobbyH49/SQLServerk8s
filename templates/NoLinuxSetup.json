@@ -395,7 +395,8 @@
             "dependsOn": [
                 "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
                 "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('netbiosName'), '-bastion-ip'))]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]",
+                "[resourceId('Microsoft.Authorization/roleAssignments/', variables('resourceGroupRoleGuid'))]"
             ],
             "properties": {
                 "ipConfigurations": [

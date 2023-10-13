@@ -59,7 +59,7 @@ spec:
             - name: userlog
               mountPath: /var/opt/mssql/userlog
             - name: backup
-              mountPath: "/var/opt/mssql/backup"
+              mountPath: /var/opt/mssql/backup
             - name: tempdb
               mountPath: /var/opt/mssql/tempdb
             - name: mssql-config-volume
@@ -67,6 +67,10 @@ spec:
             - name: krb5-config-volume
               mountPath: /etc/krb5.conf
               subPath: krb5.conf
+            - name: ssl-certs
+              mountPath: /etc/ssl/certs/
+            - name: ssl-keys
+              mountPath: /etc/ssl/private/
         - name: dxe
           image: dh2i/dxe
           env:
@@ -77,20 +81,13 @@ spec:
                 key: MSSQL_SA_PASSWORD
           volumeMounts:
           - name: dxe
-            mountPath: "/etc/dh2i"
+            mountPath: /etc/dh2i
       hostAliases:
-        - ip: "10.192.16.4"
+        - ip: "10.<IP Address Value>.16.4"
           hostnames:
             - "sqlk8sdc.sqlk8s.local"
             - "sqlk8s.local"
             - "sqlk8s"
-#      dnsPolicy: "None"
-#      dnsConfig:
-#        nameservers:
-#          - 10.192.16.4
-#        searches:
-#          - "sqlk8s.local"
-#          - "local"
       volumes:
         - name: mssql-config-volume
           configMap:
@@ -139,6 +136,22 @@ spec:
         resources:
           requests:
             storage: 8Gi
+    - metadata:
+        name: ssl-certs
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: ssl-keys
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
     - metadata:
         name: dxe
       spec:

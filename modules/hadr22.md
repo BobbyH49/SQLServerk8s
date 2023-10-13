@@ -8,7 +8,7 @@ For this solution, you will be using DxEnterprise which is a licensed product fr
 
 The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.
 
-1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<azureUser\>.sqlk8s.local)
+1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<adminUsername\>@sqlk8s.local)
 
     ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 

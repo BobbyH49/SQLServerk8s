@@ -8,7 +8,7 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.192.5.3
+  loadBalancerIP: 10.<IP Address Value>.5.3
   selector:
     app: mssql22
   ports:

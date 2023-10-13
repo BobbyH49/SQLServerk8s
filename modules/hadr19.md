@@ -8,7 +8,7 @@ For this solution, you will be using DxEnterprise which is a licensed product fr
 
 The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.
 
-1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<azureUser\>.sqlk8s.local)
+1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<adminUsername\>@sqlk8s.local)
 
     ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 
@@ -116,7 +116,15 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Join Availability Group Node 3](media/JoinAgNode319.jpg)
 
-14. Set Availability Group listener port (14033)
+14. Create Listener Tunnel
+
+    ```text
+    kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql19-agl1
+    ```
+
+    ![Create Tunnel for Listener](media/CreateListenerTunnel19.jpg)
+
+15. Set Availability Group listener port (14033)
 
     ```text
     kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-listener mssql19-agl1 mssql19-ag1 14033
@@ -124,21 +132,13 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Set Listener Port](media/SetListenerPort19.jpg)
 
-15. Add loadbalancer for listener
+16. Add loadbalancer for listener
 
     ```text
     kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\service.yaml -n sql19
     ```
 
     ![Create Listener Internal Load Balancer](media/CreateListenerILB19.jpg)
-
-16. Use tunnels for faster connections to the listener
-
-    ```text
-    kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql19-agl1
-    ```
-
-    ![Create Tunnel for Listener](media/CreateListenerTunnel19.jpg)
 
 17. Check listener service is available
 

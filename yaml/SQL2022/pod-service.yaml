@@ -8,7 +8,7 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.192.5.0
+  loadBalancerIP: 10.<IP Address Value>.5.0
   selector:
     #Assign load balancer to a specific pod
     statefulset.kubernetes.io/pod-name: mssql22-0
@@ -35,7 +35,7 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.192.5.1
+  loadBalancerIP: 10.<IP Address Value>.5.1
   selector:
     #Assign load balancer to a specific pod
     statefulset.kubernetes.io/pod-name: mssql22-1
@@ -62,7 +62,7 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.192.5.2
+  loadBalancerIP: 10.<IP Address Value>.5.2
   selector:
     #Assign load balancer to a specific pod
     statefulset.kubernetes.io/pod-name: mssql22-2
