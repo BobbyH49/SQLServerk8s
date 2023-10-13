@@ -1,24 +1,10 @@
 # Connect to Azure Subscription
 # Join Azure VM to domain
 
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [string]$subscriptionId,
-    [Parameter(Mandatory = $true)]
-    [string]$resourceGroup,
-    [Parameter(Mandatory = $true)]
-    [string]$azureUser,
-    [Parameter(Mandatory = $true)]
-    [string]$azurePassword
-)
 function NewMessage 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$message,
-        [Parameter(Mandatory = $true)]
         [string]$type
     )
     if ($type -eq "success") {
@@ -39,23 +25,14 @@ function NewMessage
 # Connect to Azure Subscription
 function ConnectToAzure 
 {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$subscriptionId
-    )
-
     try {
-        $check = Get-AzContext -ErrorAction SilentlyContinue
-        if ($null -eq $check) {
-            Connect-AzAccount -SubscriptionId $subscriptionId | out-null
-        }
-        else {
-            Set-AzContext -SubscriptionId $subscriptionId | out-null
-        }
+        Connect-AzAccount -Identity | out-null
+        $message = "Connected to Azure."
+        NewMessage -message $message -type "success"
     }
     catch {
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Failed to connect to Azure."
+        NewMessage -message $message -type "error"
         Exit
     }
 }
@@ -63,28 +40,25 @@ function ConnectToAzure
 # Join Azure VM to domain
 function JoinDomain 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup,
-        [Parameter(Mandatory = $true)]
-        [string]$domain,
-        [Parameter(Mandatory = $true)]
+        [string]$netbiosName,
+        [string]$domainSuffix,
         [string]$adminUsername,
-        [Parameter(Mandatory = $true)]
         [string]$adminPassword
     )
+    $netbiosNameLower = $netbiosName.toLower()
+    $netbiosNameUpper = $netbiosName.toUpper()
     try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\JoinDomain.ps1"
 
-            $commands = "`$domainUsername=""$domain\$adminUsername""" + "`r`n"
+            $commands = "`$domainUsername=""$netbiosNameUpper\$adminUsername""" + "`r`n"
             $commands = $commands + "`$domainPassword=""$adminPassword""" + "`r`n"
             $commands = $commands + "`$SecurePassword = ConvertTo-SecureString `$domainPassword -AsPlainText -Force" + "`r`n"
             $commands = $commands + "`$credential = New-Object System.Management.Automation.PSCredential (`$domainUsername, `$SecurePassword)" + "`r`n"
-            $commands = $commands + "Add-Computer -DomainName ""$domain.local"" -Credential `$credential -Restart -Force -PassThru -ErrorAction Stop"
+            $commands = $commands + "Add-Computer -DomainName ""$netbiosNameLower.$domainSuffix"" -Credential `$credential -Force -PassThru -ErrorAction Stop"
             
             $commands | Out-File -FilePath $file -force
 
@@ -103,18 +77,53 @@ function JoinDomain
     }
     catch {
         Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Failed to join $vmName to the domain."
+        NewMessage -message $message -type "error"
     }
 }
 
 # Main Code
+Start-Transcript -Path $Env:DeploymentLogsDir\EnvironmentSetup.log -Append
+
+Write-Header "Joining $Env:jumpboxVM to the domain"
+
 Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-ConnectToAzure -subscriptionId $subscriptionId
+Write-Host "Connecting to Azure"
+ConnectToAzure -ErrorAction SilentlyContinue
 
 # Join Azure VM to domain
-JoinDomain -resourceGroup $resourceGroup -vmName "SqlK8sJumpbox" -domain "sqlk8s" -adminUsername $azureUser -adminPassword $azurePassword -ErrorAction SilentlyContinue
+Write-Host "Joining $Env:jumpboxVM to domain"
+JoinDomain -resourceGroup $Env:resourceGroup -vmName $Env:jumpboxVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"
+
+# Cleanup
+Write-Header "Cleanup environment"
+Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Confirm:$false
+
+Stop-Transcript
+
+# Reboot SqlK8sJumpbox
+$netbiosNameLower = $Env:netbiosName.toLower()
+Write-Host "`r`n";
+Write-Host "$Env:jumpboxVM has been joined to the domain and will now reboot";
+Write-Host "`r`n";
+Write-Host "Close Bastion session and reconnect using $Env:adminUsername@$netbiosNameLower.$Env:domainSuffix with the same password";
+
+$Env:adminUsername = $null
+$Env:adminPassword = $null
+$Env:resourceGroup = $null
+$Env:azureLocation = $null
+$Env:templateBaseUrl = $null
+$Env:netbiosName = $null
+$Env:domainSuffix = $null
+$Env:dcVM = $null
+$Env:jumpboxVM = $null
+$Env:jumpboxNic = $null
+
+Write-Host -NoNewLine "Press any key to continue...";
+$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
+Restart-Computer -Force

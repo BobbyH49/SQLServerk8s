@@ -8,7 +8,7 @@ For this solution, you will be using DxEnterprise which is a licensed product fr
 
 The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.
 
-1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<azureUser\>.sqlk8s.local)
+1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<adminUsername\>@sqlk8s.local)
 
     ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 
@@ -141,7 +141,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 16. Add loadbalancer for listener
 
     ```text
-    kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2022\service.yaml -n sql22
+    kubectl apply -f C:\Deployment\yaml\SQL2022\service.yaml -n sql22
     ```
 
     ![Create Listener Internal Load Balancer](media/CreateListenerILB22.jpg)
@@ -157,7 +157,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 18. Copy AdventureWorks2019.bak to first pod
 
     ```text
-    kubectl cp \..\SQLBackups\AdventureWorks2019.bak mssql22-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql22
+    kubectl cp \..\Deployment\backups\AdventureWorks2019.bak mssql22-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql22
     ```
 
     ![Upload AdventureWorks2019 Backup](media/UploadSqlBackup22.jpg)
@@ -180,8 +180,8 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     restore database AdventureWorks2019
     from disk = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
     with
-    move N'AdventureWorks2019' to N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
-    , move N'AdventureWorks2019_log' to N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
+    move N'AdventureWorks2017' to N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
+    , move N'AdventureWorks2017_log' to N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
     , recovery, stats = 10
     ```
 

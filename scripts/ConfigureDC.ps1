@@ -3,26 +3,10 @@
 # Configure Active Directory Domain
 # Create a new Active Directory Organization Unit and make it default for computer objects
 
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [string]$subscriptionId,
-    [Parameter(Mandatory = $true)]
-    [string]$resourceGroup,
-    [Parameter(Mandatory = $true)]
-    [string]$location,
-    [Parameter(Mandatory = $true)]
-    [string]$azureUser,
-    [Parameter(Mandatory = $true)]
-    [string]$azurePassword
-)
 function NewMessage 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$message,
-        [Parameter(Mandatory = $true)]
         [string]$type
     )
     if ($type -eq "success") {
@@ -43,23 +27,14 @@ function NewMessage
 # Connect to Azure Subscription
 function ConnectToAzure 
 {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$subscriptionId
-    )
-
     try {
-        $check = Get-AzContext -ErrorAction SilentlyContinue
-        if ($null -eq $check) {
-            Connect-AzAccount -SubscriptionId $subscriptionId | out-null
-        }
-        else {
-            Set-AzContext -SubscriptionId $subscriptionId | out-null
-        }
+        Connect-AzAccount -Identity | out-null
+        $message = "Connected to Azure."
+        NewMessage -message $message -type "success"
     }
     catch {
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Failed to connect to Azure."
+        NewMessage -message $message -type "error"
         Exit
     }
 }
@@ -67,11 +42,8 @@ function ConnectToAzure
 # Install Active Directory Domain Services
 function InstallADDS 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup
     )
     try {
@@ -98,22 +70,23 @@ function InstallADDS
     }
     catch {
         Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
-    }
+        $message = "Error installing Active Directory."
+        NewMessage -message $message -type "error"
+}
 }   
 
 # Configure Active Directory Domain
 function ConfigureADDS 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
         [string]$resourceGroup,
-        [Parameter(Mandatory = $true)]
+        [string]$netbiosName,
+        [string]$domainSuffix,
         [string]$adminPassword
     )
+    $netbiosNameLower = $netbiosName.toLower()
+    $netbiosNameUpper = $netbiosName.toUpper()
     try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\ConfigureADDS.ps1"
@@ -126,8 +99,8 @@ function ConfigureADDS
             $commands = $commands + "-CreateDnsDelegation:`$false ``" + "`r`n"
             $commands = $commands + "-DatabasePath ""C:\Windows\NTDS"" ``" + "`r`n"
             $commands = $commands + "-DomainMode ""WinThreshold"" ``" + "`r`n"
-            $commands = $commands + "-DomainName ""sqlk8s.local"" ``" + "`r`n"
-            $commands = $commands + "-DomainNetbiosName ""SQLK8S"" ``" + "`r`n"
+            $commands = $commands + "-DomainName ""$netbiosNameLower.$domainSuffix"" ``" + "`r`n"
+            $commands = $commands + "-DomainNetbiosName ""$netbiosNameUpper"" ``" + "`r`n"
             $commands = $commands + "-ForestMode ""WinThreshold"" ``" + "`r`n"
             $commands = $commands + "-InstallDns:`$true ``" + "`r`n"
             $commands = $commands + "-LogPath ""C:\Windows\NTDS"" ``" + "`r`n"
@@ -152,27 +125,30 @@ function ConfigureADDS
     }
     catch {
         Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Error configuring Active Directory."
+        NewMessage -message $message -type "error"
     }
 }    
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
 function NewADOU 
 {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
         [string]$vmName,
-        [Parameter(Mandatory = $true)]
-        [string]$resourceGroup
+        [string]$resourceGroup,
+        [string]$netbiosName,
+        [string]$domainSuffix,
+        [string]$ouName
     )
+    $netbiosNameUpper = $netbiosName.toUpper()
+    $domainSuffixUpper = $domainSuffix.toUpper()
     try {
             # Create a temporary file in the users TEMP directory
             $file = $env:TEMP + "\NewADOU.ps1"
 
             $commands = "#Create an OU and make it default computer objects OU" + "`r`n"
-            $commands = $commands + "New-ADOrganizationalUnit -Name ""ComputersOU"" -Path ""DC=SQLK8S,DC=LOCAL""" + "`r`n"
-            $commands = $commands + "redircmp ""OU=ComputersOU,DC=SQLK8S,DC=LOCAL"""
+            $commands = $commands + "New-ADOrganizationalUnit -Name ""$ouName"" -Path ""DC=$netbiosNameUpper,DC=$domainSuffixUpper""" + "`r`n"
+            $commands = $commands + "redircmp ""OU=$ouName,DC=$netbiosNameUpper,DC=$domainSuffixUpper"""
             $commands | Out-File -FilePath $file -force
 
             $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
@@ -194,29 +170,72 @@ function NewADOU
     }
     catch {
         Remove-Item $file
-        Write-Warning "Error occured = " $Error[0]
+        $message = "Error creating Organization Unit in Active Directory."
+        NewMessage -message $message -type "error"
+    }
+}    
+# Create a new Active Directory Organization Unit and make it default for computer objects
+function NewDNSForwarder 
+{
+    
+    param(
+        [string]$vmName,
+        [string]$resourceGroup,
+        [string]$dnsForwarderName,
+        [string]$masterServers
+    )
+    try {
+            # Create a temporary file in the users TEMP directory
+            $file = $env:TEMP + "\NewDNSForwarder.ps1"
+
+            $commands = "# Create a DNSForwarder for the AKS cluster" + "`r`n"
+            $commands = $commands + "Add-DnsServerConditionalForwarderZone -Name ""$DnsForwarderName"" -MasterServers ""$MasterServers"""
+            $commands | Out-File -FilePath $file -force
+
+            $result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
+
+            if ($result.Status -eq "Succeeded") {
+                $message = "DNS Forwarder for AKS has been created on $vmName."
+                NewMessage -message $message -type "success"
+            }
+            else {
+                $message = "Failed to create DNS Forwarder on $vmName."
+                NewMessage -message $message -type "error"
+            }
+
+            Remove-Item $file
+    }
+    catch {
+        Remove-Item $file
+        $message = "Error creating DNS Forwarder."
+        NewMessage -message $message -type "error"
     }
 }    
 
 # Main Code
-Write-Host "Configuration starts: $(Get-Date)"
+Write-Host "DC Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-ConnectToAzure -subscriptionId $subscriptionId
+Write-Host "Connecting to Azure"
+ConnectToAzure -ErrorAction SilentlyContinue
 
 # Install Active Directory Domain Services
-InstallADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
+Write-Host "Installing Active Directory"
+InstallADDS -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -ErrorAction SilentlyContinue
 
 # Configure Active Directory Domain
-ConfigureADDS -resourceGroup $resourceGroup -vmName "SqlK8sDC" -adminPassword $azurePassword -ErrorAction SilentlyContinue
+Write-Host "Configuring Active Directory"
+ConfigureADDS -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -adminPassword $Env:adminPassword -ErrorAction SilentlyContinue
 
 # Create a new Active Directory Organization Unit and make it default for computer objects
-NewADOU -resourceGroup $resourceGroup -vmName "SqlK8sDC" -ErrorAction SilentlyContinue
+Write-Host "Adding Organization Unit to Active Directory"
+$ouName = "SetupOU"
+NewADOU -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -ouName $ouName -ErrorAction SilentlyContinue
 
-# Remove DNS Server from SqlK8sJumpbox-nic
-$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name "SqlK8sJumpbox-nic"
-$nic.DnsSettings.DnsServers.Clear()
-$nic | Set-AzNetworkInterface
+Write-Host "Add DNS Forwarder for AKS to Domain Controller"
+$dnsForwarderName = "privatelink.$Env:azureLocation.azmk8s.io"
+$masterServers = "168.63.129.16"
+NewDNSForwarder -resourceGroup $Env:resourceGroup -vmName $Env:dcVM -dnsForwarderName $dnsForwarderName -masterServers $masterServers -ErrorAction SilentlyContinue
 
 Write-Host "Configuration ends: $(Get-Date)"
