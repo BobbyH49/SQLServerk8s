@@ -1,6 +1,6 @@
 # Create SQL Server 2019 Container Instances
 
-[< Previous Module](../modules/kerberos.md) - **[Home](../README.md)** - [Next Module >](../modules/hadr19.md)
+[< Previous Module](../modules/encryption.md) - **[Home](../README.md)** - [Next Module >](../modules/hadr19.md)
 
 ## Install and configure SQL Server 2019 on Containers
 

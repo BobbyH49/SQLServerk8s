@@ -1,6 +1,6 @@
 # Setup Windows Authentication (Kerberos)
 
-[< Previous Module](../modules/setup.md) - **[Home](../README.md)** - [Next Module >](../modules/sql19.md)
+[< Previous Module](../modules/setup.md) - **[Home](../README.md)** - [Next Module >](../modules/encryption.md)
 
 ## Join SqlK8sLinux to the SqlK8s domain
 
