@@ -8,7 +8,7 @@
 
 ## Deployment
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Foptimize_setup%2Ftemplates%2FFullsetup.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Foptimize_setup%2Ftemplates%2Fsetup.json)
 
 The following resources will be deployed (expensive to keep running and takes around 40 minutes to deploy).
 
@@ -27,7 +27,7 @@ The following resources will be deployed (expensive to keep running and takes ar
 
 ## Deploy Azure Resources
 
-1. Right-click or `Ctrl + click` the button that relates to your chosen deployment.  This will open the Azure Portal in a new window.
+1. Right-click or **Ctrl + click** the deploy button under [Deployment](#deployment).  This will open the Azure Portal in a new window.
 
 2. Complete the form and then click **Review + create**
 
