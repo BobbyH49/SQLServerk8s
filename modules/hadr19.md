@@ -135,7 +135,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 16. Add loadbalancer for listener
 
     ```text
-    kubectl apply -f C:\SQLServerk8s-main\yaml\SQLContainerDeployment\SQL2019\service.yaml -n sql19
+    kubectl apply -f C:\Deployment\yaml\SQL2019\service.yaml -n sql19
     ```
 
     ![Create Listener Internal Load Balancer](media/CreateListenerILB19.jpg)
@@ -151,7 +151,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 18. Copy AdventureWorks2019.bak to first pod
 
     ```text
-    kubectl cp \..\SQLBackups\AdventureWorks2019.bak mssql19-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql19
+    kubectl cp \..\Deployment\backups\AdventureWorks2019.bak mssql19-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql19
     ```
 
     ![Upload AdventureWorks2019 Backup](media/UploadSqlBackup19.jpg)
@@ -170,8 +170,8 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     restore database AdventureWorks2019
     from disk = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
     with
-    move N'AdventureWorks2019' to N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
-    , move N'AdventureWorks2019_log' to N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
+    move N'AdventureWorks2017' to N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
+    , move N'AdventureWorks2017_log' to N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
     , recovery, stats = 10
     ```
 

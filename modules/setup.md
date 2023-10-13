@@ -69,7 +69,7 @@ The following resources will be deployed (expensive to keep running and takes ar
 
     ![Networks Message](media/NetworksMessage.jpg)
 
-10. If you choose to do the Full deployment then a Powershell window will open and begin joining the jumpbox to the domain.  Once the script has completed it will prompt you to press a key to reboot and then logon using the new domain credentials with the same password.  Follow these instructions to complete the setup process.
+10. A Powershell window will open and begin joining the jumpbox to the domain.  Once the script has completed it will prompt you to press a key to reboot and then logon using the new domain credentials with the same password.  Follow these instructions to complete the setup process.
 
     ![Join Domain Script](media/JoinDomainScript.jpg)
 

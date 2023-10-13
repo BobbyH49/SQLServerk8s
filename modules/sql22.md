@@ -12,7 +12,7 @@
 
     ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 
-2. Edit the following yaml files and replace all occurrences of <IP Address Value> with the parameter you supplied in the ARM template deployment.
+2. Edit the following yaml files and replace all occurrences of \<IP Address Value\> with the parameter you supplied in the ARM template deployment.
 
     * C:\Deployment\yaml\SQL2022\dxemssql.yaml
     * C:\Deployment\yaml\SQL2022\pod-service.yaml
@@ -136,8 +136,6 @@
 
 16. Copy the keytab files (created in the kerberos module) to all 3 SQL Pods
 
-    **NB: This is only required if you have deployed the Domain Controller and completed all tasks from kerberos.md**
-
     ```text
     kubectl cp \..\Deployment\keytab\SQL2022\mssql_mssql22-0.keytab mssql22-0:/var/opt/mssql/secrets/mssql.keytab -n sql22
     kubectl cp \..\Deployment\keytab\SQL2022\mssql_mssql22-1.keytab mssql22-1:/var/opt/mssql/secrets/mssql.keytab -n sql22
@@ -158,8 +156,6 @@
 
 18. Copy SSL Certificate and Key files (created in the encryption module) to all 3 SQL Pods
 
-    **NB: This is only required if you have deployed the Linux Server and completed all tasks from encryption.md**
-
     ```text
     kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.pem" mssql19-0:/etc/ssl/certs/mssql.pem -n sql22
     kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.key" mssql19-0:/etc/ssl/private/mssql.key -n sql22
@@ -172,8 +168,6 @@
     ![Upload SSL Files](media/UploadSSLFiles22.jpg)
 
 19. Update mssql-conf
-
-    **NB: This is only required if you have deployed the Linux Server and completed all tasks from encryption.md**
 
     ```text
     kubectl apply -f C:\Deployment\yaml\SQL2022\mssql-conf-encryption.yaml -n sql22
@@ -201,16 +195,13 @@
 
     ![Verify SQL Pods](media/VerifySQLPods22.jpg)
 
-22. Open SQL Server Management Studio and connect to each of the SQL Containers (i.e. mssql22-0, mssql22-1, mssql22-2) using SQL authentication (sa account and \<adminPassword\>)
+22. Open SQL Server Management Studio and connect to each of the SQL Containers using their Fully Qualified Domain Name (i.e. mssql19-0.sqlk8s.local, mssql19-1.sqlk8s.local, mssql19-2.sqlk8s.local) with SQL authentication (sa account and \<adminPassword\>).
 
     ![Open SQL Server Management Studio](media/OpenSSMS.jpg)
 
     ![Connect to SQL Pods](media/ConnectSQLPods22.jpg)
 
     ![SQL Pods Connected](media/SQLPodsConnected22.jpg)
-
-    ![SQL Pods Connected FQDN](media/SQLPodsConnectedFQDN22.jpg)
-
 
 23. Open a T-SQL session on each pod (container) and create a Windows login for \<adminUsername\> with sysadmin permissions
 
@@ -233,8 +224,6 @@
     ![Create SQL Logins](media/CreateSQLLogins22.jpg)
 
 24. You should now be able to login to all 3 instances using Windows Authentication (SQLK8S\\\<adminUsername\>)
-
-    **NB: This is only required if you have deployed the Domain Controller and completed all tasks from kerberos.md**
 
     ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos22.jpg)
 

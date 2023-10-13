@@ -363,7 +363,7 @@
     ```text
     cd /
     mkdir Deployment\keytab\SQL2019
-    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql_mssql19* C:\Deployment\keytab\SQL2019\
+    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql_mssql19*.keytab C:\Deployment\keytab\SQL2019\
     ```
 
     For SQL Server 2022
@@ -371,7 +371,7 @@
     ```text
     cd /
     mkdir Deployment\keytab\SQL2022
-    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql_mssql22* C:\Deployment\keytab\SQL2022
+    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql_mssql22*.keytab C:\Deployment\keytab\SQL2022
     ```
 
     When prompted to continue enter **yes**

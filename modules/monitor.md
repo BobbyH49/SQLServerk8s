@@ -37,7 +37,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 5. Configure storage for InfluxDB
 
     ```text
-    kubectl apply -f "C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\InfluxDB\storage.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\storage.yaml" --namespace sqlmonitor
     ```
 
     ![Configure InfluxDB Storage](media/ConfigureInfluxDBStorage.jpg)
@@ -45,7 +45,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 6. Deploy InfluxDB
 
     ```text
-    kubectl apply -f "C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\InfluxDB\deployment.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\deployment.yaml" --namespace sqlmonitor
     ```
 
     ![Deploy InfluxDB](media/DeployInfluxDB.jpg)
@@ -61,7 +61,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 8. Create internal load balancer for InfluxDB
 
     ```text
-    kubectl apply -f "C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\InfluxDB\service.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\service.yaml" --namespace sqlmonitor
     ```
 
     ![Create InfluxDB Internal Load Balancer](media/CreateInfluxDbIlb.jpg)
@@ -135,7 +135,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Edit InfluxDB Config](media/EditInfluxDBConfig.jpg)
 
-16. Edit **C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\Telegraf\config.yaml** in notepad
+16. Edit **C:\Deployment\yaml\Monitor\Telegraf\config.yaml** in notepad
 
     Replace lines 143-145 with the server configurations created in **Step 15**
 
@@ -162,7 +162,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 18. Deploy the Telegraf configuration file
 
     ```text
-        kubectl apply -f "C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\Telegraf\config.yaml" --namespace sqlmonitor
+        kubectl apply -f "C:\Deployment\yaml\Monitor\Telegraf\config.yaml" --namespace sqlmonitor
     ```
 
     ![Deploy Telegraf Config](media/DeployTelegrafConfig.jpg)
@@ -170,7 +170,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 19. Deploy the Telegraf agent
 
     ```text
-        kubectl apply -f "C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\Telegraf\deployment.yaml" --namespace sqlmonitor
+        kubectl apply -f "C:\Deployment\yaml\Monitor\Telegraf\deployment.yaml" --namespace sqlmonitor
     ```
 
     ![Deploy Telegraf](media/DeployTelegraf.jpg)
@@ -249,14 +249,14 @@ This solution currently creates Grafana as a pod on your AKS cluster but you cou
 
 2. Deploy Grafana
     ```text
-    kubectl apply -f "C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\Grafana\deployment.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\Grafana\deployment.yaml" --namespace sqlmonitor
     ```
 
     ![Deploy Grafana](media/DeployGrafana.jpg)
 
 3. Deploy Internal Load Balancer for Grafana
     ```text
-    kubectl apply -f "C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\Grafana\service.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\Grafana\service.yaml" --namespace sqlmonitor
     ```
 
     ![Deploy Grafana Service](media/DeployGrafanaService.jpg)
@@ -344,7 +344,7 @@ This solution currently creates Grafana as a pod on your AKS cluster but you cou
 
     ![Import Dashboard](media/ImportDashboard.jpg)
 
-18. Drag and drop **C:\SQLServerk8s-main\yaml\SQLContainerDeployment\Monitor\Grafana\Dashboard.json** into the upload panel and then click **Import**
+18. Drag and drop **C:\Deployment\yaml\Monitor\Grafana\Dashboard.json** into the upload panel and then click **Import**
 
     **NB: When the dashboard loads it will contain failure messages and none of the charts will display.  This is as expected.**
 

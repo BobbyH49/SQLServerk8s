@@ -75,7 +75,8 @@
     ```text
     cd /
     mkdir Deployment\certificates\SQL2019
-    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql19* C:\Deployment\certificates\SQL2019\
+    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql19*.pem C:\Deployment\certificates\SQL2019\
+    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql19*.key C:\Deployment\certificates\SQL2019\
     ```
 
     For SQL Server 2022
@@ -83,7 +84,8 @@
     ```text
     cd /
     mkdir Deployment\certificates\SQL2022
-    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql22* C:\Deployment\certificates\SQL2022
+    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql22*.pem C:\Deployment\certificates\SQL2022
+    scp <adminUsername>@sqlk8slinux:/home/<adminUsername>/mssql22*.key C:\Deployment\certificates\SQL2022
     ```
 
     If prompted to continue enter **yes**
