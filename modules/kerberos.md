@@ -1,8 +1,6 @@
-# Setup Windows Authentication (Kerberos) via Domain Controller and Linux Server
+# Setup Windows Authentication (Kerberos)
 
 [< Previous Module](../modules/setup.md) - **[Home](../README.md)** - [Next Module >](../modules/sql19.md)
-
-**NB: You only need to go through this module if you have deployed the Domain Controller (SqlK8sDC)**
 
 ## Join SqlK8sLinux to the SqlK8s domain
 

@@ -6,11 +6,11 @@
 
 * An [Azure account](https://azure.microsoft.com/free/) with owner permissions on an active subscription.
 
-## Full Deployment
+## Deployment
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Foptimize_setup%2Ftemplates%2FFullsetup.json)
 
-The following resources will be deployed for full testing (expensive to keep running and takes around 40 minutes to deploy).
+The following resources will be deployed (expensive to keep running and takes around 40 minutes to deploy).
 
 * Virtual Network (SqlK8s-vnet)
 * 3 subnets (AKS, VMs, AzureBastionSubnet)
@@ -18,41 +18,6 @@ The following resources will be deployed for full testing (expensive to keep run
 * 3 Virtual Machines (Standard D2s v3)
     * SqlK8sDC (Domain Controller with 1 Nic and 1 OS Disk)
     * SqlK8sLinux (Linux server used to join AKS containers to domain with 1 Nic and 1 OS Disk)
-    * SqlK8sJumpbox (Client used to run scripts with 1 Nic and 1 OS Disk)
-* 4 Network Security Groups (1 for each subnet and 1 for Nic on SqlK8sJumpbox)
-* 2 Public IP Addresses (1 for Bastion and 1 for Jumpbox)
-* Azure Kubernetes Cluster (VM Scale Set with 2 - 3 Standard_D8s_v3 VMs)
-
-**NB: The Scale set has a minimum of 2 VMs to handle either of the SQL Server 2019 or 2022 deployments.  But it can scale to a maximum of 3 VMs if you wish to deploy both.** 
-
-## Deploy without Domain Controller
-
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2FNoDCsetup.json)
-
-The following resources will be deployed for testing without joining a domain.  However, a Linux VM will be created to setup channel encryption (expensive to keep running).
-
-* Virtual Network (SqlK8s-vnet)
-* 3 subnets (AKS, VMs, AzureBastionSubnet)
-* Bastion Host (SqlK8s-bastion)
-* 2 Virtual Machines (Standard D2s v3)
-    * SqlK8sLinux (Linux server used to join AKS containers to domain with 1 Nic and 1 OS Disk)
-    * SqlK8sJumpbox (Client used to run scripts with 1 Nic and 1 OS Disk)
-* 4 Network Security Groups (1 for each subnet and 1 for Nic on SqlK8sJumpbox)
-* 2 Public IP Addresses (1 for Bastion and 1 for Jumpbox)
-* Azure Kubernetes Cluster (VM Scale Set with 2 - 3 Standard_D8s_v3 VMs)
-
-**NB: The Scale set has a minimum of 2 VMs to handle either of the SQL Server 2019 or 2022 deployments.  But it can scale to a maximum of 3 VMs if you wish to deploy both.** 
-
-## Deploy without Domain Controller or Linux Server
-
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2FNoLinuxsetup.json)
-
-The following resources will be deployed for testing without joining a domain or configuring channel encryption (cheapest option).
-
-* Virtual Network (SqlK8s-vnet)
-* 3 subnets (AKS, VMs, AzureBastionSubnet)
-* Bastion Host (SqlK8s-bastion)
-* 1 Virtual Machine (Standard D2s v3)
     * SqlK8sJumpbox (Client used to run scripts with 1 Nic and 1 OS Disk)
 * 4 Network Security Groups (1 for each subnet and 1 for Nic on SqlK8sJumpbox)
 * 2 Public IP Addresses (1 for Bastion and 1 for Jumpbox)

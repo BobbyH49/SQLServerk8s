@@ -1,8 +1,6 @@
-# Setup Channel Encryption (Encryption in Transit) via Linux Server
+# Setup Channel Encryption (Encryption in Transit)
 
 [< Previous Module](../modules/kerberos.md) - **[Home](../README.md)** - [Next Module >](../modules/encryption.md)
-
-**NB: You only need to go through this module if you have deployed the Linux Server (SqlK8sLinux)**
 
 ## Create and download SSL Certificate from SqlK8sLinux
 
