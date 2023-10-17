@@ -126,7 +126,7 @@
 
     ![Verify SQL Services](media/VerifySQLServices22.jpg)
 
-15. Check pods by nodes (there will be 2 nodes if you are only running one instance e.g. SQL 2019 or SQL 2022, but this could increase up to 3 nodes if running both)
+15. Check pods by nodes.  There will be 2 nodes (one node with 2 pods and the other with 1 pod).
 
     ```text
     kubectl get pod -o=custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName -n sql22
@@ -157,12 +157,12 @@
 18. Copy SSL Certificate and Key files (created in the encryption module) to all 3 SQL Pods
 
     ```text
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.pem" mssql19-0:/etc/ssl/certs/mssql.pem -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.key" mssql19-0:/etc/ssl/private/mssql.key -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.pem" mssql19-1:/etc/ssl/certs/mssql.pem -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.key" mssql19-1:/etc/ssl/private/mssql.key -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.pem" mssql19-2:/etc/ssl/certs/mssql.pem -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.key" mssql19-2:/etc/ssl/private/mssql.key -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.pem" mssql22-0:/etc/ssl/certs/mssql.pem -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.key" mssql22-0:/etc/ssl/private/mssql.key -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.pem" mssql22-1:/etc/ssl/certs/mssql.pem -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.key" mssql22-1:/etc/ssl/private/mssql.key -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.pem" mssql22-2:/etc/ssl/certs/mssql.pem -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.key" mssql22-2:/etc/ssl/private/mssql.key -n sql22
     ```
 
     ![Upload SSL Files](media/UploadSSLFiles22.jpg)
@@ -195,7 +195,7 @@
 
     ![Verify SQL Pods](media/VerifySQLPods22.jpg)
 
-22. Open SQL Server Management Studio and connect to each of the SQL Containers using their Fully Qualified Domain Name (i.e. mssql19-0.sqlk8s.local, mssql19-1.sqlk8s.local, mssql19-2.sqlk8s.local) with SQL authentication (sa account and \<adminPassword\>).
+22. Open SQL Server Management Studio and connect to each of the SQL Containers using their Fully Qualified Domain Name (i.e. mssql22-0.sqlk8s.local, mssql22-1.sqlk8s.local, mssql22-2.sqlk8s.local) with SQL authentication (sa account and \<adminPassword\>).
 
     ![Open SQL Server Management Studio](media/OpenSSMS.jpg)
 

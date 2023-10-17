@@ -160,7 +160,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Open SQL Server Management Studio](media/OpenSSMS.jpg)
 
-20. Connect to mssql19-0
+20. Connect to mssql19-0.sqlk8s.local
 
     ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos19.jpg)
 
@@ -212,7 +212,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Verify Availability Group](media/VerifyAg19.jpg)
 
-26. Connect to the listener from SQL Server Management Studio (mssql19-agl1,14033 or mssql19-agl1.sqlk8s.local,14033) and verify that mssql19-0 is the primary pod
+26. Connect to the listener from SQL Server Management Studio (mssql19-agl1.sqlk8s.local,14033) and verify that mssql19-0 is the primary pod
 
     ![Connect to SQL Listener via Kerberos](media/ConnectSQLListener19.jpg)
 

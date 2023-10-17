@@ -126,7 +126,7 @@
 
     ![Verify SQL Services](media/VerifySQLServices19.jpg)
 
-15. Check pods by nodes (there will be 2 nodes if you are only running one instance e.g. SQL 2019 or SQL 2022, but this could increase up to 3 nodes if running both)
+15. Check pods by nodes.  There will be 2 nodes (one node with 2 pods and the other with 1 pod).
 
     ```text
     kubectl get pod -o=custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName -n sql19

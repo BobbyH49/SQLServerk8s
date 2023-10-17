@@ -166,7 +166,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Open SQL Server Management Studio](media/OpenSSMS.jpg)
 
-20. Connect to mssql22-0
+20. Connect to mssql22-0.sqlk8s.local
 
     ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos22.jpg)
 
@@ -222,7 +222,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Verify Availability Group](media/VerifyAg22.jpg)
 
-27. Connect to the listener from SQL Server Management Studio (mssql22-agl1,14033 or mssql22-agl1.sqlk8s.local,14033)
+27. Connect to the listener from SQL Server Management Studio (mssql22-agl1.sqlk8s.local,14033)
 
     **NB: You will notice there is no Availability Group option when connected to the listener, and there is only 1 database (AdventureWorks2019) which is not synchronized.  However, mssql-0 shows 3 synchronized databases.  This is by design, with Contained Availability Groups, the listener appears as a standalone instance.  The availability group is under the hood.**
 
@@ -239,5 +239,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
     ```
 
     ![Failover and Verify Availability Group](media/FailoverVerifyAg22.jpg)
+
+    ![Listener Post Failover](media/ListenerPostFailover22.jpg)
 
 [Continue >](../modules/logins.md)

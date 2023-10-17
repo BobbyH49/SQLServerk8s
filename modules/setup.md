@@ -10,7 +10,7 @@
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2Fsetup.json)
 
-The following resources will be deployed (expensive to keep running and takes around 40 minutes to deploy).
+The following resources will be deployed (takes around 40 minutes to deploy).
 
 * Virtual Network (SqlK8s-vnet)
 * 3 subnets (AKS, VMs, AzureBastionSubnet)
@@ -23,7 +23,7 @@ The following resources will be deployed (expensive to keep running and takes ar
 * 2 Public IP Addresses (1 for Bastion and 1 for Jumpbox)
 * Azure Kubernetes Cluster (VM Scale Set with 2 - 3 Standard_D8s_v3 VMs)
 
-**NB: The Scale set has a minimum of 2 VMs to handle either of the SQL Server 2019 or 2022 deployments.  But it can scale to a maximum of 3 VMs if you wish to deploy both.** 
+**NB: This deployment can be expensive to keep running but you can reduce costs by shutting down the 3 Virtual Machines and AKS Cluster and starting up when required.  You can also drop the bastion host when shutting down the Virtual Machines and then re-create when required.** 
 
 ## Deploy Azure Resources
 
