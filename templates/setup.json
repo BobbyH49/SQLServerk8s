@@ -656,7 +656,7 @@
                         "count": 2,
                         "enableAutoScaling": true,
                         "minCount": 2,
-                        "maxCount": 3,
+                        "maxCount": 4,
                         "vmSize": "Standard_D8s_v3",
                         "osType": "Linux",
                         "storageProfile": "ManagedDisks",
