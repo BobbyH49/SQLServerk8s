@@ -26,7 +26,7 @@ data:
     [network]
     privilegedadaccount = sqlk8ssvc19
     kerberoskeytabfile = /var/opt/mssql/secrets/mssql.keytab
-    tlscert = /etc/ssl/certs/mssql.pem
-    tlskey = /etc/ssl/private/mssql.key
+    tlscert = /var/opt/mssql/certs/mssql.pem
+    tlskey = /var/opt/mssql/private/mssql.key
     tlsprotocols = 1.2
     forceencryption = 1

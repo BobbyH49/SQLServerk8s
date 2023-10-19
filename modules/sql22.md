@@ -154,18 +154,18 @@
 
     ![Upload Logger Files](media/UploadLoggerFiles22.jpg)
 
-18. Copy SSL Certificate and Key files (created in the encryption module) to all 3 SQL Pods
+18. Copy TLS Certificate and Key files (created in the encryption module) to all 3 SQL Pods
 
     ```text
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.pem" mssql22-0:/etc/ssl/certs/mssql.pem -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.key" mssql22-0:/etc/ssl/private/mssql.key -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.pem" mssql22-1:/etc/ssl/certs/mssql.pem -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.key" mssql22-1:/etc/ssl/private/mssql.key -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.pem" mssql22-2:/etc/ssl/certs/mssql.pem -n sql22
-    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.key" mssql22-2:/etc/ssl/private/mssql.key -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.pem" mssql22-0:/var/opt/mssql/certs/mssql.pem -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.key" mssql22-0:/var/opt/mssql/private/mssql.key -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.pem" mssql22-1:/var/opt/mssql/certs/mssql.pem -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.key" mssql22-1:/var/opt/mssql/private/mssql.key -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.pem" mssql22-2:/var/opt/mssql/certs/mssql.pem -n sql22
+    kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.key" mssql22-2:/var/opt/mssql/private/mssql.key -n sql22
     ```
 
-    ![Upload SSL Files](media/UploadSSLFiles22.jpg)
+    ![Upload TLS Files](media/UploadTLSFiles22.jpg)
 
 19. Update mssql-conf
 
@@ -175,7 +175,7 @@
 
     ![Update SQL Config](media/UpdateSQLConfig22.jpg)
 
-20. Delete all 3 pods so they are re-created with Kerberos and SSL correctly configured
+20. Delete all 3 pods so they are re-created with Kerberos and TLS correctly configured
 
     **NB: This also tests the High Availability of each SQL Server Instance before the availability group is implemented**
 
@@ -228,5 +228,23 @@
     ![Connect to SQL Pods via Kerberos](media/ConnectSQLKerberos22.jpg)
 
     ![SQL Pods Connected via Kerberos](media/SQLKerberosConnected22.jpg)
+
+25. Open a T-SQL session on each pod (container) and confirm that Kerberos and TLS are configured correctly
+
+    ```text
+    SELECT
+        session_id
+        , net_transport
+        , protocol_type
+        , encrypt_option
+        , auth_scheme
+    FROM
+        sys.dm_exec_connections
+    WHERE
+        session_id = @@SPID;
+    GO
+    ```
+
+    ![Confirm Security Configurations](media/ConfirmSecurityConfigs22.jpg)
 
 [Continue >](../modules/hadr22.md)

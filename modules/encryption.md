@@ -2,7 +2,7 @@
 
 [< Previous Module](../modules/kerberos.md) - **[Home](../README.md)** - [Next Module >](../modules/sql19.md)
 
-## Create and download SSL Certificate from SqlK8sLinux
+## Create and download TLS Certificate from SqlK8sLinux
 
 1. Connect to SqlK8sJumpbox via Bastion (using domain account i.e. \<adminUsername\>\@sqlk8s.local)
 

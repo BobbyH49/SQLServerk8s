@@ -67,10 +67,10 @@ spec:
             - name: krb5-config-volume
               mountPath: /etc/krb5.conf
               subPath: krb5.conf
-            - name: ssl-certs
-              mountPath: /etc/ssl/certs/
-            - name: ssl-keys
-              mountPath: /etc/ssl/private/
+            - name: tls-certs
+              mountPath: /var/opt/mssql/certs
+            - name: tls-keys
+              mountPath: /var/opt/mssql/private
         - name: dxe
           image: dh2i/dxe
           env:
@@ -137,7 +137,7 @@ spec:
           requests:
             storage: 8Gi
     - metadata:
-        name: ssl-certs
+        name: tls-certs
       spec:
         accessModes:
           - ReadWriteOnce
@@ -145,7 +145,7 @@ spec:
           requests:
             storage: 1Gi
     - metadata:
-        name: ssl-keys
+        name: tls-keys
       spec:
         accessModes:
           - ReadWriteOnce
