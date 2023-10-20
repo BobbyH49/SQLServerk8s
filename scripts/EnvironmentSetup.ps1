@@ -152,7 +152,8 @@ Write-Header "Deploying Linux Server with public key authentication"
 # Generate ssh keys
 Write-Host "Generating ssh keys"
 $linuxKeyFile = $Env:linuxVM.ToLower() + "_id_rsa"
-mkdir C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh
+set-location C:\Users\$Env:adminUsername.$Env:netbiosName
+mkdir .ssh
 ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh\$linuxKeyFile
 $publicKey = Get-Content C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh\$linuxKeyFile.pub
 
