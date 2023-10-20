@@ -6,7 +6,9 @@ param (
     [string]$templateBaseUrl,
     [string]$netbiosName,
     [string]$domainSuffix,
+    [string]$vnetIpAddressRangeStr,
     [string]$dcVM,
+    [string]$linuxVM,
     [string]$jumpboxVM,
     [string]$jumpboxNic
 )
@@ -18,7 +20,9 @@ param (
 [System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('netbiosName', $netbiosName, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('domainSuffix', $domainSuffix, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr', $vnetIpAddressRangeStr, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dcVM', $dcVM, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('linuxVM', $linuxVM, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('jumpboxVM', $jumpboxVM, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('jumpboxNic', $jumpboxNic, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "C:\Deployment", [System.EnvironmentVariableTarget]::Machine)
@@ -29,6 +33,7 @@ $Env:DeploymentLogsDir = "$Env:DeploymentDir\Logs"
 
 New-Item -Path $Env:DeploymentDir -ItemType directory -Force
 New-Item -Path $Env:DeploymentLogsDir -ItemType directory -Force
+New-Item -Path "$Env:DeploymentDir\templates" -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\scripts" -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\yaml" -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\yaml\SQL2019" -ItemType directory -Force
@@ -72,6 +77,9 @@ foreach ($app in $appsToInstall) {
 }
 
 Write-Header "Fetching Artifacts for SqlServerK8s"
+Write-Host "Downloading templates"
+Invoke-WebRequest ($templateBaseUrl + "templates/linux.json") -OutFile $Env:DeploymentDir\templates\linux.json
+
 Write-Host "Downloading scripts"
 Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:DeploymentDir\scripts\ConfigureDC.ps1
 Invoke-WebRequest ($templateBaseUrl + "scripts/DCJoinJumpbox.ps1") -OutFile $Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
@@ -131,6 +139,26 @@ If (-NOT (Test-Path $RegistryPath)) {
   New-Item -Path $RegistryPath -Force | Out-Null
 }
 New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
+
+# Deploy Linux Server with public key authentication
+Write-Header "Deploying Linux Server with public key authentication"
+
+# Generate and get the public key
+$linuxKeyFile = $linuxVM.ToLower() + "_id_rsa"
+mkdir C:\Users\$adminUsername.$netbiosName\.ssh
+ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$adminUsername.$netbiosName\.ssh\$linuxKeyFile
+$publicKey = Get-Content C:\Users\$adminUsername.$netbiosName\.ssh\$linuxKeyFile.pub
+
+# Generate Deployment Template Parameters
+$templateParameters = @{}
+$templateParameters.add("adminUsername", $adminUsername)
+$templateParameters.add("sshRSAPublicKey", $publicKey)
+New-AzResourceGroupDeployment -ResourceGroupName $resourceGroup -Mode Incremental -Force -TemplateFile "C:\Deployment\templates\linux.json" -TemplateParameterObject $templateParameters
+
+# Add known host
+ssh-keyscan -t rsa 10.$vnetIpAddressRangeStr.16.5 >> C:\Users\$adminUsername.$netbiosName\.ssh\known_hosts
+
+#ssh -i C:\Users\azureuser.SQLK8s\.ssh\sqlk8slinux_id_rsa azureuser@10.192.16.5
 
 # Configure Domain Controller
 Write-Header "Installing and configuring Domain Controller"

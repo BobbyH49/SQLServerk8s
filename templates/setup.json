@@ -469,57 +469,6 @@
             }
         },
         {
-            "name": "[variables('linuxVM')]",
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2022-03-01",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('linuxVM'), '-nic')]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('dcVM'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "Standard_D2s_v3"
-                },
-                "storageProfile": {
-                    "osDisk": {
-                        "createOption": "fromImage",
-                        "managedDisk": {
-                            "storageAccountType": "Premium_LRS"
-                        },
-                        "deleteOption": "Delete"
-                    },
-                    "imageReference": {
-                        "publisher": "Canonical",
-                        "offer": "UbuntuServer",
-                        "sku": "18_04-lts-gen2",
-                        "version": "latest"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('linuxVM'), '-nic'))]",
-                            "properties": {
-                                "deleteOption": "Detach"
-                            }
-                        }
-                    ]
-                },
-                "osProfile": {
-                    "computerName": "[variables('linuxVM')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "linuxConfiguration": {
-                        "patchSettings": {
-                            "patchMode": "ImageDefault"
-                        }
-                    }
-                }
-            }
-        },
-        {
             "name": "[concat(variables('jumpboxVM'), '-ip')]",
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-08-01",
@@ -540,7 +489,7 @@
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('jumpboxVM'), '-nic')]",
                 "[concat('Microsoft.Network/publicIpAddresses/', variables('jumpboxVM'), '-ip')]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('linuxVM'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('dcVM'))]"
             ],
             "identity": {
                 "type": "systemAssigned"
@@ -623,7 +572,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -vnetIpAddressRangeStr ', variables('vnetIpAddressRangeStr'), ' -dcVM ', variables('dcVM'), ' -linuxVM ', variables('linuxVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
                 }
             }
         },
