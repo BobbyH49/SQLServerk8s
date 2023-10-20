@@ -90,7 +90,7 @@ Write-Header "Configuring SQL Install Script"
 Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Confirm:$false
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DeploySQL.ps1
-Register-ScheduledTask -TaskName "DeploySQL" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
+Register-ScheduledTask -TaskName "DeploySQL" -Trigger $Trigger -User $Env:adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
 
 Stop-Transcript
 $logSuppress = Get-Content $Env:DeploymentLogsDir\DCJoinJumpbox.log | Where { $_ -notmatch "Host Application: powershell.exe" }

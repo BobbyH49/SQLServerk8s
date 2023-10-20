@@ -21,10 +21,7 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('linuxVM'), '-nic')]"
-            ],
+            "dependsOn": [],
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "Standard_D2s_v3"

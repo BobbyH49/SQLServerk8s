@@ -146,6 +146,32 @@ If (-NOT (Test-Path $RegistryPath)) {
 }
 New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
 
+# Deploy Linux Server with public key authentication
+Write-Header "Deploying Linux Server with public key authentication"
+
+# Generate ssh keys
+Write-Host "Generating ssh keys"
+$linuxKeyFile = $Env:linuxVM.ToLower() + "_id_rsa"
+mkdir C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh
+ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh\$linuxKeyFile
+$publicKey = Get-Content C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh\$linuxKeyFile.pub
+
+# Generate parameters for template deployment
+Write-Host "Generating parameters for template deployment"
+$templateParameters = @{}
+$templateParameters.add("adminUsername", $Env:adminUsername)
+$templateParameters.add("sshRSAPublicKey", $publicKey)
+$templateParameters.add("vnetName", $Env:vnetName)
+$templateParameters.add("linuxVM", $Env:linuxVM)
+
+# Deploy Linux server
+Write-Host "Deploying $Env:linuxVM"
+New-AzResourceGroupDeployment -ResourceGroupName $Env:resourceGroup -Mode Incremental -Force -TemplateFile "C:\Deployment\templates\linux.json" -TemplateParameterObject $templateParameters
+
+# Add known host
+Write-Host "Adding $Env:linuxVM as known host"
+ssh-keyscan -t rsa 10.$Env:vnetIpAddressRangeStr.16.5 >> C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh\known_hosts
+
 # Configure Domain Controller
 Write-Header "Installing and configuring Domain Controller"
 .$Env:DeploymentDir\scripts\ConfigureDC.ps1
