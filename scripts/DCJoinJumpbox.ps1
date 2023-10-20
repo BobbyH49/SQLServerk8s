@@ -68,7 +68,7 @@ function JoinDomain
 }
 
 # Main Code
-Start-Transcript -Path $Env:DeploymentLogsDir\EnvironmentSetup.log -Append
+Start-Transcript -Path $Env:DeploymentLogsDir\DCJoinJumpbox.log -Append
 
 Write-Header "Joining $Env:jumpboxVM to the domain"
 
@@ -85,11 +85,16 @@ JoinDomain -resourceGroup $Env:resourceGroup -vmName $Env:jumpboxVM -netbiosName
 
 Write-Host "Configuration ends: $(Get-Date)"
 
-# Cleanup
-Write-Header "Cleanup environment"
+# Configure SQL Install Script
+Write-Header "Configuring SQL Install Script"
 Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Confirm:$false
+$Trigger = New-ScheduledTaskTrigger -AtLogOn
+$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DeploySQL.ps1
+Register-ScheduledTask -TaskName "DeploySQL" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
 
 Stop-Transcript
+$logSuppress = Get-Content $Env:DeploymentLogsDir\DCJoinJumpbox.log | Where { $_ -notmatch "Host Application: powershell.exe" }
+$logSuppress | Set-Content $Env:DeploymentLogsDir\DCJoinJumpbox.log -Force
 
 # Reboot SqlK8sJumpbox
 $netbiosNameLower = $Env:netbiosName.toLower()
@@ -97,22 +102,6 @@ Write-Host "`r`n";
 Write-Host "$Env:jumpboxVM has been joined to the domain and will now reboot";
 Write-Host "`r`n";
 Write-Host "Close Bastion session and reconnect using $Env:adminUsername@$netbiosNameLower.$Env:domainSuffix with the same password";
-
-[System.Environment]::SetEnvironmentVariable('adminUsername', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('adminPassword', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('resourceGroup', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('azureLocation', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('templateBaseUrl', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('netbiosName', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('domainSuffix', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('vnetName', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('dcVM', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('linuxVM', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('jumpboxVM', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('jumpboxNic', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
 
 Write-Host -NoNewLine "Press any key to continue...";
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');

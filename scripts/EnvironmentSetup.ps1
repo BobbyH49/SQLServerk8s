@@ -6,6 +6,7 @@ param (
     [string]$templateBaseUrl,
     [string]$netbiosName,
     [string]$domainSuffix,
+    [string]$vnetName,
     [string]$vnetIpAddressRangeStr,
     [string]$dcVM,
     [string]$linuxVM,
@@ -20,6 +21,7 @@ param (
 [System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('netbiosName', $netbiosName, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('domainSuffix', $domainSuffix, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetName', $vnetName, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr', $vnetIpAddressRangeStr, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dcVM', $dcVM, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('linuxVM', $linuxVM, [System.EnvironmentVariableTarget]::Machine)
@@ -73,7 +75,6 @@ $appsToInstall = $chocolateyAppList -split "," | foreach { "$($_.Trim())" }
 foreach ($app in $appsToInstall) {
     Write-Host "Installing $app"
     & choco install $app /y --force --no-progress | Write-Output
-    
 }
 
 Write-Header "Fetching Artifacts for SqlServerK8s"
@@ -83,6 +84,7 @@ Invoke-WebRequest ($templateBaseUrl + "templates/linux.json") -OutFile $Env:Depl
 Write-Host "Downloading scripts"
 Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:DeploymentDir\scripts\ConfigureDC.ps1
 Invoke-WebRequest ($templateBaseUrl + "scripts/DCJoinJumpbox.ps1") -OutFile $Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/DeploySQL.ps1") -OutFile $Env:DeploymentDir\scripts\DeploySQL.ps1
 
 Write-Host "Downloading SQL Server 2019 yaml and ini files"
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/dxemssql.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\dxemssql.yaml
@@ -143,32 +145,6 @@ If (-NOT (Test-Path $RegistryPath)) {
   New-Item -Path $RegistryPath -Force | Out-Null
 }
 New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
-
-# Deploy Linux Server with public key authentication
-Write-Header "Deploying Linux Server with public key authentication"
-
-# Generate ssh keys
-Write-Host "Generating ssh keys"
-$linuxKeyFile = $linuxVM.ToLower() + "_id_rsa"
-mkdir C:\Users\$adminUsername.$netbiosName\.ssh
-ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$adminUsername.$netbiosName\.ssh\$linuxKeyFile
-$publicKey = Get-Content C:\Users\$adminUsername.$netbiosName\.ssh\$linuxKeyFile.pub
-
-# Generate parameters for template deployment
-Write-Host "Generating parameters for template deployment"
-$templateParameters = @{}
-$templateParameters.add("adminUsername", $adminUsername)
-$templateParameters.add("sshRSAPublicKey", $publicKey)
-
-# Deploy Linux server
-Write-Host "Deploying $linuxVM"
-New-AzResourceGroupDeployment -ResourceGroupName $resourceGroup -Mode Incremental -Force -TemplateFile "C:\Deployment\templates\linux.json" -TemplateParameterObject $templateParameters
-
-# Add known host
-Write-Host "Adding $linuxVM as known host"
-ssh-keyscan -t rsa 10.$vnetIpAddressRangeStr.16.5 >> C:\Users\$adminUsername.$netbiosName\.ssh\known_hosts
-
-#ssh -i C:\Users\azureuser.SQLK8s\.ssh\sqlk8slinux_id_rsa azureuser@10.192.16.5
 
 # Configure Domain Controller
 Write-Header "Installing and configuring Domain Controller"
