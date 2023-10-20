@@ -24,21 +24,6 @@ function NewMessage
     }
 }
 
-# Connect to Azure Subscription
-function ConnectToAzure 
-{
-    try {
-        Connect-AzAccount -Identity | out-null
-        $message = "Connected to Azure."
-        NewMessage -message $message -type "success"
-    }
-    catch {
-        $message = "Failed to connect to Azure."
-        NewMessage -message $message -type "error"
-        Exit
-    }
-}
-
 # Install Active Directory Domain Services
 function InstallADDS 
 {
@@ -218,7 +203,7 @@ Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
 Write-Host "Connecting to Azure"
-ConnectToAzure -ErrorAction SilentlyContinue
+Connect-AzAccount -Identity | out-null
 
 # Install Active Directory Domain Services
 Write-Host "Installing Active Directory"

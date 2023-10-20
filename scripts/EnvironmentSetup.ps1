@@ -119,6 +119,10 @@ Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/deployment.yaml") -
 Write-Host "Downloading AdventureWorks2019 backup file"
 Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019.bak
 
+# Connect to Azure Subscription
+Write-Host "Connecting to Azure"
+Connect-AzAccount -Identity | out-null
+
 Write-Header "Making alterations to Edge"
 # Disable Microsoft Edge sidebar
 $RegistryPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
@@ -143,19 +147,25 @@ New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWO
 # Deploy Linux Server with public key authentication
 Write-Header "Deploying Linux Server with public key authentication"
 
-# Generate and get the public key
+# Generate ssh keys
+Write-Host "Generating ssh keys"
 $linuxKeyFile = $linuxVM.ToLower() + "_id_rsa"
 mkdir C:\Users\$adminUsername.$netbiosName\.ssh
 ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$adminUsername.$netbiosName\.ssh\$linuxKeyFile
 $publicKey = Get-Content C:\Users\$adminUsername.$netbiosName\.ssh\$linuxKeyFile.pub
 
-# Generate Deployment Template Parameters
+# Generate parameters for template deployment
+Write-Host "Generating parameters for template deployment"
 $templateParameters = @{}
 $templateParameters.add("adminUsername", $adminUsername)
 $templateParameters.add("sshRSAPublicKey", $publicKey)
+
+# Deploy Linux server
+Write-Host "Deploying $linuxVM"
 New-AzResourceGroupDeployment -ResourceGroupName $resourceGroup -Mode Incremental -Force -TemplateFile "C:\Deployment\templates\linux.json" -TemplateParameterObject $templateParameters
 
 # Add known host
+Write-Host "Adding $linuxVM as known host"
 ssh-keyscan -t rsa 10.$vnetIpAddressRangeStr.16.5 >> C:\Users\$adminUsername.$netbiosName\.ssh\known_hosts
 
 #ssh -i C:\Users\azureuser.SQLK8s\.ssh\sqlk8slinux_id_rsa azureuser@10.192.16.5
