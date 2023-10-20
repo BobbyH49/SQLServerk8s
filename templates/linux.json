@@ -7,20 +7,23 @@
         },
         "sshRSAPublicKey": {
             "type": "secureString"
+        },
+        "vnetName": {
+            "type": "string"
+        },
+        "linuxVM": {
+            "type": "string"
         }
-    },
-    "variables": {
-        "linuxVM": "SqlK8sLinux"
     },
     "resources": [
         {
-            "name": "[variables('linuxVM')]",
+            "name": "[parameters('linuxVM')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('linuxVM'), '-nic')]"
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('linuxVM'), '-nic')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -44,7 +47,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('linuxVM'), '-nic'))]",
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('linuxVM'), '-nic'))]",
                             "properties": {
                                 "deleteOption": "Detach"
                             }
@@ -52,7 +55,7 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "[variables('linuxVM')]",
+                    "computerName": "[parameters('linuxVM')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
