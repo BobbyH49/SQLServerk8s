@@ -30,10 +30,6 @@
     az login
     ```
 
-    **NB: Edge may initially open up with a welcome page.  If so, then start without doing a data sync.**
-
-    ![No Edge Data Sync](media/NoEdgeDataSync.jpg)
-
     ![Azure CLI Signin](media/AzureCLISignin.jpg)
 
     ![Azure CLI SignedIn](media/AzureCLISignedIn.jpg)
