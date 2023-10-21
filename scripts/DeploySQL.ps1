@@ -18,9 +18,10 @@ Write-Header "Deploying Linux Server with public key authentication"
 # Generate ssh keys
 Write-Host "Generating ssh keys"
 $linuxKeyFile = $Env:linuxVM.ToLower() + "_id_rsa"
-mkdir C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh
-ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh\$linuxKeyFile
-$publicKey = Get-Content C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh\$linuxKeyFile.pub
+$netbiosNameUpper = $Env:netbiosName.toUpper()
+New-Item -Path C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh
+ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\$linuxKeyFile
+$publicKey = Get-Content C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\$linuxKeyFile.pub
 
 # Generate parameters for template deployment
 Write-Host "Generating parameters for template deployment"
@@ -36,7 +37,9 @@ New-AzResourceGroupDeployment -ResourceGroupName $Env:resourceGroup -Mode Increm
 
 # Add known host
 Write-Host "Adding $Env:linuxVM as known host"
-ssh-keyscan -t rsa 10.$Env:vnetIpAddressRangeStr.16.5 >> C:\Users\$Env:adminUsername.$Env:netbiosName\.ssh\known_hosts
+ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts
+(Get-Content C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts) | Set-Content -Encoding UTF8 C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts
+ssh -i C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5
 
 #ssh -i C:\Users\azureuser.SQLK8s\.ssh\sqlk8slinux_id_rsa azureuser@10.192.16.5
 
