@@ -507,9 +507,9 @@
                         "deleteOption": "Delete"
                     },
                     "imageReference": {
-                        "publisher": "MicrosoftWindowsDesktop",
-                        "offer": "Windows-10",
-                        "sku": "win10-21h2-pro",
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2019-datacenter-gensecond",
                         "version": "latest"
                     }
                 },

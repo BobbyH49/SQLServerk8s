@@ -58,7 +58,7 @@ Install-PackageProvider -Name NuGet -Force | out-null
 
 # Installing tools
 Write-Header "Installing Chocolatey Apps"
-$chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,ssms,putty'
+$chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,edge,ssms,putty'
 
 try {
     choco config get cacheLocation
@@ -145,43 +145,8 @@ If (-NOT (Test-Path $RegistryPath)) {
 }
 New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
 
-# Disable Privacy Settings Screen
-Write-Header "Disabling Privacy Settings Screen"
-$RegistryPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE'
-$Name         = 'PrivacyConsentStatus'
-$Value        = '00000001'
-# Create the key if it does not exist
-If (-NOT (Test-Path $RegistryPath)) {
-  New-Item -Path $RegistryPath -Force | Out-Null
-}
-New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
-
-$RegistryPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE'
-$Name         = 'SkipMachineOOBE'
-$Value        = '00000001'
-# Create the key if it does not exist
-If (-NOT (Test-Path $RegistryPath)) {
-  New-Item -Path $RegistryPath -Force | Out-Null
-}
-New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
-
-$RegistryPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE'
-$Name         = 'ProtectYourPC'
-$Value        = '00000003'
-# Create the key if it does not exist
-If (-NOT (Test-Path $RegistryPath)) {
-  New-Item -Path $RegistryPath -Force | Out-Null
-}
-New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
-
-$RegistryPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE'
-$Name         = 'SkipUserOOBE'
-$Value        = '00000001'
-# Create the key if it does not exist
-If (-NOT (Test-Path $RegistryPath)) {
-  New-Item -Path $RegistryPath -Force | Out-Null
-}
-New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
+# Disabling Windows Server Manager Scheduled Task
+Get-ScheduledTask -TaskName ServerManager | Disable-ScheduledTask
 
 # Configure Domain Controller
 Write-Header "Installing and configuring Domain Controller"
