@@ -39,9 +39,8 @@ New-AzResourceGroupDeployment -ResourceGroupName $Env:resourceGroup -Mode Increm
 Write-Host "Adding $Env:linuxVM as known host"
 ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts
 (Get-Content C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts) | Set-Content -Encoding UTF8 C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts
-ssh -i C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5
 
-#ssh -i C:\Users\azureuser.SQLK8s\.ssh\sqlk8slinux_id_rsa azureuser@10.192.16.5
+#ssh -i C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5
 
 Write-Host "Configuration ends: $(Get-Date)"
 
