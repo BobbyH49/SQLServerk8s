@@ -18,9 +18,9 @@ Write-Header "Deploying Linux Server with public key authentication"
 # Generate ssh keys
 Write-Host "Generating ssh keys"
 $linuxKeyFile = $Env:linuxVM.ToLower() + "_id_rsa"
-New-Item -Path C:\Users\$Env:adminUsername\.ssh  -ItemType directory -Force
-ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$Env:adminUsername\.ssh\$linuxKeyFile
-$publicKey = Get-Content C:\Users\$Env:adminUsername\.ssh\$linuxKeyFile.pub
+New-Item -Path $HOME\.ssh  -ItemType directory -Force
+ssh-keygen -q -t rsa -b 4096 -N '""' -f $HOME\.ssh\$linuxKeyFile
+$publicKey = Get-Content $HOME\.ssh\$linuxKeyFile.pub
 
 # Generate parameters for template deployment
 Write-Host "Generating parameters for template deployment"
@@ -36,10 +36,10 @@ New-AzResourceGroupDeployment -ResourceGroupName $Env:resourceGroup -Mode Increm
 
 # Add known host
 Write-Host "Adding $Env:linuxVM as known host"
-ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> C:\Users\$Env:adminUsername\.ssh\known_hosts
-(Get-Content C:\Users\$Env:adminUsername\.ssh\known_hosts) | Set-Content -Encoding UTF8 C:\Users\$Env:adminUsername\.ssh\known_hosts
+ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> $HOME\.ssh\known_hosts
+(Get-Content $HOME\.ssh\known_hosts) | Set-Content -Encoding UTF8 $HOME\.ssh\known_hosts
 
-#ssh -i C:\Users\$Env:adminUsername\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5
+#ssh -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5
 
 Write-Host "Configuration ends: $(Get-Date)"
 
