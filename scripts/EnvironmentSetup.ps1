@@ -180,6 +180,6 @@ Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User $Env:net
 # Stop logging and Reboot Jumpbox
 Write-Header "Rebooting $Env:jumpboxVM"
 Stop-Transcript
-$logSuppress = Get-Content $Env:DeploymentLogsDir\EnvironmentSetup.log | Where { $_ -notmatch "Host Application: powershell.exe" }
+$logSuppress = Get-Content $Env:DeploymentLogsDir\EnvironmentSetup.log | Where-Object { $_ -notmatch "Host Application: powershell.exe" }
 $logSuppress | Set-Content $Env:DeploymentLogsDir\EnvironmentSetup.log -Force
 Restart-Computer -Force

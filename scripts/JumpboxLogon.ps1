@@ -48,7 +48,7 @@ Write-Header "Cleanup environment"
 Get-ScheduledTask -TaskName JumpboxLogon | Unregister-ScheduledTask -Confirm:$false
 
 Stop-Transcript
-$logSuppress = Get-Content $Env:DeploymentLogsDir\JumpboxLogon.log | Where { $_ -notmatch "Host Application: powershell.exe" }
+$logSuppress = Get-Content $Env:DeploymentLogsDir\JumpboxLogon.log | Where-Object { $_ -notmatch "Host Application: powershell.exe" }
 $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', "", [System.EnvironmentVariableTarget]::Machine)
