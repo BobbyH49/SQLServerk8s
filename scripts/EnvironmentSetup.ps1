@@ -83,8 +83,7 @@ Invoke-WebRequest ($templateBaseUrl + "templates/linux.json") -OutFile $Env:Depl
 
 Write-Host "Downloading scripts"
 Invoke-WebRequest ($templateBaseUrl + "scripts/ConfigureDC.ps1") -OutFile $Env:DeploymentDir\scripts\ConfigureDC.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/DCJoinJumpbox.ps1") -OutFile $Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/DeploySQL.ps1") -OutFile $Env:DeploymentDir\scripts\DeploySQL.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogon.ps1") -OutFile $Env:DeploymentDir\scripts\JumpboxLogon.ps1
 
 Write-Host "Downloading SQL Server 2019 yaml and ini files"
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/dxemssql.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\dxemssql.yaml
@@ -150,12 +149,6 @@ New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWO
 Write-Header "Installing and configuring Domain Controller"
 .$Env:DeploymentDir\scripts\ConfigureDC.ps1
 
-## Configure Domain Join Scripts
-#Write-Header "Configuring Domain Join Scripts"
-#$Trigger = New-ScheduledTaskTrigger -AtLogOn
-#$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
-#Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
-
 # Remove DNS Server from Jumpbox Nic
 Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpboxNic
@@ -177,12 +170,11 @@ $securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
 Add-Computer -DomainName "$netbiosNameLower.$Env:domainSuffix" -Credential $credential -Force -PassThru -ErrorAction Stop
 
-# Configure SQL Install Script
-Write-Header "Configuring SQL Install Script"
-#Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Confirm:$false
+# Configure Jumpbox Logon Script
+Write-Header "Configuring Jumpbox Logon Script"
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
-$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DeploySQL.ps1
-Register-ScheduledTask -TaskName "DeploySQL" -Trigger $Trigger -User $Env:netbiosName\$Env:adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
+$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\JumpboxLogon.ps1
+Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User $Env:netbiosName\$Env:adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
 
 # Stop logging and Reboot Jumpbox
 Write-Header "Rebooting $Env:jumpboxVM"

@@ -1,7 +1,7 @@
 # Connect to Azure Subscription
 # Install SQL
 
-Start-Transcript -Path $Env:DeploymentLogsDir\DeploySQL.log -Append
+Start-Transcript -Path $Env:DeploymentLogsDir\JumpboxLogon.log -Append
 
 Write-Header "Automated Setup"
 
@@ -18,10 +18,9 @@ Write-Header "Deploying Linux Server with public key authentication"
 # Generate ssh keys
 Write-Host "Generating ssh keys"
 $linuxKeyFile = $Env:linuxVM.ToLower() + "_id_rsa"
-$netbiosNameUpper = $Env:netbiosName.toUpper()
-New-Item -Path C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh  -ItemType directory -Force
-ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\$linuxKeyFile
-$publicKey = Get-Content C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\$linuxKeyFile.pub
+New-Item -Path C:\Users\$Env:adminUsername\.ssh  -ItemType directory -Force
+ssh-keygen -q -t rsa -b 4096 -N '""' -f C:\Users\$Env:adminUsername\.ssh\$linuxKeyFile
+$publicKey = Get-Content C:\Users\$Env:adminUsername\.ssh\$linuxKeyFile.pub
 
 # Generate parameters for template deployment
 Write-Host "Generating parameters for template deployment"
@@ -37,20 +36,20 @@ New-AzResourceGroupDeployment -ResourceGroupName $Env:resourceGroup -Mode Increm
 
 # Add known host
 Write-Host "Adding $Env:linuxVM as known host"
-ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts
-(Get-Content C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts) | Set-Content -Encoding UTF8 C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\known_hosts
+ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> C:\Users\$Env:adminUsername\.ssh\known_hosts
+(Get-Content C:\Users\$Env:adminUsername\.ssh\known_hosts) | Set-Content -Encoding UTF8 C:\Users\$Env:adminUsername\.ssh\known_hosts
 
-#ssh -i C:\Users\$Env:adminUsername.$netbiosNameUpper\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5
+#ssh -i C:\Users\$Env:adminUsername\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5
 
 Write-Host "Configuration ends: $(Get-Date)"
 
 # Cleanup
 Write-Header "Cleanup environment"
-Get-ScheduledTask -TaskName DeploySQL | Unregister-ScheduledTask -Confirm:$false
+Get-ScheduledTask -TaskName JumpboxLogon | Unregister-ScheduledTask -Confirm:$false
 
 Stop-Transcript
-$logSuppress = Get-Content $Env:DeploymentLogsDir\DCJoinJumpbox.log | Where { $_ -notmatch "Host Application: powershell.exe" }
-$logSuppress | Set-Content $Env:DeploymentLogsDir\DCJoinJumpbox.log -Force
+$logSuppress = Get-Content $Env:DeploymentLogsDir\JumpboxLogon.log | Where { $_ -notmatch "Host Application: powershell.exe" }
+$logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('adminPassword', "", [System.EnvironmentVariableTarget]::Machine)
