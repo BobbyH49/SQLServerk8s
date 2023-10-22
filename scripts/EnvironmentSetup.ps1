@@ -150,11 +150,11 @@ New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWO
 Write-Header "Installing and configuring Domain Controller"
 .$Env:DeploymentDir\scripts\ConfigureDC.ps1
 
-# Configure Domain Join Scripts
-Write-Header "Configuring Domain Join Scripts"
-$Trigger = New-ScheduledTaskTrigger -AtLogOn
-$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
-Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
+## Configure Domain Join Scripts
+#Write-Header "Configuring Domain Join Scripts"
+#$Trigger = New-ScheduledTaskTrigger -AtLogOn
+#$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DCJoinJumpbox.ps1
+#Register-ScheduledTask -TaskName "DCJoinJumpbox" -Trigger $Trigger -User $adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
 
 # Remove DNS Server from Jumpbox Nic
 Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
@@ -167,9 +167,26 @@ Write-Header "Refreshing DNS Settings"
 ipconfig /release
 ipconfig /renew
 
-## Stop logging and Reboot Jumpbox
-#Write-Header "Rebooting $Env:jumpboxVM"
+# Join Azure VM to domain
+Write-Header "Joining $Env:jumpboxVM to the domain"
+Write-Host "Joining $Env:jumpboxVM to domain"
+$netbiosNameLower = $Env:netbiosName.toLower()
+$netbiosNameUpper = $Env:netbiosName.toUpper()
+$domainUsername="$netbiosNameUpper\$Env:adminUsername"
+$securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
+Add-Computer -DomainName "$netbiosNameLower.$Env:domainSuffix" -Credential $credential -Force -PassThru -ErrorAction Stop
+
+# Configure SQL Install Script
+Write-Header "Configuring SQL Install Script"
+#Get-ScheduledTask -TaskName DCJoinJumpbox | Unregister-ScheduledTask -Confirm:$false
+$Trigger = New-ScheduledTaskTrigger -AtLogOn
+$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\DeploySQL.ps1
+Register-ScheduledTask -TaskName "DeploySQL" -Trigger $Trigger -User $Env:netbiosName\$Env:adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
+
+# Stop logging and Reboot Jumpbox
+Write-Header "Rebooting $Env:jumpboxVM"
 Stop-Transcript
 $logSuppress = Get-Content $Env:DeploymentLogsDir\EnvironmentSetup.log | Where { $_ -notmatch "Host Application: powershell.exe" }
 $logSuppress | Set-Content $Env:DeploymentLogsDir\EnvironmentSetup.log -Force
-#Restart-Computer -Force
+Restart-Computer -Force
