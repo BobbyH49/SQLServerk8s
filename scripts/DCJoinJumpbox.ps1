@@ -10,12 +10,12 @@ Write-Host "Configuration starts: $(Get-Date)"
 
 # Join Azure VM to domain
 Write-Host "Joining $Env:jumpboxVM to domain"
-$netbiosNameLower = $netbiosName.toLower()
-$netbiosNameUpper = $netbiosName.toUpper()
-$domainUsername="$netbiosNameUpper\$adminUsername"
-$securePassword = ConvertTo-SecureString $adminPassword -AsPlainText -Force
+$netbiosNameLower = $Env:netbiosName.toLower()
+$netbiosNameUpper = $Env:netbiosName.toUpper()
+$domainUsername="$netbiosNameUpper\$Env:adminUsername"
+$securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
-Add-Computer -DomainName "$netbiosNameLower.$domainSuffix" -Credential $credential -Force -PassThru -ErrorAction Stop
+Add-Computer -DomainName "$netbiosNameLower.$Env:domainSuffix" -Credential $credential -Force -PassThru -ErrorAction Stop
 
 Write-Host "Configuration ends: $(Get-Date)"
 

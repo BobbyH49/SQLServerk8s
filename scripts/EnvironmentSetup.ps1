@@ -162,6 +162,14 @@ $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpb
 $nic.DnsSettings.DnsServers.Clear()
 $nic | Set-AzNetworkInterface | out-null
 
+Write-Host "Try a ping after changing network"
+ping sqlk8s.local
+Write-Host "Re-point after DNS change"
+ipconfig /release
+ipconfig /renew
+Write-Host "Try a ping after after ipconfig change"
+ping sqlk8s.local
+
 # Stop logging and Reboot Jumpbox
 Write-Header "Rebooting $Env:jumpboxVM"
 Stop-Transcript
