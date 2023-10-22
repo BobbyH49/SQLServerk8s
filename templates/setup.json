@@ -438,7 +438,7 @@
                     "imageReference": {
                         "publisher": "MicrosoftWindowsServer",
                         "offer": "WindowsServer",
-                        "sku": "2019-datacenter-gensecond",
+                        "sku": "2022-datacenter-g2",
                         "version": "latest"
                     }
                 },
@@ -509,7 +509,7 @@
                     "imageReference": {
                         "publisher": "MicrosoftWindowsServer",
                         "offer": "WindowsServer",
-                        "sku": "2019-datacenter-gensecond",
+                        "sku": "2022-datacenter-g2",
                         "version": "latest"
                     }
                 },
