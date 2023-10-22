@@ -167,8 +167,9 @@ $netbiosNameLower = $Env:netbiosName.toLower()
 $netbiosNameUpper = $Env:netbiosName.toUpper()
 $domainUsername="$netbiosNameUpper\$Env:adminUsername"
 $securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
+$localCredential = New-Object System.Management.Automation.PSCredential ($Env:adminUsername, $securePassword)
 $credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
-Add-Computer -DomainName "$netbiosNameLower.$Env:domainSuffix" -Credential $credential -Force -PassThru -ErrorAction Stop
+Add-Computer -DomainName "$netbiosNameLower.$Env:domainSuffix" -LocalCredential $localCredential -Credential $credential -Force -PassThru -ErrorAction Stop
 
 # Configure Jumpbox Logon Script
 Write-Header "Configuring Jumpbox Logon Script"
