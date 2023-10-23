@@ -39,7 +39,21 @@ Write-Host "Adding $Env:linuxVM as known host"
 ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> $HOME\.ssh\known_hosts
 (Get-Content $HOME\.ssh\known_hosts) | Set-Content -Encoding UTF8 $HOME\.ssh\known_hosts
 
-#ssh -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5
+Write-Host "To connect to $Env:linuxVM server you can now run ssh -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@10.192.16.5"
+
+if (($Env:installSQL2019 -eq "yes") -or ($Env:installSQL2022 -eq "yes")) {
+
+    $linuxScript = @"
+        sudo apt-get update -y;
+
+        sudo apt-get install resolvconf;
+"@
+
+    $file = "$Env:DeploymentDir\scripts\LinuxScript.sh"
+    $linuxScript | Out-File -FilePath $file -force    
+
+    #$result = Invoke-AzVMRunCommand -ResourceGroupName $resourceGroup -VMName $vmName -CommandId "RunPowerShellScript" -ScriptPath $file
+}
 
 Write-Host "Configuration ends: $(Get-Date)"
 
@@ -66,3 +80,5 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 [System.Environment]::SetEnvironmentVariable('jumpboxNic', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('installSQL2019', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('installSQL2022', "", [System.EnvironmentVariableTarget]::Machine)

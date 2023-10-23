@@ -8,9 +8,6 @@
         "sshRSAPublicKey": {
             "type": "secureString"
         },
-        "vnetName": {
-            "type": "string"
-        },
         "linuxVM": {
             "type": "string"
         }
