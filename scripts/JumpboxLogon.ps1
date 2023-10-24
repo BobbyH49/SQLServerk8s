@@ -27,7 +27,6 @@ Write-Host "Generating parameters for template deployment"
 $templateParameters = @{}
 $templateParameters.add("adminUsername", $Env:adminUsername)
 $templateParameters.add("sshRSAPublicKey", $publicKey)
-$templateParameters.add("vnetName", $Env:vnetName)
 $templateParameters.add("linuxVM", $Env:linuxVM)
 
 # Deploy Linux server
