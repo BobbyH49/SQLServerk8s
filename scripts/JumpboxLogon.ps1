@@ -111,6 +111,7 @@ Add-DnsServerResourceRecordA -Name $Env:linuxVM -ZoneName "$netbiosNameLower.$En
     Write-Host "Executing script on $Env:dcVM"
     $dcResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:dcVM -CommandId "RunPowerShellScript" -ScriptPath $dcFile
     Write-Host "Script returned a result of ${dcResult.Status}"
+    $dcResult | Out-File -FilePath $Env:DeploymentLogsDir\SqlDomainDependencies.ps1.log -force
 
 Write-Host "Configuring script for $Env:linuxVM"
 $linuxScript = @"
@@ -161,6 +162,7 @@ adutil keytab create -k mssql_mssql22-2.keytab -p $sqlsvc22 -e aes256-cts-hmac-s
 
     $linuxResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:linuxVM -CommandId "RunShellScript" -ScriptPath $linuxFile
     Write-Host "Script returned a result of ${linuxResult.Status}"
+    $linuxResult | Out-File -FilePath $Env:DeploymentLogsDir\SqlDomainDependencies.sh.log -force
 
     # Add known host
     Write-Host "Adding $Env:linuxVM as known host"
