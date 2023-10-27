@@ -172,19 +172,24 @@ adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p $sqls
 adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
 adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
 
-# Generating certificate and private key files
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-0.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-0.$netbiosNameLower.$Env:domainSuffix, DNS:mssql19-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-0.key -out /home/$Env:adminUsername/mssql19-0.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-1.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-1.$netbiosNameLower.$Env:domainSuffix, DNS:mssql19-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-1.key -out /home/$Env:adminUsername/mssql19-1.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-2.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-2.$netbiosNameLower.$Env:domainSuffix, DNS:mssql19-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-2.key -out /home/$Env:adminUsername/mssql19-2.pem -days 365
+# Removing error when generating certificates due to missing .rnd file
+cp /etc/ssl/openssl.cnf /home/$Env:adminUsername/openssl.cnf;
+sed 's/RANDFILE\t\t= `$ENV::HOME\/.rnd/#RANDFILE\t\t= `$ENV::HOME\/.rnd/' /home/$Env:adminUsername/openssl.cnf > /home/$Env:adminUsername/openssl.cnf.updated;
+sudo cp /home/$Env:adminUsername/openssl.cnf.updated /etc/ssl/openssl.cnf;
 
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-0.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-0.$netbiosNameLower.$Env:domainSuffix, DNS:mssql22-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-0.key -out /home/$Env:adminUsername/mssql22-0.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-1.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-1.$netbiosNameLower.$Env:domainSuffix, DNS:mssql22-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-1.key -out /home/$Env:adminUsername/mssql22-1.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-2.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-2.$netbiosNameLower.$Env:domainSuffix, DNS:mssql22-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-2.key -out /home/$Env:adminUsername/mssql22-2.pem -days 365
+# Generating certificate and private key files
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-0.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-0.$netbiosNameLower.$Env:domainSuffix, DNS:mssql19-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-0.key -out /home/$Env:adminUsername/mssql19-0.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-1.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-1.$netbiosNameLower.$Env:domainSuffix, DNS:mssql19-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-1.key -out /home/$Env:adminUsername/mssql19-1.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-2.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-2.$netbiosNameLower.$Env:domainSuffix, DNS:mssql19-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-2.key -out /home/$Env:adminUsername/mssql19-2.pem -days 365;
+
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-0.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-0.$netbiosNameLower.$Env:domainSuffix, DNS:mssql22-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-0.key -out /home/$Env:adminUsername/mssql22-0.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-1.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-1.$netbiosNameLower.$Env:domainSuffix, DNS:mssql22-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-1.key -out /home/$Env:adminUsername/mssql22-1.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-2.$netbiosNameLower.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-2.$netbiosNameLower.$Env:domainSuffix, DNS:mssql22-agl1.$netbiosNameLower.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-2.key -out /home/$Env:adminUsername/mssql22-2.pem -days 365;
 
 # Changing ownership on files to $Env:adminUsername
-sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.keytab
-sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.key
-sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.pem
+sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.keytab;
+sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.key;
+sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.pem;
 
 "@
 
