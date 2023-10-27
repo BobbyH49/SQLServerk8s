@@ -58,7 +58,7 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\
 
 # Installing PowerShell Module Dependencies
 Write-Header "Installing NuGet"
-Install-PackageProvider -Name NuGet -Force | out-null
+Install-PackageProvider -Name NuGet -Force
 
 # Installing tools
 Write-Header "Installing Chocolatey Apps"
@@ -124,10 +124,6 @@ Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/deployment.yaml") -
 Write-Host "Downloading AdventureWorks2019 backup file"
 Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019.bak
 
-# Connect to Azure Subscription
-Write-Host "Connecting to Azure"
-Connect-AzAccount -Identity | out-null
-
 Write-Header "Making alterations to Edge"
 # Disable Microsoft Edge sidebar
 $RegistryPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
@@ -135,7 +131,7 @@ $Name         = 'HubsSidebarEnabled'
 $Value        = '00000000'
 # Create the key if it does not exist
 If (-NOT (Test-Path $RegistryPath)) {
-  New-Item -Path $RegistryPath -Force | Out-Null
+  New-Item -Path $RegistryPath -Force
 }
 New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
 
@@ -145,22 +141,121 @@ $Name         = 'HideFirstRunExperience'
 $Value        = '00000001'
 # Create the key if it does not exist
 If (-NOT (Test-Path $RegistryPath)) {
-  New-Item -Path $RegistryPath -Force | Out-Null
+  New-Item -Path $RegistryPath -Force
 }
 New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWORD -Force
 
 # Disabling Windows Server Manager Scheduled Task
 Get-ScheduledTask -TaskName ServerManager | Disable-ScheduledTask
 
+# Connect to Azure Subscription
+Write-Header "Connecting to Azure"
+Connect-AzAccount -Identity
+Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
+
 # Configure Domain Controller
-Write-Header "Installing and configuring Domain Controller"
-.$Env:DeploymentDir\scripts\ConfigureDC.ps1
+Write-Header "Installing Domain Controller on $Env:dcVM"
+Write-Host "Configuring CreateDC script for $Env:dcVM"
+$dcCreateScript = @"
+
+# Install AD DS feature
+Install-WindowsFeature AD-Domain-Services -IncludeManagementTools -Restart
+
+`$securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
+
+# Configure Domain
+Import-Module ADDSDeployment
+Install-ADDSForest -CreateDnsDelegation:`$false -DatabasePath "C:\Windows\NTDS" -DomainMode "WinThreshold" -DomainName "${netbiosName.toLower()}.$domainSuffix" -DomainNetbiosName ${netbiosName.toUpper()} -ForestMode "WinThreshold" -InstallDns:`$true -LogPath "C:\Windows\NTDS" -NoRebootOnCompletion:`$true -SafeModeAdministratorPassword `$securePassword -SysvolPath "C:\Windows\SYSVOL" -Force
+
+# Reboot Computer
+Restart-Computer
+
+"@
+
+$dcCreateFile = "$Env:DeploymentDir\scripts\CreateDC.ps1"
+$dcCreateScript | Out-File -FilePath $dcCreateFile -force    
+
+Write-Host "Executing CreateDC script on $Env:dcVM"
+$dcCreateResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:dcVM -CommandId "RunPowerShellScript" -ScriptPath $dcCreateFile
+Write-Host "Script returned a result of ${dcCreateResult.Status}"
+$dcCreateResult | Out-File -FilePath $Env:DeploymentLogsDir\CreateDC.log -force
+
+Write-Header "Configuring Domain and DNS on $Env:dcVM"
+
+Write-Host "Configuring ConfigureDC script for $Env:dcVM"
+$dcConfigureScript = @"
+
+`$SecurePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
+
+# Creating new SQL Service Accounts
+New-ADUser "${Env:netbiosName.toLower()}svc19" -AccountPassword `$SecurePassword -PasswordNeverExpires `$true -Enabled `$true -KerberosEncryptionType AES256
+New-ADUser "${Env:netbiosName.toLower()}svc22" -AccountPassword `$SecurePassword -PasswordNeverExpires `$true -Enabled `$true -KerberosEncryptionType AES256
+
+# Generating all of the SPNs
+setspn -S MSSQLSvc/mssql19-0.${Env:netbiosName.toLower()}.$Env:domainSuffix ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-1.${Env:netbiosName.toLower()}.$Env:domainSuffix ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-2.${Env:netbiosName.toLower()}.$Env:domainSuffix ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-0.${Env:netbiosName.toLower()}.${Env:domainSuffix}:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-1.${Env:netbiosName.toLower()}.${Env:domainSuffix}:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-2.${Env:netbiosName.toLower()}.${Env:domainSuffix}:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-0:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-1:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-2:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-0 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-1 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-2 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-agl1.${Env:netbiosName.toLower()}.${Env:domainSuffix}:14033 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+setspn -S MSSQLSvc/mssql19-agl1:14033 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc19"
+
+setspn -S MSSQLSvc/mssql22-0.${Env:netbiosName.toLower()}.$Env:domainSuffix ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-1.${Env:netbiosName.toLower()}.$Env:domainSuffix ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-2.${Env:netbiosName.toLower()}.$Env:domainSuffix ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-0.${Env:netbiosName.toLower()}.${Env:domainSuffix}:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-1.${Env:netbiosName.toLower()}.${Env:domainSuffix}:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-2.${Env:netbiosName.toLower()}.${Env:domainSuffix}:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-0:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-1:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-2:1433 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-0 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-1 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-2 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-agl1.${Env:netbiosName.toLower()}.${Env:domainSuffix}:14033 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+setspn -S MSSQLSvc/mssql22-agl1:14033 ${Env:netbiosName.toUpper()}\"${Env:netbiosName.toLower()}svc22"
+
+# Add all of the DNS entry records
+Add-DnsServerResourceRecordA -Name "mssql19-0" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.4.0" -TimeToLive "00:20:00"
+Add-DnsServerResourceRecordA -Name "mssql19-1" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.4.1" -TimeToLive "00:20:00"
+Add-DnsServerResourceRecordA -Name "mssql19-2" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.4.2" -TimeToLive "00:20:00"
+Add-DnsServerResourceRecordA -Name "mssql19-agl1" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.4.3" -TimeToLive "00:20:00"
+
+Add-DnsServerResourceRecordA -Name "mssql22-0" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.5.0" -TimeToLive "00:20:00"
+Add-DnsServerResourceRecordA -Name "mssql22-1" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.5.1" -TimeToLive "00:20:00"
+Add-DnsServerResourceRecordA -Name "mssql22-2" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.5.2" -TimeToLive "00:20:00"
+Add-DnsServerResourceRecordA -Name "mssql22-agl1" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.5.3" -TimeToLive "00:20:00"
+
+Add-DnsServerResourceRecordA -Name "influxdb" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.6.0" -TimeToLive "00:20:00"
+Add-DnsServerResourceRecordA -Name "grafana" -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.6.1" -TimeToLive "00:20:00"
+
+Add-DnsServerResourceRecordA -Name $Env:linuxVM -ZoneName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.16.5" -TimeToLive "00:20:00"
+
+# Create a DNSForwarder for the AKS cluster
+Add-DnsServerConditionalForwarderZone -Name "privatelink.$Env:azureLocation.azmk8s.io" -MasterServers "168.63.129.16"
+
+"@
+
+$dcConfigureFile = "$Env:DeploymentDir\scripts\ConfigureDC.ps1"
+$dcConfigureScript | Out-File -FilePath $dcConfigureFile -force    
+
+Write-Host "Executing ConfigureDC script on $Env:dcVM"
+$dcConfigureResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:dcVM -CommandId "RunPowerShellScript" -ScriptPath $dcConfigureFile
+Write-Host "Script returned a result of ${dcConfigureResult.Status}"
+$dcConfigureResult | Out-File -FilePath $Env:DeploymentLogsDir\ConfigureDC.log -force
 
 # Remove DNS Server from Jumpbox Nic
 Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpboxNic
 $nic.DnsSettings.DnsServers.Clear()
-$nic | Set-AzNetworkInterface | out-null
+$nic | Set-AzNetworkInterface
 
 # Refresh DNS Settings
 Write-Header "Refreshing DNS Settings"
@@ -170,18 +265,16 @@ ipconfig /renew
 # Join Azure VM to domain
 Write-Header "Joining $Env:jumpboxVM to the domain"
 Write-Host "Joining $Env:jumpboxVM to domain"
-$netbiosNameLower = $Env:netbiosName.toLower()
-$netbiosNameUpper = $Env:netbiosName.toUpper()
-$domainUsername="$netbiosNameUpper\$Env:adminUsername"
+$domainUsername="${Env:netbiosName.toUpper()}\$Env:adminUsername"
 $securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
-Add-Computer -DomainName "$netbiosNameLower.$Env:domainSuffix" -Credential $credential
+Add-Computer -DomainName "${Env:netbiosName.toLower()}.$Env:domainSuffix" -Credential $credential
 
 # Configure Jumpbox Logon Script
 Write-Header "Configuring Jumpbox Logon Script"
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\JumpboxLogon.ps1
-Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User $Env:netbiosName\$Env:adminUsername -Action $Action -RunLevel "Highest" -Force | out-null
+Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User ${Env:netbiosName.toUpper()}\$Env:adminUsername -Action $Action -RunLevel "Highest" -Force
 
 # Stop logging and Reboot Jumpbox
 Write-Header "Rebooting $Env:jumpboxVM"
