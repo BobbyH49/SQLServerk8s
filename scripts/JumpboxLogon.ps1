@@ -164,6 +164,9 @@ adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p $sqls
 adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
 adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
 adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+
+sudo chown $Env:adminUsername:$Env:adminUsername mssql_mssql19*
+sudo chown $Env:adminUsername:$Env:adminUsername mssql_mssql22*
 "@
 
     Write-Host "Executing script on $Env:linuxVM"
