@@ -16,7 +16,7 @@ Write-Header "Deploying Linux Server with public key authentication"
 
 # Generate ssh keys
 Write-Host "Generating ssh keys"
-$linuxKeyFile = "${Env:linuxVM.toLower()}_id_rsa"
+$linuxKeyFile = "$($Env:linuxVM.toLower())_id_rsa"
 New-Item -Path $HOME\.ssh  -ItemType directory -Force
 ssh-keygen -q -t rsa -b 4096 -N '""' -f $HOME\.ssh\$linuxKeyFile
 $publicKey = Get-Content $HOME\.ssh\$linuxKeyFile.pub
@@ -66,9 +66,9 @@ sudo apt-get install -y sssd-tools;
 export DEBIAN_FRONTEND=noninteractive;
 sudo -E apt -y -qq install krb5-user;
 cp /etc/krb5.conf krb5.conf;
-sed 's/default_realm = ATHENA.MIT.EDU/default_realm = ${Env:netbiosName.toUpper()}.${Env:domainSuffix.toUpper()}\n\trdns = false/' krb5.conf > krb5.conf.updated;
+sed 's/default_realm = ATHENA.MIT.EDU/default_realm = $($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper())\n\trdns = false/' krb5.conf > krb5.conf.updated;
 sudo cp krb5.conf.updated /etc/krb5.conf;
-echo $Env:adminPassword | sudo realm join ${Env:netbiosName.toLower()}.$Env:domainSuffix -U '$Env:adminUsername@${Env:netbiosName.toUpper()}.${Env:domainSuffix.toUpper()}' -v;
+echo $Env:adminPassword | sudo realm join $($Env:netbiosName.toLower()).$Env:domainSuffix -U '$Env:adminUsername@$($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper())' -v;
 
 # Installing adutil
 curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -;
@@ -78,22 +78,22 @@ sudo apt-get update;
 sudo ACCEPT_EULA=Y apt-get install -y adutil;
 
 # Obtaining Kerberos Ticket
-echo $Env:adminPassword | kinit $Env:adminUsername@${Env:netbiosName.toUpper()}.${Env:domainSuffix.toUpper()};
+echo $Env:adminPassword | kinit $Env:adminUsername@$($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper());
 
 # Generating keytab files
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql19-0.${Env:netbiosName.toLower()}.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql19-1.${Env:netbiosName.toLower()}.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql19-2.${Env:netbiosName.toLower()}.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.${Env:netbiosName.toLower()}.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.${Env:netbiosName.toLower()}.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.${Env:netbiosName.toLower()}.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
 
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-0.keytab -p "${Env:netbiosName.toLower()}svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-1.keytab -p "${Env:netbiosName.toLower()}svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p "${Env:netbiosName.toLower()}svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p "${Env:netbiosName.toLower()}svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p "${Env:netbiosName.toLower()}svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p "${Env:netbiosName.toLower()}svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-0.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-1.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
 
 # Removing error when generating certificates due to missing .rnd file
 cp /etc/ssl/openssl.cnf /home/$Env:adminUsername/openssl.cnf;
@@ -101,13 +101,13 @@ sed 's/RANDFILE\t\t= `$ENV::HOME\/.rnd/#RANDFILE\t\t= `$ENV::HOME\/.rnd/' /home/
 sudo cp /home/$Env:adminUsername/openssl.cnf.updated /etc/ssl/openssl.cnf;
 
 # Generating certificate and private key files
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-0.${Env:netbiosName.toLower()}.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-0.${Env:netbiosName.toLower()}.$Env:domainSuffix, DNS:mssql19-agl1.${Env:netbiosName.toLower()}.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-0.key -out /home/$Env:adminUsername/mssql19-0.pem -days 365;
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-1.${Env:netbiosName.toLower()}.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-1.${Env:netbiosName.toLower()}.$Env:domainSuffix, DNS:mssql19-agl1.${Env:netbiosName.toLower()}.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-1.key -out /home/$Env:adminUsername/mssql19-1.pem -days 365;
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-2.${Env:netbiosName.toLower()}.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-2.${Env:netbiosName.toLower()}.$Env:domainSuffix, DNS:mssql19-agl1.${Env:netbiosName.toLower()}.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-2.key -out /home/$Env:adminUsername/mssql19-2.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql19-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-0.key -out /home/$Env:adminUsername/mssql19-0.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql19-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-1.key -out /home/$Env:adminUsername/mssql19-1.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql19-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-2.key -out /home/$Env:adminUsername/mssql19-2.pem -days 365;
 
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-0.${Env:netbiosName.toLower()}.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-0.${Env:netbiosName.toLower()}.$Env:domainSuffix, DNS:mssql22-agl1.${Env:netbiosName.toLower()}.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-0.key -out /home/$Env:adminUsername/mssql22-0.pem -days 365;
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-1.${Env:netbiosName.toLower()}.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-1.${Env:netbiosName.toLower()}.$Env:domainSuffix, DNS:mssql22-agl1.${Env:netbiosName.toLower()}.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-1.key -out /home/$Env:adminUsername/mssql22-1.pem -days 365;
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-2.${Env:netbiosName.toLower()}.$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-2.${Env:netbiosName.toLower()}.$Env:domainSuffix, DNS:mssql22-agl1.${Env:netbiosName.toLower()}.$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-2.key -out /home/$Env:adminUsername/mssql22-2.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql22-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-0.key -out /home/$Env:adminUsername/mssql22-0.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql22-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-1.key -out /home/$Env:adminUsername/mssql22-1.pem -days 365;
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql22-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-2.key -out /home/$Env:adminUsername/mssql22-2.pem -days 365;
 
 # Changing ownership on files to $Env:adminUsername
 sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.keytab;
@@ -117,12 +117,12 @@ sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*
 "@
 
 Write-Host "Executing script on $Env:linuxVM"
-$linuxFile = "$Env:DeploymentDir\scripts\SqlDomainDependencies.sh"
+$linuxFile = "$Env:DeploymentDir\scripts\GenerateLinuxFiles.sh"
 $linuxScript | Out-File -FilePath $linuxFile -force    
 
 $linuxResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:linuxVM -CommandId "RunShellScript" -ScriptPath $linuxFile
-Write-Host "Script returned a result of ${linuxResult.Status}"
-$linuxResult | Out-File -FilePath $Env:DeploymentLogsDir\SqlDomainDependencies.sh.log -force
+Write-Host "Script returned a result of $($linuxResult.Status)"
+$linuxResult | Out-File -FilePath $Env:DeploymentLogsDir\GenerateLinuxFiles.log -force
 
 # Add known host
 Write-Host "Adding $Env:linuxVM as known host"
@@ -136,18 +136,18 @@ New-Item -Path $Env:DeploymentDir\keytab  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\keytab\SQL2019  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\keytab\SQL2022  -ItemType directory -Force
 
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@${Env:linuxVM}:/home/$Env:adminUsername/mssql_mssql19*.keytab $Env:DeploymentDir\keytab\SQL2019\
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@${Env:linuxVM}:/home/$Env:adminUsername/mssql_mssql22*.keytab $Env:DeploymentDir\keytab\SQL2022\
+scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql_mssql19*.keytab $Env:DeploymentDir\keytab\SQL2019\
+scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql_mssql22*.keytab $Env:DeploymentDir\keytab\SQL2022\
 
 Write-Host "Downloading certificate and private key files from $Env:linuxVM"
 New-Item -Path $Env:DeploymentDir\certificates  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\certificates\SQL2019  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\certificates\SQL2022  -ItemType directory -Force
 
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@${Env:linuxVM}:/home/$Env:adminUsername/mssql19*.pem $Env:DeploymentDir\certificates\SQL2019\
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@${Env:linuxVM}:/home/$Env:adminUsername/mssql19*.key $Env:DeploymentDir\certificates\SQL2019\
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@${Env:linuxVM}:/home/$Env:adminUsername/mssql22*.pem $Env:DeploymentDir\certificates\SQL2022\
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@${Env:linuxVM}:/home/$Env:adminUsername/mssql22*.key $Env:DeploymentDir\certificates\SQL2022\
+scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql19*.pem $Env:DeploymentDir\certificates\SQL2019\
+scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql19*.key $Env:DeploymentDir\certificates\SQL2019\
+scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql22*.pem $Env:DeploymentDir\certificates\SQL2022\
+scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql22*.key $Env:DeploymentDir\certificates\SQL2022\
 
 Write-Host "Installing SQL Server certificates on $Env:jumpboxVM"
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-0.pem" -CertStoreLocation "cert:\LocalMachine\Root"
