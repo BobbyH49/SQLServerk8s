@@ -139,7 +139,7 @@ sudo apt-get remove adutil-preview
 sudo apt-get update
 sudo ACCEPT_EULA=Y apt-get install -y adutil
 
-echo $adminPassword | kinit $Env:adminUsername@$netbiosNameUpper.$domainSuffixUpper;
+echo $Env:adminPassword | kinit $Env:adminUsername@$netbiosNameUpper.$domainSuffixUpper;
 
 adutil keytab createauto -k mssql_mssql22-0.keytab -p 1433 -H mssql19-0.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc
 adutil keytab createauto -k mssql_mssql22-1.keytab -p 1433 -H mssql19-1.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc
