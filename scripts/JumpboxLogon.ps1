@@ -56,9 +56,11 @@ Write-Host "Configuring script for $Env:dcVM"
 $dcScript = @"
 `$SecurePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 
+# Creating new SQL Service Accounts
 New-ADUser $sqlsvc19 -AccountPassword `$SecurePassword -PasswordNeverExpires `$true -Enabled `$true -KerberosEncryptionType AES256
 New-ADUser $sqlsvc22 -AccountPassword `$SecurePassword -PasswordNeverExpires `$true -Enabled `$true -KerberosEncryptionType AES256
 
+# Generating all of the SPNs
 setspn -S MSSQLSvc/mssql19-0.$netbiosNameLower.$Env:domainSuffix $netbiosNameUpper\$sqlsvc19
 setspn -S MSSQLSvc/mssql19-1.$netbiosNameLower.$Env:domainSuffix $netbiosNameUpper\$sqlsvc19
 setspn -S MSSQLSvc/mssql19-2.$netbiosNameLower.$Env:domainSuffix $netbiosNameUpper\$sqlsvc19
@@ -89,6 +91,7 @@ setspn -S MSSQLSvc/mssql22-2 $netbiosNameUpper\$sqlsvc22
 setspn -S MSSQLSvc/mssql22-agl1.$netbiosNameLower.$domainSuffixListenerPort $netbiosNameUpper\$sqlsvc22
 setspn -S MSSQLSvc/mssql22-agl1:14033 $netbiosNameUpper\$sqlsvc22
 
+# Add all of the DNS entry records
 Add-DnsServerResourceRecordA -Name "mssql19-0" -ZoneName "$netbiosNameLower.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.4.0" -TimeToLive "00:20:00"
 Add-DnsServerResourceRecordA -Name "mssql19-1" -ZoneName "$netbiosNameLower.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.4.1" -TimeToLive "00:20:00"
 Add-DnsServerResourceRecordA -Name "mssql19-2" -ZoneName "$netbiosNameLower.$Env:domainSuffix" -IPv4Address "10.$Env:vnetIpAddressRangeStr.4.2" -TimeToLive "00:20:00"
@@ -117,14 +120,14 @@ Write-Host "Configuring script for $Env:linuxVM"
 $linuxScript = @"
 sudo apt-get update -y;
 
-echo "Installing and configuring resolvconf"
+# Installing and configuring resolvconf
 sudo apt-get install resolvconf;
 cp /etc/resolvconf/resolv.conf.d/head resolv.conf;
 echo nameserver 10.$Env:vnetIpAddressRangeStr.16.4 >> resolv.conf;
 sudo cp resolv.conf /etc/resolvconf/resolv.conf.d/head;
 sudo systemctl enable --now resolvconf.service;
 
-echo "Joining $Env:linuxVM to the domain"
+# Joining $Env:linuxVM to the domain
 sudo apt-get install -y realmd;
 sudo apt-get install -y software-properties-common;
 sudo apt-get install -y packagekit;
@@ -137,30 +140,30 @@ sed 's/default_realm = ATHENA.MIT.EDU/default_realm = $netbiosNameUpper.$domainS
 sudo cp krb5.conf.updated /etc/krb5.conf;
 echo $Env:adminPassword | sudo realm join $netbiosNameLower.$Env:domainSuffix -U '$Env:adminUsername@$netbiosNameUpper.$domainSuffixUpper' -v;
 
-echo "Installing adutil"
+# Installing adutil
 curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -;
 sudo curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list;
 sudo apt-get remove adutil-preview;
 sudo apt-get update;
 sudo ACCEPT_EULA=Y apt-get install -y adutil;
 
-echo "Obtaining Kerberos Ticket"
+# Obtaining Kerberos Ticket
 echo $Env:adminPassword | kinit $Env:adminUsername@$netbiosNameUpper.$domainSuffixUpper;
 
-echo "Generating keytab files"
-adutil keytab createauto -k mssql_mssql22-0.keytab -p 1433 -H mssql19-0.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k mssql_mssql22-1.keytab -p 1433 -H mssql19-1.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k mssql_mssql22-2.keytab -p 1433 -H mssql19-2.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k mssql_mssql22-0.keytab -p 1433 -H mssql22-0.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k mssql_mssql22-1.keytab -p 1433 -H mssql22-1.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k mssql_mssql22-2.keytab -p 1433 -H mssql22-2.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+# Generating keytab files
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql19-0.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql19-1.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql19-2.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.$netbiosNameLower.$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
 
-adutil keytab create -k mssql_mssql19-0.keytab -p $sqlsvc19 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k mssql_mssql19-1.keytab -p $sqlsvc19 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k mssql_mssql19-2.keytab -p $sqlsvc19 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k mssql_mssql22-0.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k mssql_mssql22-1.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k mssql_mssql22-2.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-0.keytab -p $sqlsvc19 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-1.keytab -p $sqlsvc19 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p $sqlsvc19 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p $sqlsvc22 -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
 "@
 
     Write-Host "Executing script on $Env:linuxVM"
