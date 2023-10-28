@@ -202,7 +202,7 @@ $attempts = 1
 while (($joinSuccess -eq 0) -and ($attempts -le 10)) {
   try {
     Write-Host "Joining $Env:jumpboxVM to the domain - Attempt $Env:attempts"
-    Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential
+    Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential -ErrorAction Stop
     $joinSuccess = 1
   }
   catch {
