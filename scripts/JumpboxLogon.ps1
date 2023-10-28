@@ -158,8 +158,370 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-0.pem" 
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 
-#if (($Env:installSQL2019 -eq "Yes") -or ($Env:installSQL2022 -eq "Yes")) {
-#}
+# Install SQL Server 2019 Container
+if ($Env:installSQL2019 -eq "Yes") {
+    Write-Header "Installing SQL Server 2019 Container"
+
+    Write-Host "Login to Azure"
+    az login --identity
+
+    Write-Host "Connecting to $Env:aksCluster"
+    az aks get-credentials -n $Env:aksCluster -g $Env:resourceGroup
+
+    Write-Host "Creating sql19 namespace"
+    kubectl create namespace sql19
+
+    Write-Host "Creating Headless Services for SQL Pods"
+    kubectl apply -f $Env:DeploymentDir\yaml\SQL2019\headless-services.yaml -n sql19
+
+    Write-Host "Setting sa password"
+    kubectl create secret generic mssql19 --from-literal=MSSQL_SA_PASSWORD=$Env:adminPassword -n sql19
+
+    Write-Host "Applying kerberos configurations"
+    kubectl apply -f $Env:DeploymentDir\yaml\SQL2019\krb5-conf.yaml -n sql19
+
+    Write-Host "Applying SQL Server configurations"
+    kubectl apply -f $Env:DeploymentDir\yaml\SQL2019\mssql-conf.yaml -n sql19
+
+    Write-Host "Installing SQL Server Pods"
+$mssqlPodScript = @"
+#DxEnterprise + MSSQL StatefulSet
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: azure-disk
+provisioner: kubernetes.io/azure-disk
+parameters:
+  storageaccounttype: Standard_LRS
+  kind: Managed
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mssql19
+  labels:
+    app: mssql19
+spec:
+  serviceName: mssql19
+  replicas: 3
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: mssql19
+  template:
+    metadata:
+      labels:
+        app: mssql19
+    spec:
+      securityContext:
+        fsGroup: 10001
+      containers:
+        - name: mssql19
+          command:
+            - /bin/bash
+            - -c
+            - cp /var/opt/config/mssql.conf /var/opt/mssql/mssql.conf && /opt/mssql/bin/sqlservr
+          image: 'mcr.microsoft.com/mssql/server:2019-latest'
+          resources:
+            limits:
+              memory: 8Gi
+              cpu: '2'
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: 'Y'
+            - name: MSSQL_ENABLE_HADR
+              value: '1'
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mssql19
+                  key: MSSQL_SA_PASSWORD
+          volumeMounts:
+            - name: mssql
+              mountPath: /var/opt/mssql
+            - name: userdata
+              mountPath: /var/opt/mssql/userdata
+            - name: userlog
+              mountPath: /var/opt/mssql/userlog
+            - name: backup
+              mountPath: /var/opt/mssql/backup
+            - name: tempdb
+              mountPath: /var/opt/mssql/tempdb
+            - name: mssql-config-volume
+              mountPath: /var/opt/config
+            - name: krb5-config-volume
+              mountPath: /etc/krb5.conf
+              subPath: krb5.conf
+            - name: tls-certs
+              mountPath: /var/opt/mssql/certs
+            - name: tls-keys
+              mountPath: /var/opt/mssql/private
+        - name: dxe
+          image: dh2i/dxe
+          env:
+          - name: MSSQL_SA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mssql19
+                key: MSSQL_SA_PASSWORD
+          volumeMounts:
+          - name: dxe
+            mountPath: /etc/dh2i
+      hostAliases:
+        - ip: "10.$Env:vnetIpAddressRangeStr.16.4"
+          hostnames:
+            - "sqlk8sdc.sqlk8s.local"
+            - "sqlk8s.local"
+            - "sqlk8s"
+      volumes:
+        - name: mssql-config-volume
+          configMap:
+            name: mssql19
+        - name: krb5-config-volume
+          configMap:
+            name: krb5
+  volumeClaimTemplates:
+    - metadata:
+        name: mssql
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+    - metadata:
+        name: userdata
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+    - metadata:
+        name: userlog
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+    - metadata:
+        name: backup
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+    - metadata:
+        name: tempdb
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+    - metadata:
+        name: tls-certs
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: tls-keys
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: dxe
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+"@
+
+    $mssqlPodFile = "$Env:DeploymentDir\yaml\SQL2019\dxemssql.yaml"
+    $mssqlPodScript | Out-File -FilePath $mssqlPodFile -force    
+    kubectl apply -f $mssqlPodFile -n sql19    
+    
+    Write-Host "Installing SQL Server Pod Services"
+$mssqlPodServiceScript = @"
+#Access for SQL server, AG listener, and DxE management
+apiVersion: v1
+kind: Service
+metadata:
+  #Unique name
+  name: mssql19-0-lb
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.4.0
+  selector:
+    #Assign load balancer to a specific pod
+    statefulset.kubernetes.io/pod-name: mssql19-0
+  ports:
+  - name: sql
+    protocol: TCP
+    port: 1433
+    targetPort: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+    targetPort: 14033
+  - name: dxe
+    protocol: TCP
+    port: 7979
+    targetPort: 7979
+---
+apiVersion: v1
+kind: Service
+metadata:
+  #Unique name
+  name: mssql19-1-lb
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.4.1
+  selector:
+    #Assign load balancer to a specific pod
+    statefulset.kubernetes.io/pod-name: mssql19-1
+  ports:
+  - name: sql
+    protocol: TCP
+    port: 1433
+    targetPort: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+    targetPort: 14033
+  - name: dxe
+    protocol: TCP
+    port: 7979
+    targetPort: 7979
+---
+apiVersion: v1
+kind: Service
+metadata:
+  #Unique name
+  name: mssql19-2-lb
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.4.2
+  selector:
+    #Assign load balancer to a specific pod
+    statefulset.kubernetes.io/pod-name: mssql19-2
+  ports:
+  - name: sql
+    protocol: TCP
+    port: 1433
+    targetPort: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+    targetPort: 14033
+  - name: dxe
+    protocol: TCP
+    port: 7979
+    targetPort: 7979
+"@
+
+    $mssqlPodServiceFile = "$Env:DeploymentDir\yaml\SQL2019\pod-service.yaml"
+    $mssqlPodServiceScript | Out-File -FilePath $mssqlPodServiceFile -force    
+    kubectl apply -f $mssqlPodServiceFile -n sql19
+
+    Write-Host "Verifying pods and services started successfully"
+    $podsDeployed = 0
+    $servicesDeployed = 0
+    $attempts = 1
+    while ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -le 10)) {
+        $pod_mssql19_0 = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
+        $pod_mssql19_1 = kubectl get pods -n sql19 mssql19-1 -o jsonpath="{.status.phase}"
+        $pod_mssql19_2 = kubectl get pods -n sql19 mssql19-2 -o jsonpath="{.status.phase}"
+        if (($pod_mssql19_0 -eq "Running") -and ($pod_mssql19_1 -eq "Running") -and ($pod_mssql19_2 -eq "Running")) {
+            $podsDeployed = 1
+        }
+    
+        $service_mssql19_0 = kubectl get services -n sql19 mssql19-0-lb -o jsonpath="{.spec.loadBalancerIP}"
+        $service_mssql19_1 = kubectl get services -n sql19 mssql19-1-lb -o jsonpath="{.spec.loadBalancerIP}"
+        $service_mssql19_2 = kubectl get services -n sql19 mssql19-2-lb -o jsonpath="{.spec.loadBalancerIP}"
+        if (($service_mssql19_0 -eq "10.$Env:vnetIpAddressRangeStr.4.0") -and ($service_mssql19_1 -eq "10.$Env:vnetIpAddressRangeStr.4.1") -and ($service_mssql19_2 -eq "10.$Env:vnetIpAddressRangeStr.4.2")) {
+            $servicesDeployed = 1
+        }
+
+        if ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -lt 10)) {
+            $attempts += 1
+            Start-Sleep -Seconds 10
+        }
+    }
+    if ($podsDeployed -eq 0) {
+        Write-Host "Failed to start SQL Pods"
+    }
+    if ($servicesDeployed -eq 0) {
+        Write-Host "Failed to start SQL Services"
+    }
+
+    Write-Host "Uploading keytab files to pods"
+    $kubectlDeploymentDir = $Env:DeploymentDir -replace 'C:\\', '\..\'
+    kubectl cp $kubectlDeploymentDir\keytab\SQL2019\mssql_mssql19-0.keytab mssql19-0:/var/opt/mssql/secrets/mssql.keytab -n sql19
+    kubectl cp $kubectlDeploymentDir\keytab\SQL2019\mssql_mssql19-1.keytab mssql19-1:/var/opt/mssql/secrets/mssql.keytab -n sql19
+    kubectl cp $kubectlDeploymentDir\keytab\SQL2019\mssql_mssql19-2.keytab mssql19-2:/var/opt/mssql/secrets/mssql.keytab -n sql19
+
+    Write-Host "Uploading logger.ini files to pods"
+    kubectl cp "$kubectlDeploymentDir\yaml\SQL2019\logger.ini" mssql19-0:/var/opt/mssql/logger.ini -n sql19
+    kubectl cp "$kubectlDeploymentDir\yaml\SQL2019\logger.ini" mssql19-1:/var/opt/mssql/logger.ini -n sql19
+    kubectl cp "$kubectlDeploymentDir\yaml\SQL2019\logger.ini" mssql19-2:/var/opt/mssql/logger.ini -n sql19
+
+    Write-Host "Uploading TLS certificates to pods"
+    kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-0.pem" mssql19-0:/var/opt/mssql/certs/mssql.pem -n sql19
+    kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-0.key" mssql19-0:/var/opt/mssql/private/mssql.key -n sql19
+    kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-1.pem" mssql19-1:/var/opt/mssql/certs/mssql.pem -n sql19
+    kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-1.key" mssql19-1:/var/opt/mssql/private/mssql.key -n sql19
+    kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-2.pem" mssql19-2:/var/opt/mssql/certs/mssql.pem -n sql19
+    kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-2.key" mssql19-2:/var/opt/mssql/private/mssql.key -n sql19
+
+    Write-Host "Updating SQL Server Configurations"
+    kubectl apply -f $Env:DeploymentDir\yaml\SQL2019\mssql-conf-encryption.yaml -n sql19
+
+    Write-Host "Deleting pods to apply new configurations"
+    kubectl delete pod mssql19-0 -n sql19
+    Start-Sleep -Seconds 5
+    kubectl delete pod mssql19-1 -n sql19
+    Start-Sleep -Seconds 5
+    kubectl delete pod mssql19-2 -n sql19
+
+    Write-Host "Verifying pods restarted successfully"
+    $podsDeployed = 0
+    $attempts = 1
+    while (($podsDeployed -eq 0) -and ($attempts -le 10)) {
+        $pod_mssql19_0 = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
+        $pod_mssql19_1 = kubectl get pods -n sql19 mssql19-1 -o jsonpath="{.status.phase}"
+        $pod_mssql19_2 = kubectl get pods -n sql19 mssql19-2 -o jsonpath="{.status.phase}"
+        if (($pod_mssql19_0 -eq "Running") -and ($pod_mssql19_1 -eq "Running") -and ($pod_mssql19_2 -eq "Running")) {
+            $podsDeployed = 1
+        }
+    
+        if (($podsDeployed -eq 0) -and ($attempts -lt 10)) {
+            $attempts += 1
+            Start-Sleep -Seconds 10
+        }
+    }
+    if ($podsDeployed -eq 0) {
+        Write-Host "Failed to restart SQL Pods"
+    }
+}
 
 Write-Host "Configuration ends: $(Get-Date)"
 
@@ -188,3 +550,4 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2019', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2022', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('aksCluster', "", [System.EnvironmentVariableTarget]::Machine)

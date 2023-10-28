@@ -13,7 +13,8 @@ param (
     [string]$jumpboxVM,
     [string]$jumpboxNic,
     [string]$installSQL2019,
-    [string]$installSQL2022
+    [string]$installSQL2022,
+    [string]$aksCluster
 )
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
@@ -31,6 +32,7 @@ param (
 [System.Environment]::SetEnvironmentVariable('jumpboxNic', $jumpboxNic, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2019', $installSQL2019, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2022', $installSQL2022, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('aksCluster', $aksCluster, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "C:\Deployment", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "C:\Deployment\Logs", [System.EnvironmentVariableTarget]::Machine)
 
