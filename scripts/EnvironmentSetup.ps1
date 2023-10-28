@@ -207,7 +207,10 @@ while (($joinSuccess -eq 0) -and ($attempts -le 10)) {
   catch {
     $attempts += 1
     Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $Env:attempts"
-    if ($attempts -eq 10) {
+    if ($attempts -le 10) {
+      Start-Sleep -Seconds 6
+    }
+    else {
       Write-Host $Error[0]
     }
   }
