@@ -14,7 +14,8 @@ param (
     [string]$jumpboxNic,
     [string]$installSQL2019,
     [string]$installSQL2022,
-    [string]$aksCluster
+    [string]$aksCluster,
+    [string]$dH2iLicenseKey
 )
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
@@ -33,6 +34,7 @@ param (
 [System.Environment]::SetEnvironmentVariable('installSQL2019', $installSQL2019, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2022', $installSQL2022, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('aksCluster', $aksCluster, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', $dH2iLicenseKey, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "C:\Deployment", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "C:\Deployment\Logs", [System.EnvironmentVariableTarget]::Machine)
 
@@ -64,7 +66,7 @@ Install-PackageProvider -Name NuGet -Force
 
 # Installing tools
 Write-Header "Installing Chocolatey Apps"
-$chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,microsoft-edge,ssms'
+$chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,microsoft-edge,ssms,sqlcmd'
 
 try {
     choco config get cacheLocation
@@ -201,15 +203,16 @@ $credential = New-Object System.Management.Automation.PSCredential ($domainUsern
 
 $joinSuccess = 0
 $attempts = 1
-while (($joinSuccess -eq 0) -and ($attempts -le 30)) {
+$maxAttempts = 60
+while (($joinSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
   try {
     Write-Host "Joining $Env:jumpboxVM to the domain - Attempt $attempts"
     Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential -ErrorAction Stop
     $joinSuccess = 1
   }
   catch {
-    Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $attempts"
-    if ($attempts -lt 30) {
+    Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $attempts out of $maxAttempts"
+    if ($attempts -lt $maxAttempts) {
       Start-Sleep -Seconds 10
     }
     else {

@@ -446,7 +446,8 @@ spec:
     $podsDeployed = 0
     $servicesDeployed = 0
     $attempts = 1
-    while ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -le 30)) {
+    $maxAttempts = 60
+    while ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -le $maxAttempts)) {
         $pod_mssql19_0 = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
         $pod_mssql19_1 = kubectl get pods -n sql19 mssql19-1 -o jsonpath="{.status.phase}"
         $pod_mssql19_2 = kubectl get pods -n sql19 mssql19-2 -o jsonpath="{.status.phase}"
@@ -461,10 +462,11 @@ spec:
             $servicesDeployed = 1
         }
 
-        if ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -lt 30)) {
-            $attempts += 1
+        if ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -lt $maxAttempts)) {
+            Write-Host "Pods and Services are not yet available - Attempt $attempts out of $maxAttempts"
             Start-Sleep -Seconds 10
         }
+        $attempts += 1
     }
     if ($podsDeployed -eq 0) {
         Write-Host "Failed to start SQL Pods"
@@ -505,7 +507,7 @@ spec:
     Write-Host "Verifying pods restarted successfully"
     $podsDeployed = 0
     $attempts = 1
-    while (($podsDeployed -eq 0) -and ($attempts -le 30)) {
+    while (($podsDeployed -eq 0) -and ($attempts -le $maxAttempt)) {
         $pod_mssql19_0 = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
         $pod_mssql19_1 = kubectl get pods -n sql19 mssql19-1 -o jsonpath="{.status.phase}"
         $pod_mssql19_2 = kubectl get pods -n sql19 mssql19-2 -o jsonpath="{.status.phase}"
@@ -513,13 +515,219 @@ spec:
             $podsDeployed = 1
         }
     
-        if (($podsDeployed -eq 0) -and ($attempts -lt 30)) {
-            $attempts += 1
+        if (($podsDeployed -eq 0) -and ($attempts -lt $maxAttempt)) {
+            Write-Host "Pods are not yet available - Attempt $attempts out of $maxAttempts"
             Start-Sleep -Seconds 10
         }
+        $attempts += 1
     }
     if ($podsDeployed -eq 0) {
         Write-Host "Failed to restart SQL Pods"
+    }
+
+Write-Host "Creating Windows sysadmin login and Telegraf monitoring login"
+$sqlLoginScript = @"
+USE [master];
+GO
+
+CREATE LOGIN [$($Env:netbiosName.toUpper())\$Env:adminUsername] FROM WINDOWS;
+ALTER SERVER ROLE [sysadmin] ADD MEMBER [$($Env:netbiosName.toUpper())\$Env:adminUsername];
+GO
+
+CREATE LOGIN [Telegraf] WITH PASSWORD = N'$Env:adminPassword', DEFAULT_DATABASE=[master], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
+GRANT VIEW SERVER STATE TO [Telegraf];
+GRANT VIEW ANY DEFINITION TO [Telegraf];
+GO
+"@
+
+    $sqlLoginFile = "$Env:DeploymentDir\scripts\CreateLogins.sql"
+    $sqlLoginScript | Out-File -FilePath $sqlLoginFile -force
+    SQLCMD -S "mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
+    SQLCMD -S "mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
+    SQLCMD -S "mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
+
+    # Configure High Availability
+    if ($Env:dH2iLicenseKey.length -eq 19) {
+        Write-Header "Configuring High Availability"
+
+        Write-Host "Licensing pods"
+        $licenseSuccess = 0
+        $attempts = 1
+        while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
+          try {
+            Write-Host "Obtaining license for mssql19-0 - Attempt $attempts"
+            kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
+            $licenseSuccess = 1
+          }
+          catch {
+            Write-Host "Failed to obtain license for mssql19-0 - Attempt $attempts out of $maxAttempts"
+            if ($attempts -lt $maxAttempts) {
+              Start-Sleep -Seconds 10
+            }
+            else {
+              Write-Host $Error[0]
+            }
+            $attempts += 1
+          }
+        }
+
+        $licenseSuccess = 0
+        $attempts = 1
+        while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
+          try {
+            Write-Host "Obtaining license for mssql19-1 - Attempt $attempts"
+            kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
+            $licenseSuccess = 1
+          }
+          catch {
+            Write-Host "Failed to obtain license for mssql19-1 - Attempt $attempts out of $maxAttempts"
+            if ($attempts -lt $maxAttempts) {
+              Start-Sleep -Seconds 10
+            }
+            else {
+              Write-Host $Error[0]
+            }
+            $attempts += 1
+          }
+        }
+
+        $licenseSuccess = 0
+        $attempts = 1
+        while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
+          try {
+            Write-Host "Obtaining license for mssql19-2 - Attempt $attempts"
+            kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
+            $licenseSuccess = 1
+          }
+          catch {
+            Write-Host "Failed to obtain license for mssql19-2 - Attempt $attempts out of $maxAttempts"
+            if ($attempts -lt $maxAttempts) {
+              Start-Sleep -Seconds 10
+            }
+            else {
+              Write-Host $Error[0]
+            }
+            $attempts += 1
+          }
+        }
+
+        Write-Host "Creating HA Cluster on mssql19-0"
+        kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli cluster-add-vhost mssql19-agl1 *127.0.0.1 mssql19-0
+
+        Write-Host "Getting encrypted password for sa"
+        $saSecurePassword = kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli encrypt-text $Env:adminPassword
+
+        Write-Host "Creating Availability Group on mssql19-0"
+        kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags mssql19-agl1 mssql19-ag1 "mssql19-0|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
+
+        Write-Host "Setting the cluster passkey using admin password"
+        kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli cluster-set-secret-ex $Env:adminPassword
+
+        Write-Host "Enabling vhost lookup in DxEnterprise's global settings"
+        kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli set-globalsetting membername.lookup true
+
+        Write-Host "Joining mssql19-1 to cluster"
+        kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli join-cluster-ex mssql19-0 $Env:adminPassword
+
+        Write-Host "Joining mssql19-1 to the Availability Group"
+        kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli add-ags-node mssql19-agl1 mssql19-ag1 "mssql19-1|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
+
+        Write-Host "Joining mssql19-2 to cluster"
+        kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli join-cluster-ex mssql19-0 $Env:adminPassword
+
+        Write-Host "Joining mssql19-2 to the Availability Group"
+        kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli add-ags-node mssql19-agl1 mssql19-ag1 "mssql19-2|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
+
+        Write-Host "Creating Tunnel for Listener"
+        kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql19-agl1
+
+        Write-Host "Setting the Listener Port to 14033"
+        kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-listener mssql19-agl1 mssql19-ag1 14033
+
+        Write-Hoste "Creating Load Balancer Service"
+        kubectl apply -f C:\Deployment\yaml\SQL2019\service.yaml -n sql19
+
+$mssqlListenerServiceScript = @"
+#Example load balancer service
+#Access for SQL server, AG listener, and DxE management
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql19-cluster-lb
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.$vnetIpAddressRangeStr.4.3
+  selector:
+    app: mssql19
+  ports:
+  - name: sql
+    protocol: TCP
+    port: 1433
+    targetPort: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+    targetPort: 14033
+  - name: dxe
+    protocol: TCP
+    port: 7979
+    targetPort: 7979
+"@
+
+        $mssqlListenerServiceFile = "$Env:DeploymentDir\yaml\2019\service.yaml"
+        $mssqlListenerServiceScript | Out-File -FilePath $mssqlListenerServiceFile -force
+        kubectl apply -f $mssqlListenerServiceFile -n sql19
+
+        Write-Host "Verifying listener service started successfully"
+        $listenerDeployed = 0
+        $attempts = 1
+        $maxAttempts = 60
+        while (($listenerDeployed -eq 0) -and ($attempts -le $maxAttempts)) {
+            $service_mssql19_agl1 = kubectl get services -n sql19 mssql19-cluster-lb -o jsonpath="{.spec.loadBalancerIP}"
+            if ($service_mssql19_agl1 -eq "10.$Env:vnetIpAddressRangeStr.4.3") {
+                $listenerDeployed = 1
+            }
+    
+            if (($listenerDeployed -eq 0) -and ($attempts -lt $maxAttempts)) {
+                Write-Host "Listener Service is not yet available - Attempt $attempts out of $maxAttempts"
+                Start-Sleep -Seconds 10
+            }
+            $attempts += 1
+        }
+        if ($listenerDeployed -eq 0) {
+            Write-Host "Failed to start Listener Service"
+        }
+
+        Write-Host "Copying backup file to mssql19-0"
+        kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql19-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql19
+
+        Write-Host "Restoring database backup to mssql19-0 and configuring for High Availability"
+$sqlRestoreScript = @"
+RESTORE DATABASE AdventureWorks2019
+FROM DISK = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
+WITH
+MOVE N'AdventureWorks2017' TO N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
+, MOVE N'AdventureWorks2017_log' TO N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
+, RECOVERY, STATS = 10;
+GO
+
+ALTER DATABASE AdventureWorks2019 SET RECOVER FULL;
+GO
+
+BACKUP DATABASE AdventureWorks2019
+TO DISK = N'/var/opt/mssql/backup/AdventureWorks2019_Full_Recovery.bak'
+WITH FORMAT, INIT, COMPRESSION, STATS = 10;
+GO
+"@
+        
+        $sqlRestoreFile = "$Env:DeploymentDir\scripts\RestoreDatabase.sql"
+        $sqlRestoreScript | Out-File -FilePath $sqlRestoreFile -force
+        SQLCMD -S "mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $RestoreDatabase
+
+        Write-Host "Adding database to Availability Group"
+        kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-databases mssql19-agl1 mssql19-ag1 AdventureWorks2019
     }
 }
 
@@ -546,8 +754,9 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 [System.Environment]::SetEnvironmentVariable('linuxVM', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('jumpboxVM', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('jumpboxNic', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2019', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2022', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('aksCluster', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
