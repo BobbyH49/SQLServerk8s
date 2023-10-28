@@ -201,18 +201,19 @@ $joinSuccess = 0
 $attempts = 1
 while (($joinSuccess -eq 0) -and ($attempts -le 10)) {
   try {
+    Write-Host "Joining $Env:jumpboxVM to the domain - Attempt $Env:attempts"
     Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential
     $joinSuccess = 1
   }
   catch {
-    $attempts += 1
     Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $Env:attempts"
-    if ($attempts -le 10) {
+    if ($attempts -lt 10) {
       Start-Sleep -Seconds 6
     }
     else {
       Write-Host $Error[0]
     }
+    $attempts += 1
   }
 }
 
@@ -221,11 +222,11 @@ Write-Header "Configuring Domain and DNS on $Env:dcVM"
 Write-Host "Configuring ConfigureDC script for $Env:dcVM"
 $dcConfigureScript = @"
 
-`$SecurePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
+`$securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 
 # Creating new SQL Service Accounts
-New-ADUser "$($Env:netbiosName.toLower())svc19" -AccountPassword `$SecurePassword -PasswordNeverExpires `$true -Enabled `$true -KerberosEncryptionType AES256
-New-ADUser "$($Env:netbiosName.toLower())svc22" -AccountPassword `$SecurePassword -PasswordNeverExpires `$true -Enabled `$true -KerberosEncryptionType AES256
+New-ADUser "$($Env:netbiosName.toLower())svc19" -AccountPassword `$securePassword -PasswordNeverExpires `$true -Enabled `$true -KerberosEncryptionType AES256
+New-ADUser "$($Env:netbiosName.toLower())svc22" -AccountPassword `$securePassword -PasswordNeverExpires `$true -Enabled `$true -KerberosEncryptionType AES256
 
 # Generating all of the SPNs
 setspn -S MSSQLSvc/mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix $($Env:netbiosName.toUpper())\"$($Env:netbiosName.toLower())svc19"
