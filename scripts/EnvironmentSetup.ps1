@@ -196,7 +196,22 @@ Write-Host "Joining $Env:jumpboxVM to domain"
 $domainUsername="$($Env:netbiosName.toUpper())\$Env:adminUsername"
 $securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
-Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential
+
+$joinSuccess = 0
+$attempts = 1
+while (($joinSuccess = 0) -and ($attempts -le 10)) {
+  try {
+    Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential
+    $joinSuccess = 1
+  }
+  catch {
+    $attempts += 1
+    Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $Env:attempts"
+    if ($attempts = 10) {
+      Write-Host $Error[0]
+    }
+  }
+}
 
 Write-Header "Configuring Domain and DNS on $Env:dcVM"
 
