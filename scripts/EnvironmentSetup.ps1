@@ -201,12 +201,12 @@ $joinSuccess = 0
 $attempts = 1
 while (($joinSuccess -eq 0) -and ($attempts -le 10)) {
   try {
-    Write-Host "Joining $Env:jumpboxVM to the domain - Attempt $Env:attempts"
+    Write-Host "Joining $Env:jumpboxVM to the domain - Attempt $attempts"
     Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential -ErrorAction Stop
     $joinSuccess = 1
   }
   catch {
-    Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $Env:attempts"
+    Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $attempts"
     if ($attempts -lt 10) {
       Start-Sleep -Seconds 6
     }

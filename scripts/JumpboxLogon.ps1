@@ -12,7 +12,7 @@ Write-Header "Connecting to Azure"
 Connect-AzAccount -Identity
 
 # Deploy Linux Server with public key authentication
-Write-Header "Deploying Linux Server with public key authentication"
+Write-Header "Deploying Linux Server with private key authentication"
 
 # Generate ssh keys
 Write-Host "Generating ssh keys"
