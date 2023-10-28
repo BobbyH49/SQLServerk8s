@@ -446,7 +446,7 @@ spec:
     $podsDeployed = 0
     $servicesDeployed = 0
     $attempts = 1
-    while ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -le 10)) {
+    while ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -le 30)) {
         $pod_mssql19_0 = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
         $pod_mssql19_1 = kubectl get pods -n sql19 mssql19-1 -o jsonpath="{.status.phase}"
         $pod_mssql19_2 = kubectl get pods -n sql19 mssql19-2 -o jsonpath="{.status.phase}"
@@ -461,7 +461,7 @@ spec:
             $servicesDeployed = 1
         }
 
-        if ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -lt 10)) {
+        if ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -lt 30)) {
             $attempts += 1
             Start-Sleep -Seconds 10
         }
@@ -505,7 +505,7 @@ spec:
     Write-Host "Verifying pods restarted successfully"
     $podsDeployed = 0
     $attempts = 1
-    while (($podsDeployed -eq 0) -and ($attempts -le 10)) {
+    while (($podsDeployed -eq 0) -and ($attempts -le 30)) {
         $pod_mssql19_0 = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
         $pod_mssql19_1 = kubectl get pods -n sql19 mssql19-1 -o jsonpath="{.status.phase}"
         $pod_mssql19_2 = kubectl get pods -n sql19 mssql19-2 -o jsonpath="{.status.phase}"
@@ -513,7 +513,7 @@ spec:
             $podsDeployed = 1
         }
     
-        if (($podsDeployed -eq 0) -and ($attempts -lt 10)) {
+        if (($podsDeployed -eq 0) -and ($attempts -lt 30)) {
             $attempts += 1
             Start-Sleep -Seconds 10
         }

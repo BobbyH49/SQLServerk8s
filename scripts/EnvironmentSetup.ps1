@@ -201,7 +201,7 @@ $credential = New-Object System.Management.Automation.PSCredential ($domainUsern
 
 $joinSuccess = 0
 $attempts = 1
-while (($joinSuccess -eq 0) -and ($attempts -le 10)) {
+while (($joinSuccess -eq 0) -and ($attempts -le 30)) {
   try {
     Write-Host "Joining $Env:jumpboxVM to the domain - Attempt $attempts"
     Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential -ErrorAction Stop
@@ -209,8 +209,8 @@ while (($joinSuccess -eq 0) -and ($attempts -le 10)) {
   }
   catch {
     Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $attempts"
-    if ($attempts -lt 10) {
-      Start-Sleep -Seconds 6
+    if ($attempts -lt 30) {
+      Start-Sleep -Seconds 10
     }
     else {
       Write-Host $Error[0]
