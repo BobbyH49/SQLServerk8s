@@ -52,9 +52,9 @@ sudo apt-get update -y;
 
 # Installing and configuring resolvconf
 sudo apt-get install resolvconf;
-cp /etc/resolvconf/resolv.conf.d/head resolv.conf;
-echo nameserver 10.$Env:vnetIpAddressRangeStr.16.4 >> resolv.conf;
-sudo cp resolv.conf /etc/resolvconf/resolv.conf.d/head;
+cp /etc/resolvconf/resolv.conf.d/head /home/$Env:adminUsername/resolv.conf;
+echo nameserver 10.$Env:vnetIpAddressRangeStr.16.4 >> /home/$Env:adminUsername/resolv.conf;
+sudo cp /home/$Env:adminUsername/resolv.conf /etc/resolvconf/resolv.conf.d/head;
 sudo systemctl enable --now resolvconf.service;
 
 # Joining $Env:linuxVM to the domain
@@ -65,9 +65,9 @@ sudo apt-get install -y sssd;
 sudo apt-get install -y sssd-tools;
 export DEBIAN_FRONTEND=noninteractive;
 sudo -E apt -y -qq install krb5-user;
-cp /etc/krb5.conf krb5.conf;
-sed 's/default_realm = ATHENA.MIT.EDU/default_realm = $($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper())\n\trdns = false/' krb5.conf > krb5.conf.updated;
-sudo cp krb5.conf.updated /etc/krb5.conf;
+cp /etc/krb5.conf /home/$Env:adminUsername/krb5.conf;
+sed 's/default_realm = ATHENA.MIT.EDU/default_realm = $($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper())\n\trdns = false/' /home/$Env:adminUsername/krb5.conf > /home/$Env:adminUsername/krb5.conf.updated;
+sudo cp /home/$Env:adminUsername/krb5.conf.updated /etc/krb5.conf;
 echo $Env:adminPassword | sudo realm join $($Env:netbiosName.toLower()).$Env:domainSuffix -U '$Env:adminUsername@$($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper())' -v;
 
 # Installing adutil
