@@ -179,6 +179,25 @@ $dcCreateResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -V
 Write-Host "Script returned a result of $($dcCreateResult.Status)"
 $dcCreateResult | Out-File -FilePath $Env:DeploymentLogsDir\CreateDC.log -force
 
+# Remove DNS Server from Jumpbox Nic
+Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
+$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpboxNic
+$nic.DnsSettings.DnsServers.Clear()
+$nic | Set-AzNetworkInterface
+
+# Refresh DNS Settings
+Write-Header "Refreshing DNS Settings"
+ipconfig /release
+ipconfig /renew
+
+# Join Azure VM to domain
+Write-Header "Joining $Env:jumpboxVM to the domain"
+Write-Host "Joining $Env:jumpboxVM to domain"
+$domainUsername="$($Env:netbiosName.toUpper())\$Env:adminUsername"
+$securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
+Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential
+
 Write-Header "Configuring Domain and DNS on $Env:dcVM"
 
 Write-Host "Configuring ConfigureDC script for $Env:dcVM"
@@ -250,30 +269,11 @@ $dcConfigureResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup
 Write-Host "Script returned a result of $($dcConfigureResult.Status)"
 $dcConfigureResult | Out-File -FilePath $Env:DeploymentLogsDir\ConfigureDC.log -force
 
-# Remove DNS Server from Jumpbox Nic
-Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
-$nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpboxNic
-$nic.DnsSettings.DnsServers.Clear()
-$nic | Set-AzNetworkInterface
-
-# Refresh DNS Settings
-Write-Header "Refreshing DNS Settings"
-ipconfig /release
-ipconfig /renew
-
-# Join Azure VM to domain
-Write-Header "Joining $Env:jumpboxVM to the domain"
-Write-Host "Joining $Env:jumpboxVM to domain"
-$domainUsername="$($Env:netbiosName.toUpper())\$Env:adminUsername"
-$securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
-Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential
-
 # Configure Jumpbox Logon Script
 Write-Header "Configuring Jumpbox Logon Script"
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\JumpboxLogon.ps1
-Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User $($Env:netbiosName.toUpper())\$Env:adminUsername -Action $Action -RunLevel "Highest" -Force
+Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User "$($Env:netbiosName.toUpper())\$Env:adminUsername" -Action $Action -RunLevel "Highest" -Force
 
 # Stop logging and Reboot Jumpbox
 Write-Header "Rebooting $Env:jumpboxVM"
