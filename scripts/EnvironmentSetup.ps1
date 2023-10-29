@@ -61,38 +61,38 @@ Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\
 .$PsHome\Profile.ps1
 
 # Installing PowerShell Module Dependencies
-Write-Header "Installing NuGet"
+Write-Header "$(Get-Date) - Installing NuGet"
 Install-PackageProvider -Name NuGet -Force
 
 # Installing tools
-Write-Header "Installing Chocolatey Apps"
+Write-Header "$(Get-Date) - Installing Chocolatey Apps"
 $chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,microsoft-edge,ssms,sqlcmd'
 
 try {
     choco config get cacheLocation
 }
 catch {
-    Write-Host "Chocolatey not detected, trying to install now"
+    Write-Host "$(Get-Date) - Chocolatey not detected, trying to install now"
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 }
 
-Write-Header "Chocolatey Apps Specified"
+Write-Header "$(Get-Date) - Chocolatey Apps Specified"
 
 $appsToInstall = $chocolateyAppList -split "," | foreach { "$($_.Trim())" }
 
 foreach ($app in $appsToInstall) {
-    Write-Host "Installing $app"
+    Write-Host "$(Get-Date) - Installing $app"
     & choco install $app /y --force --no-progress | Write-Output
 }
 
-Write-Header "Fetching Artifacts for SqlServerK8s"
-Write-Host "Downloading templates"
+Write-Header "$(Get-Date) - Fetching Artifacts for SqlServerK8s"
+Write-Host "$(Get-Date) - Downloading templates"
 Invoke-WebRequest ($templateBaseUrl + "templates/linux.json") -OutFile $Env:DeploymentDir\templates\linux.json
 
-Write-Host "Downloading scripts"
+Write-Host "$(Get-Date) - Downloading scripts"
 Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogon.ps1") -OutFile $Env:DeploymentDir\scripts\JumpboxLogon.ps1
 
-Write-Host "Downloading SQL Server 2019 yaml and ini files"
+Write-Host "$(Get-Date) - Downloading SQL Server 2019 yaml and ini files"
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/dxemssql.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\dxemssql.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/headless-services.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\headless-services.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/krb5-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\krb5-conf.yaml
@@ -103,7 +103,7 @@ Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/mssql-conf-encryption.yaml")
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/pod-service.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\pod-service.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/service.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\service.yaml
 
-Write-Host "Downloading SQL Server 2022 yaml and ini files"
+Write-Host "$(Get-Date) - Downloading SQL Server 2022 yaml and ini files"
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/dxemssql.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\dxemssql.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/headless-services.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\headless-services.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/krb5-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\krb5-conf.yaml
@@ -114,7 +114,7 @@ Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/mssql-conf-encryption.yaml")
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/pod-service.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\pod-service.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/service.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\service.yaml
 
-Write-Host "Downloading SQL Monitor yaml and json files"
+Write-Host "$(Get-Date) - Downloading SQL Monitor yaml and json files"
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/Dashboard.json") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\Dashboard.json
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\deployment.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/service.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\service.yaml
@@ -124,10 +124,10 @@ Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/storage.yaml") -Out
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\config.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\deployment.yaml
 
-Write-Host "Downloading AdventureWorks2019 backup file"
+Write-Host "$(Get-Date) - Downloading AdventureWorks2019 backup file"
 Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019.bak
 
-Write-Header "Making alterations to Edge"
+Write-Header "$(Get-Date) - Making alterations to Edge"
 # Disable Microsoft Edge sidebar
 $RegistryPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
 $Name         = 'HubsSidebarEnabled'
@@ -152,13 +152,13 @@ New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType DWO
 Get-ScheduledTask -TaskName ServerManager | Disable-ScheduledTask
 
 # Connect to Azure Subscription
-Write-Header "Connecting to Azure"
+Write-Header "$(Get-Date) - Connecting to Azure"
 Connect-AzAccount -Identity
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Configure Domain Controller
-Write-Header "Installing Domain Controller on $Env:dcVM"
-Write-Host "Configuring CreateDC script for $Env:dcVM"
+Write-Header "$(Get-Date) - Installing Domain Controller on $Env:dcVM"
+Write-Host "$(Get-Date) - Configuring CreateDC script for $Env:dcVM"
 $dcCreateScript = @"
 
 # Install AD DS feature
@@ -178,40 +178,40 @@ Restart-Computer
 $dcCreateFile = "$Env:DeploymentDir\scripts\CreateDC.ps1"
 $dcCreateScript | Out-File -FilePath $dcCreateFile -force    
 
-Write-Host "Executing CreateDC script on $Env:dcVM"
+Write-Host "$(Get-Date) - Executing CreateDC script on $Env:dcVM"
 $dcCreateResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:dcVM -CommandId "RunPowerShellScript" -ScriptPath $dcCreateFile
-Write-Host "Script returned a result of $($dcCreateResult.Status)"
+Write-Host "$(Get-Date) - Script returned a result of $($dcCreateResult.Status)"
 $dcCreateResult | Out-File -FilePath $Env:DeploymentLogsDir\CreateDC.log -force
 
 # Remove DNS Server from Jumpbox Nic
-Write-Header "Removing DNS Server entry from $Env:jumpboxNic"
+Write-Header "$(Get-Date) - Removing DNS Server entry from $Env:jumpboxNic"
 $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpboxNic
 $nic.DnsSettings.DnsServers.Clear()
 $nic | Set-AzNetworkInterface
 
 # Refresh DNS Settings
-Write-Header "Refreshing DNS Settings"
+Write-Header "$(Get-Date) - Refreshing DNS Settings"
 ipconfig /release
 ipconfig /renew
 
 # Join Azure VM to domain
-Write-Header "Joining $Env:jumpboxVM to the domain"
-Write-Host "Joining $Env:jumpboxVM to domain"
+Write-Header "$(Get-Date) - Joining $Env:jumpboxVM to the domain"
+Write-Host "$(Get-Date) - Joining $Env:jumpboxVM to domain"
 $domainUsername="$($Env:netbiosName.toUpper())\$Env:adminUsername"
 $securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
 
 $joinSuccess = 0
 $attempts = 1
-$maxAttempts = 60
+$maxAttempts = 120
 while (($joinSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
   try {
-    Write-Host "Joining $Env:jumpboxVM to the domain - Attempt $attempts"
+    Write-Host "$(Get-Date) - Joining $Env:jumpboxVM to the domain - Attempt $attempts"
     Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential -ErrorAction Stop
     $joinSuccess = 1
   }
   catch {
-    Write-Host "Failed to join $Env:jumpboxVM to the domain - Attempt $attempts out of $maxAttempts"
+    Write-Host "$(Get-Date) - Failed to join $Env:jumpboxVM to the domain - Attempt $attempts out of $maxAttempts"
     if ($attempts -lt $maxAttempts) {
       Start-Sleep -Seconds 10
     }
@@ -222,9 +222,9 @@ while (($joinSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
   }
 }
 
-Write-Header "Configuring Domain and DNS on $Env:dcVM"
+Write-Header "$(Get-Date) - Configuring Domain and DNS on $Env:dcVM"
 
-Write-Host "Configuring ConfigureDC script for $Env:dcVM"
+Write-Host "$(Get-Date) - Configuring ConfigureDC script for $Env:dcVM"
 $dcConfigureScript = @"
 
 `$securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
@@ -288,19 +288,19 @@ Add-DnsServerConditionalForwarderZone -Name "privatelink.$Env:azureLocation.azmk
 $dcConfigureFile = "$Env:DeploymentDir\scripts\ConfigureDC.ps1"
 $dcConfigureScript | Out-File -FilePath $dcConfigureFile -force    
 
-Write-Host "Executing ConfigureDC script on $Env:dcVM"
+Write-Host "$(Get-Date) - Executing ConfigureDC script on $Env:dcVM"
 $dcConfigureResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:dcVM -CommandId "RunPowerShellScript" -ScriptPath $dcConfigureFile
-Write-Host "Script returned a result of $($dcConfigureResult.Status)"
+Write-Host "$(Get-Date) - Script returned a result of $($dcConfigureResult.Status)"
 $dcConfigureResult | Out-File -FilePath $Env:DeploymentLogsDir\ConfigureDC.log -force
 
 # Configure Jumpbox Logon Script
-Write-Header "Configuring Jumpbox Logon Script"
+Write-Header "$(Get-Date) - Configuring Jumpbox Logon Script"
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\JumpboxLogon.ps1
 Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User "$($Env:netbiosName.toUpper())\$Env:adminUsername" -Action $Action -RunLevel "Highest" -Force
 
 # Stop logging and Reboot Jumpbox
-Write-Header "Rebooting $Env:jumpboxVM"
+Write-Header "$(Get-Date) - Rebooting $Env:jumpboxVM"
 Stop-Transcript
 $logSuppress = Get-Content $Env:DeploymentLogsDir\EnvironmentSetup.log | Where-Object { $_ -notmatch "Host Application: powershell.exe" }
 $logSuppress | Set-Content $Env:DeploymentLogsDir\EnvironmentSetup.log -Force

@@ -25,10 +25,13 @@
                 },
                 "storageProfile": {
                     "osDisk": {
+                        "name": "[concat(parameters('linuxVM'),'-OSDisk')]",
+                        "caching": "ReadWrite",
                         "createOption": "fromImage",
                         "managedDisk": {
                             "storageAccountType": "Premium_LRS"
                         },
+                        "diskSizeGB": 128,
                         "deleteOption": "Delete"
                     },
                     "imageReference": {

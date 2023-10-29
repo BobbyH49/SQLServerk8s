@@ -4,44 +4,43 @@
 
 Start-Transcript -Path $Env:DeploymentLogsDir\JumpboxLogon.log -Append
 
-Write-Host "Configuration starts: $(Get-Date)"
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value $true
 
 # Connect to Azure Subscription
-Write-Header "Connecting to Azure"
+Write-Header "$(Get-Date) - Connecting to Azure"
 Connect-AzAccount -Identity
 
 # Deploy Linux Server with public key authentication
-Write-Header "Deploying Linux Server with private key authentication"
+Write-Header "$(Get-Date) - Deploying Linux Server with private key authentication"
 
 # Generate ssh keys
-Write-Host "Generating ssh keys"
+Write-Host "$(Get-Date) - Generating ssh keys"
 $linuxKeyFile = "$($Env:linuxVM.toLower())_id_rsa"
 New-Item -Path $HOME\.ssh  -ItemType directory -Force
 ssh-keygen -q -t rsa -b 4096 -N '""' -f $HOME\.ssh\$linuxKeyFile
 $publicKey = Get-Content $HOME\.ssh\$linuxKeyFile.pub
 
 # Generate parameters for template deployment
-Write-Host "Generating parameters for template deployment"
+Write-Host "$(Get-Date) - Generating parameters for template deployment"
 $templateParameters = @{}
 $templateParameters.add("adminUsername", $Env:adminUsername)
 $templateParameters.add("sshRSAPublicKey", $publicKey)
 $templateParameters.add("linuxVM", $Env:linuxVM)
 
 # Deploy Linux server
-Write-Host "Deploying $Env:linuxVM"
+Write-Host "$(Get-Date) - Deploying $Env:linuxVM"
 New-AzResourceGroupDeployment -ResourceGroupName $Env:resourceGroup -Mode Incremental -Force -TemplateFile "C:\Deployment\templates\linux.json" -TemplateParameterObject $templateParameters
 
 # Add known host
-Write-Host "Adding $Env:linuxVM as known host"
+Write-Host "$(Get-Date) - Adding $Env:linuxVM as known host"
 ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa $Env:linuxVM >> $HOME\.ssh\known_hosts
 (Get-Content $HOME\.ssh\known_hosts) | Set-Content -Encoding UTF8 $HOME\.ssh\known_hosts
 
-Write-Host "To connect to $Env:linuxVM server you can now run ssh -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$Env:linuxVM"
+Write-Host "$(Get-Date) - To connect to $Env:linuxVM server you can now run ssh -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$Env:linuxVM"
 
-Write-Header "Generate and download Kerberos keytab and TLS certificates"
-Write-Host "Configuring script for $Env:linuxVM"
+Write-Header "$(Get-Date) - Generate and download Kerberos keytab and TLS certificates"
+Write-Host "$(Get-Date) - Configuring script for $Env:linuxVM"
 $linuxScript = @"
 
 # Update hostname and get latest updates
@@ -116,22 +115,22 @@ sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*
 
 "@
 
-Write-Host "Executing script on $Env:linuxVM"
+Write-Host "$(Get-Date) - Executing script on $Env:linuxVM"
 $linuxFile = "$Env:DeploymentDir\scripts\GenerateLinuxFiles.sh"
 $linuxScript | Out-File -FilePath $linuxFile -force    
 
 $linuxResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:linuxVM -CommandId "RunShellScript" -ScriptPath $linuxFile
-Write-Host "Script returned a result of $($linuxResult.Status)"
+Write-Host "$(Get-Date) - Script returned a result of $($linuxResult.Status)"
 $linuxResult | Out-File -FilePath $Env:DeploymentLogsDir\GenerateLinuxFiles.log -force
 
 # Add known host
-Write-Host "Adding $Env:linuxVM as known host"
+Write-Host "$(Get-Date) - Adding $Env:linuxVM as known host"
 Remove-Item -Path $HOME\.ssh\known_hosts -Force
 ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa $Env:linuxVM >> $HOME\.ssh\known_hosts
 (Get-Content $HOME\.ssh\known_hosts) | Set-Content -Encoding UTF8 $HOME\.ssh\known_hosts
 
-Write-Host "Downloading keytab files from $Env:linuxVM"
+Write-Host "$(Get-Date) - Downloading keytab files from $Env:linuxVM"
 New-Item -Path $Env:DeploymentDir\keytab  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\keytab\SQL2019  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\keytab\SQL2022  -ItemType directory -Force
@@ -139,7 +138,7 @@ New-Item -Path $Env:DeploymentDir\keytab\SQL2022  -ItemType directory -Force
 scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql_mssql19*.keytab $Env:DeploymentDir\keytab\SQL2019\
 scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql_mssql22*.keytab $Env:DeploymentDir\keytab\SQL2022\
 
-Write-Host "Downloading certificate and private key files from $Env:linuxVM"
+Write-Host "$(Get-Date) - Downloading certificate and private key files from $Env:linuxVM"
 New-Item -Path $Env:DeploymentDir\certificates  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\certificates\SQL2019  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\certificates\SQL2022  -ItemType directory -Force
@@ -149,7 +148,7 @@ scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:ad
 scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql22*.pem $Env:DeploymentDir\certificates\SQL2022\
 scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql22*.key $Env:DeploymentDir\certificates\SQL2022\
 
-Write-Host "Installing SQL Server certificates on $Env:jumpboxVM"
+Write-Host "$(Get-Date) - Installing SQL Server certificates on $Env:jumpboxVM"
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-0.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
@@ -160,30 +159,30 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" 
 
 # Install SQL Server 2019 Container
 if ($Env:installSQL2019 -eq "Yes") {
-    Write-Header "Installing SQL Server 2019 Container"
+    Write-Header "$(Get-Date) - Installing SQL Server 2019 Container"
 
-    Write-Host "Login to Azure"
+    Write-Host "$(Get-Date) - Login to Azure"
     az login --identity
 
-    Write-Host "Connecting to $Env:aksCluster"
+    Write-Host "$(Get-Date) - Connecting to $Env:aksCluster"
     az aks get-credentials -n $Env:aksCluster -g $Env:resourceGroup
 
-    Write-Host "Creating sql19 namespace"
+    Write-Host "$(Get-Date) - Creating sql19 namespace"
     kubectl create namespace sql19
 
-    Write-Host "Creating Headless Services for SQL Pods"
+    Write-Host "$(Get-Date) - Creating Headless Services for SQL Pods"
     kubectl apply -f $Env:DeploymentDir\yaml\SQL2019\headless-services.yaml -n sql19
 
-    Write-Host "Setting sa password"
+    Write-Host "$(Get-Date) - Setting sa password"
     kubectl create secret generic mssql19 --from-literal=MSSQL_SA_PASSWORD=$Env:adminPassword -n sql19
 
-    Write-Host "Applying kerberos configurations"
+    Write-Host "$(Get-Date) - Applying kerberos configurations"
     kubectl apply -f $Env:DeploymentDir\yaml\SQL2019\krb5-conf.yaml -n sql19
 
-    Write-Host "Applying SQL Server configurations"
+    Write-Host "$(Get-Date) - Applying SQL Server configurations"
     kubectl apply -f $Env:DeploymentDir\yaml\SQL2019\mssql-conf.yaml -n sql19
 
-    Write-Host "Installing SQL Server Pods"
+    Write-Host "$(Get-Date) - Installing SQL Server Pods"
 $mssqlPodScript = @"
 #DxEnterprise + MSSQL StatefulSet
 kind: StorageClass
@@ -353,7 +352,7 @@ spec:
     $mssqlPodScript | Out-File -FilePath $mssqlPodFile -force    
     kubectl apply -f $mssqlPodFile -n sql19    
     
-    Write-Host "Installing SQL Server Pod Services"
+    Write-Host "$(Get-Date) - Installing SQL Server Pod Services"
 $mssqlPodServiceScript = @"
 #Access for SQL server, AG listener, and DxE management
 apiVersion: v1
@@ -442,7 +441,7 @@ spec:
     $mssqlPodServiceScript | Out-File -FilePath $mssqlPodServiceFile -force    
     kubectl apply -f $mssqlPodServiceFile -n sql19
 
-    Write-Host "Verifying pods and services started successfully"
+    Write-Host "$(Get-Date) - Verifying pods and services started successfully"
     $podsDeployed = 0
     $servicesDeployed = 0
     $attempts = 1
@@ -463,30 +462,30 @@ spec:
         }
 
         if ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -lt $maxAttempts)) {
-            Write-Host "Pods and Services are not yet available - Attempt $attempts out of $maxAttempts"
+            Write-Host "$(Get-Date) - Pods and Services are not yet available - Attempt $attempts out of $maxAttempts"
             Start-Sleep -Seconds 10
         }
         $attempts += 1
     }
     if ($podsDeployed -eq 0) {
-        Write-Host "Failed to start SQL Pods"
+        Write-Host "$(Get-Date) - Failed to start SQL Pods"
     }
     if ($servicesDeployed -eq 0) {
-        Write-Host "Failed to start SQL Services"
+        Write-Host "$(Get-Date) - Failed to start SQL Services"
     }
 
-    Write-Host "Uploading keytab files to pods"
+    Write-Host "$(Get-Date) - Uploading keytab files to pods"
     $kubectlDeploymentDir = $Env:DeploymentDir -replace 'C:\\', '\..\'
     kubectl cp $kubectlDeploymentDir\keytab\SQL2019\mssql_mssql19-0.keytab mssql19-0:/var/opt/mssql/secrets/mssql.keytab -n sql19
     kubectl cp $kubectlDeploymentDir\keytab\SQL2019\mssql_mssql19-1.keytab mssql19-1:/var/opt/mssql/secrets/mssql.keytab -n sql19
     kubectl cp $kubectlDeploymentDir\keytab\SQL2019\mssql_mssql19-2.keytab mssql19-2:/var/opt/mssql/secrets/mssql.keytab -n sql19
 
-    Write-Host "Uploading logger.ini files to pods"
+    Write-Host "$(Get-Date) - Uploading logger.ini files to pods"
     kubectl cp "$kubectlDeploymentDir\yaml\SQL2019\logger.ini" mssql19-0:/var/opt/mssql/logger.ini -n sql19
     kubectl cp "$kubectlDeploymentDir\yaml\SQL2019\logger.ini" mssql19-1:/var/opt/mssql/logger.ini -n sql19
     kubectl cp "$kubectlDeploymentDir\yaml\SQL2019\logger.ini" mssql19-2:/var/opt/mssql/logger.ini -n sql19
 
-    Write-Host "Uploading TLS certificates to pods"
+    Write-Host "$(Get-Date) - Uploading TLS certificates to pods"
     kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-0.pem" mssql19-0:/var/opt/mssql/certs/mssql.pem -n sql19
     kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-0.key" mssql19-0:/var/opt/mssql/private/mssql.key -n sql19
     kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-1.pem" mssql19-1:/var/opt/mssql/certs/mssql.pem -n sql19
@@ -494,17 +493,17 @@ spec:
     kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-2.pem" mssql19-2:/var/opt/mssql/certs/mssql.pem -n sql19
     kubectl cp "$kubectlDeploymentDir\certificates\SQL2019\mssql19-2.key" mssql19-2:/var/opt/mssql/private/mssql.key -n sql19
 
-    Write-Host "Updating SQL Server Configurations"
+    Write-Host "$(Get-Date) - Updating SQL Server Configurations"
     kubectl apply -f $Env:DeploymentDir\yaml\SQL2019\mssql-conf-encryption.yaml -n sql19
 
-    Write-Host "Deleting pods to apply new configurations"
+    Write-Host "$(Get-Date) - Deleting pods to apply new configurations"
     kubectl delete pod mssql19-0 -n sql19
     Start-Sleep -Seconds 5
     kubectl delete pod mssql19-1 -n sql19
     Start-Sleep -Seconds 5
     kubectl delete pod mssql19-2 -n sql19
 
-    Write-Host "Verifying pods restarted successfully"
+    Write-Host "$(Get-Date) - Verifying pods restarted successfully"
     $podsDeployed = 0
     $attempts = 1
     $pod_mssql19_0 = ""
@@ -519,16 +518,16 @@ spec:
         }
     
         if (($podsDeployed -eq 0) -and ($attempts -lt $maxAttempts)) {
-            Write-Host "Pods are not yet available - Attempt $attempts out of $maxAttempts"
+            Write-Host "$(Get-Date) - Pods are not yet available - Attempt $attempts out of $maxAttempts"
             Start-Sleep -Seconds 10
         }
         $attempts += 1
     }
     if ($podsDeployed -eq 0) {
-        Write-Host "Failed to restart SQL Pods"
+        Write-Host "$(Get-Date) - Failed to restart SQL Pods"
     }
 
-Write-Host "Creating Windows sysadmin login and Telegraf monitoring login"
+Write-Host "$(Get-Date) - Creating Windows sysadmin login and Telegraf monitoring login"
 $sqlLoginScript = @"
 USE [master];
 GO
@@ -551,19 +550,19 @@ GO
 
     # Configure High Availability
     if ($Env:dH2iLicenseKey.length -eq 19) {
-        Write-Header "Configuring High Availability"
+        Write-Header "$(Get-Date) - Configuring High Availability"
 
-        Write-Host "Licensing pods"
+        Write-Host "$(Get-Date) - Licensing pods"
         $licenseSuccess = 0
         $attempts = 1
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
           try {
-            Write-Host "Obtaining license for mssql19-0 - Attempt $attempts"
+            Write-Host "$(Get-Date) - Obtaining license for mssql19-0 - Attempt $attempts"
             kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
             $licenseSuccess = 1
           }
           catch {
-            Write-Host "Failed to obtain license for mssql19-0 - Attempt $attempts out of $maxAttempts"
+            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-0 - Attempt $attempts out of $maxAttempts"
             if ($attempts -lt $maxAttempts) {
               Start-Sleep -Seconds 10
             }
@@ -578,12 +577,12 @@ GO
         $attempts = 1
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
           try {
-            Write-Host "Obtaining license for mssql19-1 - Attempt $attempts"
+            Write-Host "$(Get-Date) - Obtaining license for mssql19-1 - Attempt $attempts"
             kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
             $licenseSuccess = 1
           }
           catch {
-            Write-Host "Failed to obtain license for mssql19-1 - Attempt $attempts out of $maxAttempts"
+            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-1 - Attempt $attempts out of $maxAttempts"
             if ($attempts -lt $maxAttempts) {
               Start-Sleep -Seconds 10
             }
@@ -598,12 +597,12 @@ GO
         $attempts = 1
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
           try {
-            Write-Host "Obtaining license for mssql19-2 - Attempt $attempts"
+            Write-Host "$(Get-Date) - Obtaining license for mssql19-2 - Attempt $attempts"
             kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
             $licenseSuccess = 1
           }
           catch {
-            Write-Host "Failed to obtain license for mssql19-2 - Attempt $attempts out of $maxAttempts"
+            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-2 - Attempt $attempts out of $maxAttempts"
             if ($attempts -lt $maxAttempts) {
               Start-Sleep -Seconds 10
             }
@@ -614,37 +613,37 @@ GO
           }
         }
 
-        Write-Host "Creating HA Cluster on mssql19-0"
+        Write-Host "$(Get-Date) - Creating HA Cluster on mssql19-0"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli cluster-add-vhost mssql19-agl1 *127.0.0.1 mssql19-0
 
-        Write-Host "Getting encrypted password for sa"
+        Write-Host "$(Get-Date) - Getting encrypted password for sa"
         $saSecurePassword = kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli encrypt-text $Env:adminPassword
 
-        Write-Host "Creating Availability Group on mssql19-0"
+        Write-Host "$(Get-Date) - Creating Availability Group on mssql19-0"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags mssql19-agl1 mssql19-ag1 "mssql19-0|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
 
-        Write-Host "Setting the cluster passkey using admin password"
+        Write-Host "$(Get-Date) - Setting the cluster passkey using admin password"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli cluster-set-secret-ex $Env:adminPassword
 
-        Write-Host "Enabling vhost lookup in DxEnterprise's global settings"
+        Write-Host "$(Get-Date) - Enabling vhost lookup in DxEnterprise's global settings"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli set-globalsetting membername.lookup true
 
-        Write-Host "Joining mssql19-1 to cluster"
+        Write-Host "$(Get-Date) - Joining mssql19-1 to cluster"
         kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli join-cluster-ex mssql19-0 $Env:adminPassword
 
-        Write-Host "Joining mssql19-1 to the Availability Group"
+        Write-Host "$(Get-Date) - Joining mssql19-1 to the Availability Group"
         kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli add-ags-node mssql19-agl1 mssql19-ag1 "mssql19-1|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
 
-        Write-Host "Joining mssql19-2 to cluster"
+        Write-Host "$(Get-Date) - Joining mssql19-2 to cluster"
         kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli join-cluster-ex mssql19-0 $Env:adminPassword
 
-        Write-Host "Joining mssql19-2 to the Availability Group"
+        Write-Host "$(Get-Date) - Joining mssql19-2 to the Availability Group"
         kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli add-ags-node mssql19-agl1 mssql19-ag1 "mssql19-2|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
 
-        Write-Host "Creating Tunnel for Listener"
+        Write-Host "$(Get-Date) - Creating Tunnel for Listener"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql19-agl1
 
-        Write-Host "Setting the Listener Port to 14033"
+        Write-Host "$(Get-Date) - Setting the Listener Port to 14033"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-listener mssql19-agl1 mssql19-ag1 14033
 
         Write-Hoste "Creating Load Balancer Service"
@@ -683,7 +682,7 @@ spec:
         $mssqlListenerServiceScript | Out-File -FilePath $mssqlListenerServiceFile -force
         kubectl apply -f $mssqlListenerServiceFile -n sql19
 
-        Write-Host "Verifying listener service started successfully"
+        Write-Host "$(Get-Date) - Verifying listener service started successfully"
         $listenerDeployed = 0
         $attempts = 1
         $maxAttempts = 60
@@ -694,19 +693,19 @@ spec:
             }
     
             if (($listenerDeployed -eq 0) -and ($attempts -lt $maxAttempts)) {
-                Write-Host "Listener Service is not yet available - Attempt $attempts out of $maxAttempts"
+                Write-Host "$(Get-Date) - Listener Service is not yet available - Attempt $attempts out of $maxAttempts"
                 Start-Sleep -Seconds 10
             }
             $attempts += 1
         }
         if ($listenerDeployed -eq 0) {
-            Write-Host "Failed to start Listener Service"
+            Write-Host "$(Get-Date) - Failed to start Listener Service"
         }
 
-        Write-Host "Copying backup file to mssql19-0"
+        Write-Host "$(Get-Date) - Copying backup file to mssql19-0"
         kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql19-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql19
 
-        Write-Host "Restoring database backup to mssql19-0 and configuring for High Availability"
+        Write-Host "$(Get-Date) - Restoring database backup to mssql19-0 and configuring for High Availability"
 $sqlRestoreScript = @"
 RESTORE DATABASE AdventureWorks2019
 FROM DISK = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
@@ -729,15 +728,13 @@ GO
         $sqlRestoreScript | Out-File -FilePath $sqlRestoreFile -force
         SQLCMD -S "mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $RestoreDatabase
 
-        Write-Host "Adding database to Availability Group"
+        Write-Host "$(Get-Date) - Adding database to Availability Group"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-databases mssql19-agl1 mssql19-ag1 AdventureWorks2019
     }
 }
 
-Write-Host "Configuration ends: $(Get-Date)"
-
 # Cleanup
-Write-Header "Cleanup environment"
+Write-Header "$(Get-Date) - Cleanup environment"
 Get-ScheduledTask -TaskName JumpboxLogon | Unregister-ScheduledTask -Confirm:$false
 
 Stop-Transcript

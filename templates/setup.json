@@ -450,10 +450,13 @@
                 },
                 "storageProfile": {
                     "osDisk": {
+                        "name": "[concat(variables('dcVM'),'-OSDisk')]",
+                        "caching": "ReadWrite",
                         "createOption": "fromImage",
                         "managedDisk": {
                             "storageAccountType": "Premium_LRS"
                         },
+                        "diskSizeGB": 128,
                         "deleteOption": "Delete"
                     },
                     "imageReference": {
@@ -521,10 +524,13 @@
                 },
                 "storageProfile": {
                     "osDisk": {
+                        "name": "[concat(variables('jumpboxVM'),'-OSDisk')]",
+                        "caching": "ReadWrite",
                         "createOption": "fromImage",
                         "managedDisk": {
                             "storageAccountType": "Premium_LRS"
                         },
+                        "diskSizeGB": 128,
                         "deleteOption": "Delete"
                     },
                     "imageReference": {
