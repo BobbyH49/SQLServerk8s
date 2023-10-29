@@ -507,7 +507,10 @@ spec:
     Write-Host "Verifying pods restarted successfully"
     $podsDeployed = 0
     $attempts = 1
-    while (($podsDeployed -eq 0) -and ($attempts -le $maxAttempt)) {
+    $pod_mssql19_0 = ""
+    $pod_mssql19_1 = ""
+    $pod_mssql19_2 = ""
+    while (($podsDeployed -eq 0) -and ($attempts -le $maxAttempts)) {
         $pod_mssql19_0 = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
         $pod_mssql19_1 = kubectl get pods -n sql19 mssql19-1 -o jsonpath="{.status.phase}"
         $pod_mssql19_2 = kubectl get pods -n sql19 mssql19-2 -o jsonpath="{.status.phase}"
@@ -515,7 +518,7 @@ spec:
             $podsDeployed = 1
         }
     
-        if (($podsDeployed -eq 0) -and ($attempts -lt $maxAttempt)) {
+        if (($podsDeployed -eq 0) -and ($attempts -lt $maxAttempts)) {
             Write-Host "Pods are not yet available - Attempt $attempts out of $maxAttempts"
             Start-Sleep -Seconds 10
         }
