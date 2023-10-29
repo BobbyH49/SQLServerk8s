@@ -674,7 +674,7 @@
                 "type": "SystemAssigned"
             }
         },
-       {
+        {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
             "name": "[variables('aksSubnetRoleGuid')]",
