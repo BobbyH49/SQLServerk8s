@@ -554,12 +554,12 @@ GO
         Write-Header "$(Get-Date) - Configuring High Availability"
 
         Write-Host "$(Get-Date) - Licensing pods"
-        $ErrorActionPreference = "Stop"
         $licenseSuccess = 0
         $attempts = 1
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
           try {
             Write-Host "$(Get-Date) - Obtaining license for mssql19-0 - Attempt $attempts"
+            $ErrorActionPreference = "Stop"
             kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
             $licenseSuccess = 1
           }
@@ -580,6 +580,7 @@ GO
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
           try {
             Write-Host "$(Get-Date) - Obtaining license for mssql19-1 - Attempt $attempts"
+            $ErrorActionPreference = "Stop"
             kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
             $licenseSuccess = 1
           }
@@ -600,6 +601,7 @@ GO
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
           try {
             Write-Host "$(Get-Date) - Obtaining license for mssql19-2 - Attempt $attempts"
+            $ErrorActionPreference = "Stop"
             kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
             $licenseSuccess = 1
           }
@@ -649,9 +651,7 @@ GO
         Write-Host "$(Get-Date) - Setting the Listener Port to 14033"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-listener mssql19-agl1 mssql19-ag1 14033
 
-        Write-Hoste "Creating Load Balancer Service"
-        kubectl apply -f C:\Deployment\yaml\SQL2019\service.yaml -n sql19
-
+        Write-Host "$(Get-Date) - Creating Load Balancer Service"
 $mssqlListenerServiceScript = @"
 #Example load balancer service
 #Access for SQL server, AG listener, and DxE management
@@ -663,7 +663,7 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.$vnetIpAddressRangeStr.4.3
+  loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.4.3
   selector:
     app: mssql19
   ports:
@@ -681,7 +681,7 @@ spec:
     targetPort: 7979
 "@
 
-        $mssqlListenerServiceFile = "$Env:DeploymentDir\yaml\2019\service.yaml"
+        $mssqlListenerServiceFile = "$Env:DeploymentDir\yaml\SQL2019\service.yaml"
         $mssqlListenerServiceScript | Out-File -FilePath $mssqlListenerServiceFile -force
         kubectl apply -f $mssqlListenerServiceFile -n sql19
 
@@ -705,7 +705,7 @@ spec:
             Write-Host "$(Get-Date) - Failed to start Listener Service"
         }
         Start-Sleep -Seconds 10
-        
+
         Write-Host "$(Get-Date) - Copying backup file to mssql19-0"
         kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql19-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql19
 
@@ -719,7 +719,7 @@ MOVE N'AdventureWorks2017' TO N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
 , RECOVERY, STATS = 10;
 GO
 
-ALTER DATABASE AdventureWorks2019 SET RECOVER FULL;
+ALTER DATABASE AdventureWorks2019 SET RECOVERY FULL;
 GO
 
 BACKUP DATABASE AdventureWorks2019
@@ -730,7 +730,7 @@ GO
         
         $sqlRestoreFile = "$Env:DeploymentDir\scripts\RestoreDatabase.sql"
         $sqlRestoreScript | Out-File -FilePath $sqlRestoreFile -force
-        SQLCMD -S "mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $RestoreDatabase
+        SQLCMD -S "mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlRestoreFile
 
         Write-Host "$(Get-Date) - Adding database to Availability Group"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli add-ags-databases mssql19-agl1 mssql19-ag1 AdventureWorks2019
