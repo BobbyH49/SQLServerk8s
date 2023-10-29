@@ -526,6 +526,7 @@ spec:
     if ($podsDeployed -eq 0) {
         Write-Host "$(Get-Date) - Failed to restart SQL Pods"
     }
+    Start-Sleep -Seconds 10
 
 Write-Host "$(Get-Date) - Creating Windows sysadmin login and Telegraf monitoring login"
 $sqlLoginScript = @"
@@ -703,7 +704,8 @@ spec:
         if ($listenerDeployed -eq 0) {
             Write-Host "$(Get-Date) - Failed to start Listener Service"
         }
-
+        Start-Sleep -Seconds 10
+        
         Write-Host "$(Get-Date) - Copying backup file to mssql19-0"
         kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql19-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql19
 
