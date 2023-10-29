@@ -506,9 +506,6 @@ spec:
     Write-Host "$(Get-Date) - Verifying pods restarted successfully"
     $podsDeployed = 0
     $attempts = 1
-    $pod_mssql19_0 = ""
-    $pod_mssql19_1 = ""
-    $pod_mssql19_2 = ""
     while (($podsDeployed -eq 0) -and ($attempts -le $maxAttempts)) {
         $pod_mssql19_0 = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
         $pod_mssql19_1 = kubectl get pods -n sql19 mssql19-1 -o jsonpath="{.status.phase}"
@@ -557,66 +554,56 @@ GO
         $licenseSuccess = 0
         $attempts = 1
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
-          try {
-            Write-Host "$(Get-Date) - Obtaining license for mssql19-0 - Attempt $attempts"
-            $ErrorActionPreference = "Stop"
-            kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
-            $licenseSuccess = 1
-          }
-          catch {
-            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-0 - Attempt $attempts out of $maxAttempts"
-            if ($attempts -lt $maxAttempts) {
-              Start-Sleep -Seconds 10
+            $result = kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
+            if ($result -eq "Result: License successfully set")	{
+	    	    $licenseSuccess = 1
             }
-            else {
-              Write-Host $Error[0]
+            
+            if (($licenseSuccess -eq 0) -and ($attempts -lt $maxAttempts)) {
+                Write-Host "$(Get-Date) - Failed to obtain license for mssql19-0 - Attempt $attempts out of $maxAttempts"
+                Start-Sleep -Seconds 10
             }
             $attempts += 1
-          }
+        }
+        if ($licenseSuccess -eq 0) {
+            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-0 - $result"
         }
 
         $licenseSuccess = 0
         $attempts = 1
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
-          try {
-            Write-Host "$(Get-Date) - Obtaining license for mssql19-1 - Attempt $attempts"
-            $ErrorActionPreference = "Stop"
-            kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
-            $licenseSuccess = 1
-          }
-          catch {
-            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-1 - Attempt $attempts out of $maxAttempts"
-            if ($attempts -lt $maxAttempts) {
-              Start-Sleep -Seconds 10
+            $result = kubectl exec -n sql19 -c dxe mssql19-1 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
+            if ($result -eq "Result: License successfully set")	{
+	    	    $licenseSuccess = 1
             }
-            else {
-              Write-Host $Error[0]
+            
+            if (($licenseSuccess -eq 0) -and ($attempts -lt $maxAttempts)) {
+                Write-Host "$(Get-Date) - Failed to obtain license for mssql19-1 - Attempt $attempts out of $maxAttempts"
+                Start-Sleep -Seconds 10
             }
             $attempts += 1
-          }
         }
-
+        if ($licenseSuccess -eq 0) {
+            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-1 - $result"
+        }
+        
         $licenseSuccess = 0
         $attempts = 1
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
-          try {
-            Write-Host "$(Get-Date) - Obtaining license for mssql19-2 - Attempt $attempts"
-            $ErrorActionPreference = "Stop"
-            kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
-            $licenseSuccess = 1
-          }
-          catch {
-            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-2 - Attempt $attempts out of $maxAttempts"
-            if ($attempts -lt $maxAttempts) {
-              Start-Sleep -Seconds 10
+            $result = kubectl exec -n sql19 -c dxe mssql19-2 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
+            if ($result -eq "Result: License successfully set")	{
+	    	    $licenseSuccess = 1
             }
-            else {
-              Write-Host $Error[0]
+            
+            if (($licenseSuccess -eq 0) -and ($attempts -lt $maxAttempts)) {
+                Write-Host "$(Get-Date) - Failed to obtain license for mssql19-2 - Attempt $attempts out of $maxAttempts"
+                Start-Sleep -Seconds 10
             }
             $attempts += 1
-          }
         }
-        $ErrorActionPreference = "Continue"
+        if ($licenseSuccess -eq 0) {
+            Write-Host "$(Get-Date) - Failed to obtain license for mssql19-2 - $result"
+        }
 
         Write-Host "$(Get-Date) - Creating HA Cluster on mssql19-0"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli cluster-add-vhost mssql19-agl1 *127.0.0.1 mssql19-0
