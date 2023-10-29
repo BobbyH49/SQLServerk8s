@@ -553,6 +553,7 @@ GO
         Write-Header "$(Get-Date) - Configuring High Availability"
 
         Write-Host "$(Get-Date) - Licensing pods"
+        $ErrorActionPreference = "Stop"
         $licenseSuccess = 0
         $attempts = 1
         while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
@@ -612,6 +613,7 @@ GO
             $attempts += 1
           }
         }
+        $ErrorActionPreference = "Continue"
 
         Write-Host "$(Get-Date) - Creating HA Cluster on mssql19-0"
         kubectl exec -n sql19 -c dxe mssql19-0 -- dxcli cluster-add-vhost mssql19-agl1 *127.0.0.1 mssql19-0
