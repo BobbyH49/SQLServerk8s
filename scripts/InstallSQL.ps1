@@ -1,4 +1,99 @@
-Write-Header "$(Get-Date) - Installing SQL Server 20$($currentSQLVersion) Containers"
+function VerifyPodRunning
+{
+  param(
+    [string]$podName,
+    [string]$namespace,
+    [string]$maxAttempts,
+    [string]$failedSleepTime,
+    [string]$successSleepTime
+  )
+  $podStatus = ""
+  $attempts = 1
+  while (($podStatus -ne "Running") -and ($attempts -le $maxAttempts)) {
+    $podStatus = kubectl get pods -n $namespace $podName -o jsonpath="{.status.phase}"
+
+    if ($podStatus -ne "Running") {
+      Write-Host "$(Get-Date) - Pod $podName is not yet available - Attempt $attempts out of $maxAttempts"
+      if ($attempts -lt $maxAttempts) {
+        Start-Sleep -Seconds $failedSleepTime
+      }
+      else {
+        Write-Host "$(Get-Date) - Failed to restart $podName after $maxAttempts attempts"
+      }
+    }
+    else {
+      Write-Host "$(Get-Date) - Pod $podName is now available"
+      Start-Sleep -Seconds $successSleepTime
+    }
+    $attempts += 1
+  }
+}
+
+function VerifyServiceRunning
+{
+  param(
+    [string]$serviceName,
+    [string]$namespace,
+    [string]$expectedServiceIP,
+    [string]$maxAttempts,
+    [string]$failedSleepTime,
+    [string]$successSleepTime
+  )
+  $actualServiceIP = ""
+  $attempts = 1
+  while (($actualServiceIP -ne $expectedServiceIP) -and ($attempts -le $maxAttempts)) {
+    $actualServiceIP = kubectl get services -n $namespace $serviceName -o jsonpath="{.spec.loadBalancerIP}"
+
+    if ($actualServiceIP -ne $expectedServiceIP) {
+      Write-Host "$(Get-Date) - Service $serviceName is not yet available - Attempt $attempts out of $maxAttempts"
+      if ($attempts -lt $maxAttempts) {
+        Start-Sleep -Seconds $failedSleepTime
+      }
+      else {
+        Write-Host "$(Get-Date) - Failed to restart $serviceName after $maxAttempts attempts"
+      }
+    }
+    else {
+      Write-Host "$(Get-Date) - Service $serviceName is now available"
+      Start-Sleep -Seconds $successSleepTime
+    }
+    $attempts += 1
+  }
+}
+
+function LicenseSqlPod
+{
+  param(
+    [string]$podName,
+    [string]$namespace,
+    [string]$licenseKey,
+    [string]$maxAttempts,
+    [string]$failedSleepTime
+  )
+  $licenseStatus = ""
+  $attempts = 1
+  while (($licenseStatus -ne "Result: License successfully set") -and ($attempts -le $maxAttempts)) {
+    $licenseStatus = kubectl exec -n $namespace -c dxe $podName -- dxcli activate-server $licenseKey --accept-eula
+
+    if ($licenseStatus -ne "Result: License successfully set") {
+      Write-Host "$(Get-Date) - Failed to obtain license for $podName - Attempt $attempts out of $maxAttempts"
+      if ($attempts -lt $maxAttempts) {
+        Start-Sleep -Seconds $failedSleepTime
+      }
+      else {
+        Write-Host "$(Get-Date) - Failed to obtain license for $podName after $maxAttempts attempts"
+        Write-Host $licenseStatus
+      }
+    }
+    else {
+      Write-Host "$(Get-Date) - Pod is now licensed"
+    }
+    $attempts += 1
+  }
+}
+
+# Main
+Write-Header "$(Get-Date) - Installing SQL Server 20$($Env:currentSqlVersion) Containers"
 
 Write-Host "$(Get-Date) - Login to Azure"
 az login --identity
@@ -6,20 +101,20 @@ az login --identity
 Write-Host "$(Get-Date) - Connecting to $Env:aksCluster"
 az aks get-credentials -n $Env:aksCluster -g $Env:resourceGroup
 
-Write-Host "$(Get-Date) - Creating sql$($currentSQLVersion) namespace"
-kubectl create namespace sql$($currentSQLVersion)
+Write-Host "$(Get-Date) - Creating sql$($Env:currentSqlVersion) namespace"
+kubectl create namespace sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Creating Headless Services for SQL Pods"
-kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($currentSQLVersion)\headless-services.yaml -n sql$($currentSQLVersion)
+kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\headless-services.yaml -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Setting sa password"
-kubectl create secret generic mssql$($currentSQLVersion) --from-literal=MSSQL_SA_PASSWORD=$Env:adminPassword -n sql$($currentSQLVersion)
+kubectl create secret generic mssql$($Env:currentSqlVersion) --from-literal=MSSQL_SA_PASSWORD=$Env:adminPassword -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Applying kerberos configurations"
-kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($currentSQLVersion)\krb5-conf.yaml -n sql$($currentSQLVersion)
+kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\krb5-conf.yaml -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Applying SQL Server configurations"
-kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($currentSQLVersion)\mssql-conf.yaml -n sql$($currentSQLVersion)
+kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\mssql-conf.yaml -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Installing SQL Server Pods"
 $mssqlPodScript = @"
@@ -36,30 +131,30 @@ kind: Managed
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-name: mssql$($currentSQLVersion)
+name: mssql$($Env:currentSqlVersion)
 labels:
-app: mssql$($currentSQLVersion)
+app: mssql$($Env:currentSqlVersion)
 spec:
-serviceName: mssql$($currentSQLVersion)
+serviceName: mssql$($Env:currentSqlVersion)
 replicas: 3
 podManagementPolicy: Parallel
 selector:
 matchLabels:
-  app: mssql$($currentSQLVersion)
+  app: mssql$($Env:currentSqlVersion)
 template:
 metadata:
   labels:
-    app: mssql$($currentSQLVersion)
+    app: mssql$($Env:currentSqlVersion)
 spec:
   securityContext:
     fsGroup: 10001
   containers:
-    - name: mssql$($currentSQLVersion)
+    - name: mssql$($Env:currentSqlVersion)
       command:
         - /bin/bash
         - -c
         - cp /var/opt/config/mssql.conf /var/opt/mssql/mssql.conf && /opt/mssql/bin/sqlservr
-      image: 'mcr.microsoft.com/mssql/server:20$($currentSQLVersion)-latest'
+      image: 'mcr.microsoft.com/mssql/server:20$($Env:currentSqlVersion)-latest'
       resources:
         limits:
           memory: 8Gi
@@ -74,7 +169,7 @@ spec:
         - name: MSSQL_SA_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mssql$($currentSQLVersion)
+              name: mssql$($Env:currentSqlVersion)
               key: MSSQL_SA_PASSWORD
       volumeMounts:
         - name: mssql
@@ -102,7 +197,7 @@ spec:
       - name: MSSQL_SA_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: mssql$($currentSQLVersion)
+            name: mssql$($Env:currentSqlVersion)
             key: MSSQL_SA_PASSWORD
       volumeMounts:
       - name: dxe
@@ -116,7 +211,7 @@ spec:
   volumes:
     - name: mssql-config-volume
       configMap:
-        name: mssql$($currentSQLVersion)
+        name: mssql$($Env:currentSqlVersion)
     - name: krb5-config-volume
       configMap:
         name: krb5
@@ -187,9 +282,9 @@ volumeClaimTemplates:
         storage: 1Gi
 "@
 
-$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($currentSQLVersion)\dxemssql.yaml"
+$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\dxemssql.yaml"
 $mssqlPodScript | Out-File -FilePath $mssqlPodFile -force    
-kubectl apply -f $mssqlPodFile -n sql$($currentSQLVersion)    
+kubectl apply -f $mssqlPodFile -n sql$($Env:currentSqlVersion)    
 
 Write-Host "$(Get-Date) - Installing SQL Server Pod Services"
 $mssqlPodServiceScript = @"
@@ -198,15 +293,15 @@ apiVersion: v1
 kind: Service
 metadata:
 #Unique name
-name: mssql$($currentSQLVersion)-0-lb
+name: mssql$($Env:currentSqlVersion)-0-lb
 annotations:
 service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
 type: LoadBalancer
-loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($vnetIpAddressRangeStr2).0
+loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).0
 selector:
 #Assign load balancer to a specific pod
-statefulset.kubernetes.io/pod-name: mssql$($currentSQLVersion)-0
+statefulset.kubernetes.io/pod-name: mssql$($Env:currentSqlVersion)-0
 ports:
 - name: sql
 protocol: TCP
@@ -225,15 +320,15 @@ apiVersion: v1
 kind: Service
 metadata:
 #Unique name
-name: mssql$($currentSQLVersion)-1-lb
+name: mssql$($Env:currentSqlVersion)-1-lb
 annotations:
 service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
 type: LoadBalancer
-loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($vnetIpAddressRangeStr2).1
+loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).1
 selector:
 #Assign load balancer to a specific pod
-statefulset.kubernetes.io/pod-name: mssql$($currentSQLVersion)-1
+statefulset.kubernetes.io/pod-name: mssql$($Env:currentSqlVersion)-1
 ports:
 - name: sql
 protocol: TCP
@@ -252,15 +347,15 @@ apiVersion: v1
 kind: Service
 metadata:
 #Unique name
-name: mssql$($currentSQLVersion)-2-lb
+name: mssql$($Env:currentSqlVersion)-2-lb
 annotations:
 service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
 type: LoadBalancer
-loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($vnetIpAddressRangeStr2).2
+loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).2
 selector:
 #Assign load balancer to a specific pod
-statefulset.kubernetes.io/pod-name: mssql$($currentSQLVersion)-2
+statefulset.kubernetes.io/pod-name: mssql$($Env:currentSqlVersion)-2
 ports:
 - name: sql
 protocol: TCP
@@ -276,93 +371,59 @@ port: 7979
 targetPort: 7979
 "@
 
-$mssqlPodServiceFile = "$Env:DeploymentDir\yaml\SQL20$($currentSQLVersion)\pod-service.yaml"
+$mssqlPodServiceFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\pod-service.yaml"
 $mssqlPodServiceScript | Out-File -FilePath $mssqlPodServiceFile -force    
-kubectl apply -f $mssqlPodServiceFile -n sql$($currentSQLVersion)
+kubectl apply -f $mssqlPodServiceFile -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Verifying pods and services started successfully"
-$podsDeployed = 0
-$servicesDeployed = 0
-$attempts = 1
-$maxAttempts = 60
-while ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -le $maxAttempts)) {
-    $pod0 = kubectl get pods -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-0 -o jsonpath="{.status.phase}"
-    $pod1 = kubectl get pods -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-1 -o jsonpath="{.status.phase}"
-    $pod2 = kubectl get pods -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-2 -o jsonpath="{.status.phase}"
-    if (($pod0 -eq "Running") -and ($pod1 -eq "Running") -and ($pod2 -eq "Running")) {
-        $podsDeployed = 1
-    }
+if ($Env:currentSqlVersion -eq "19") {
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0  
+}
+else {
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
+}
 
-    $service0 = kubectl get services -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-0-lb -o jsonpath="{.spec.loadBalancerIP}"
-    $service1 = kubectl get services -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-1-lb -o jsonpath="{.spec.loadBalancerIP}"
-    $service2 = kubectl get services -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-2-lb -o jsonpath="{.spec.loadBalancerIP}"
-    if (($service0 -eq "10.$Env:vnetIpAddressRangeStr.$($vnetIpAddressRangeStr2).0") -and ($service1 -eq "10.$Env:vnetIpAddressRangeStr.$($vnetIpAddressRangeStr2).1") -and ($service2 -eq "10.$Env:vnetIpAddressRangeStr.$($vnetIpAddressRangeStr2).2")) {
-        $servicesDeployed = 1
-    }
-
-    if ((($podsDeployed -eq 0) -or ($servicesDeployed -eq 0)) -and ($attempts -lt $maxAttempts)) {
-        Write-Host "$(Get-Date) - Pods and Services are not yet available - Attempt $attempts out of $maxAttempts"
-        Start-Sleep -Seconds 10
-    }
-    $attempts += 1
-}
-if ($podsDeployed -eq 0) {
-    Write-Host "$(Get-Date) - Failed to start SQL Pods"
-}
-if ($servicesDeployed -eq 0) {
-    Write-Host "$(Get-Date) - Failed to start SQL Services"
-}
+VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-0-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-1-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).1" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-2-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).2" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
 
 Write-Host "$(Get-Date) - Uploading keytab files to pods"
 $kubectlDeploymentDir = $Env:DeploymentDir -replace 'C:\\', '\..\'
-kubectl cp $kubectlDeploymentDir\keytab\SQL20$($currentSQLVersion)\mssql_mssql$($currentSQLVersion)-0.keytab mssql$($currentSQLVersion)-0:/var/opt/mssql/secrets/mssql.keytab -n sql$($currentSQLVersion)
-kubectl cp $kubectlDeploymentDir\keytab\SQL20$($currentSQLVersion)\mssql_mssql$($currentSQLVersion)-1.keytab mssql$($currentSQLVersion)-1:/var/opt/mssql/secrets/mssql.keytab -n sql$($currentSQLVersion)
-kubectl cp $kubectlDeploymentDir\keytab\SQL20$($currentSQLVersion)\mssql_mssql$($currentSQLVersion)-2.keytab mssql$($currentSQLVersion)-2:/var/opt/mssql/secrets/mssql.keytab -n sql$($currentSQLVersion)
+kubectl cp $kubectlDeploymentDir\keytab\SQL20$($Env:currentSqlVersion)\mssql_mssql$($Env:currentSqlVersion)-0.keytab mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/secrets/mssql.keytab -n sql$($Env:currentSqlVersion)
+kubectl cp $kubectlDeploymentDir\keytab\SQL20$($Env:currentSqlVersion)\mssql_mssql$($Env:currentSqlVersion)-1.keytab mssql$($Env:currentSqlVersion)-1:/var/opt/mssql/secrets/mssql.keytab -n sql$($Env:currentSqlVersion)
+kubectl cp $kubectlDeploymentDir\keytab\SQL20$($Env:currentSqlVersion)\mssql_mssql$($Env:currentSqlVersion)-2.keytab mssql$($Env:currentSqlVersion)-2:/var/opt/mssql/secrets/mssql.keytab -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Uploading logger.ini files to pods"
-kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($currentSQLVersion)\logger.ini" mssql$($currentSQLVersion)-0:/var/opt/mssql/logger.ini -n sql$($currentSQLVersion)
-kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($currentSQLVersion)\logger.ini" mssql$($currentSQLVersion)-1:/var/opt/mssql/logger.ini -n sql$($currentSQLVersion)
-kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($currentSQLVersion)\logger.ini" mssql$($currentSQLVersion)-2:/var/opt/mssql/logger.ini -n sql$($currentSQLVersion)
+kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\logger.ini" mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/logger.ini -n sql$($Env:currentSqlVersion)
+kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\logger.ini" mssql$($Env:currentSqlVersion)-1:/var/opt/mssql/logger.ini -n sql$($Env:currentSqlVersion)
+kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\logger.ini" mssql$($Env:currentSqlVersion)-2:/var/opt/mssql/logger.ini -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Uploading TLS certificates to pods"
-kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($currentSQLVersion)\mssql$($currentSQLVersion)-0.pem" mssql$($currentSQLVersion)-0:/var/opt/mssql/certs/mssql.pem -n sql$($currentSQLVersion)
-kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($currentSQLVersion)\mssql$($currentSQLVersion)-0.key" mssql$($currentSQLVersion)-0:/var/opt/mssql/private/mssql.key -n sql$($currentSQLVersion)
-kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($currentSQLVersion)\mssql$($currentSQLVersion)-1.pem" mssql$($currentSQLVersion)-1:/var/opt/mssql/certs/mssql.pem -n sql$($currentSQLVersion)
-kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($currentSQLVersion)\mssql$($currentSQLVersion)-1.key" mssql$($currentSQLVersion)-1:/var/opt/mssql/private/mssql.key -n sql$($currentSQLVersion)
-kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($currentSQLVersion)\mssql$($currentSQLVersion)-2.pem" mssql$($currentSQLVersion)-2:/var/opt/mssql/certs/mssql.pem -n sql$($currentSQLVersion)
-kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($currentSQLVersion)\mssql$($currentSQLVersion)-2.key" mssql$($currentSQLVersion)-2:/var/opt/mssql/private/mssql.key -n sql$($currentSQLVersion)
+kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-0.pem" mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/certs/mssql.pem -n sql$($Env:currentSqlVersion)
+kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-0.key" mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/private/mssql.key -n sql$($Env:currentSqlVersion)
+kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-1.pem" mssql$($Env:currentSqlVersion)-1:/var/opt/mssql/certs/mssql.pem -n sql$($Env:currentSqlVersion)
+kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-1.key" mssql$($Env:currentSqlVersion)-1:/var/opt/mssql/private/mssql.key -n sql$($Env:currentSqlVersion)
+kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-2.pem" mssql$($Env:currentSqlVersion)-2:/var/opt/mssql/certs/mssql.pem -n sql$($Env:currentSqlVersion)
+kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-2.key" mssql$($Env:currentSqlVersion)-2:/var/opt/mssql/private/mssql.key -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Updating SQL Server Configurations"
-kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($currentSQLVersion)\mssql-conf-encryption.yaml -n sql$($currentSQLVersion)
+kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\mssql-conf-encryption.yaml -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Deleting pods to apply new configurations"
-kubectl delete pod mssql$($currentSQLVersion)-0 -n sql$($currentSQLVersion)
+kubectl delete pod mssql$($Env:currentSqlVersion)-0 -n sql$($Env:currentSqlVersion)
 Start-Sleep -Seconds 5
-kubectl delete pod mssql$($currentSQLVersion)-1 -n sql$($currentSQLVersion)
+kubectl delete pod mssql$($Env:currentSqlVersion)-1 -n sql$($Env:currentSqlVersion)
 Start-Sleep -Seconds 5
-kubectl delete pod mssql$($currentSQLVersion)-2 -n sql$($currentSQLVersion)
+kubectl delete pod mssql$($Env:currentSqlVersion)-2 -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Verifying pods restarted successfully"
-$podsDeployed = 0
-$attempts = 1
-while (($podsDeployed -eq 0) -and ($attempts -le $maxAttempts)) {
-    $pod0 = kubectl get pods -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-0 -o jsonpath="{.status.phase}"
-    $pod1 = kubectl get pods -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-1 -o jsonpath="{.status.phase}"
-    $pod2 = kubectl get pods -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-2 -o jsonpath="{.status.phase}"
-    if (($pod0 -eq "Running") -and ($pod1 -eq "Running") -and ($pod2 -eq "Running")) {
-        $podsDeployed = 1
-    }
-
-    if (($podsDeployed -eq 0) -and ($attempts -lt $maxAttempts)) {
-        Write-Host "$(Get-Date) - Pods are not yet available - Attempt $attempts out of $maxAttempts"
-        Start-Sleep -Seconds 10
-    }
-    $attempts += 1
-}
-if ($podsDeployed -eq 0) {
-    Write-Host "$(Get-Date) - Failed to restart SQL Pods"
-}
-Start-Sleep -Seconds 10
+VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
+VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
+VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
 
 Write-Host "$(Get-Date) - Creating Windows sysadmin login and Telegraf monitoring login"
 $sqlLoginScript = @"
@@ -381,119 +442,69 @@ GO
 
 $sqlLoginFile = "$Env:DeploymentDir\scripts\CreateLogins.sql"
 $sqlLoginScript | Out-File -FilePath $sqlLoginFile -force
-SQLCMD -S "mssql$($currentSQLVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
-SQLCMD -S "mssql$($currentSQLVersion)-1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
-SQLCMD -S "mssql$($currentSQLVersion)-2.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
+SQLCMD -S "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
+SQLCMD -S "mssql$($Env:currentSqlVersion)-1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
+SQLCMD -S "mssql$($Env:currentSqlVersion)-2.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
 
 # Configure High Availability
 if ($Env:dH2iLicenseKey.length -eq 19) {
     Write-Header "$(Get-Date) - Configuring High Availability"
 
     Write-Host "$(Get-Date) - Licensing pods"
-    $licenseSuccess = 0
-    $attempts = 1
-    while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
-        $result = kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
-        if ($result -eq "Result: License successfully set")	{
-            $licenseSuccess = 1
-        }
-        
-        if (($licenseSuccess -eq 0) -and ($attempts -lt $maxAttempts)) {
-            Write-Host "$(Get-Date) - Failed to obtain license for mssql$($currentSQLVersion)-0 - Attempt $attempts out of $maxAttempts"
-            Start-Sleep -Seconds 10
-        }
-        $attempts += 1
-    }
-    if ($licenseSuccess -eq 0) {
-        Write-Host "$(Get-Date) - Failed to obtain license for mssql$($currentSQLVersion)-0 - $result"
-    }
+    LicenseSqlPod -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -licenseKey $Env:dH2iLicenseKey -maxAttempts 60 -failedSleepTime 10
+    LicenseSqlPod -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -licenseKey $Env:dH2iLicenseKey -maxAttempts 60 -failedSleepTime 10
+    LicenseSqlPod -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -licenseKey $Env:dH2iLicenseKey -maxAttempts 60 -failedSleepTime 10
 
-    $licenseSuccess = 0
-    $attempts = 1
-    while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
-        $result = kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-1 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
-        if ($result -eq "Result: License successfully set")	{
-            $licenseSuccess = 1
-        }
-        
-        if (($licenseSuccess -eq 0) -and ($attempts -lt $maxAttempts)) {
-            Write-Host "$(Get-Date) - Failed to obtain license for mssql$($currentSQLVersion)-1 - Attempt $attempts out of $maxAttempts"
-            Start-Sleep -Seconds 10
-        }
-        $attempts += 1
-    }
-    if ($licenseSuccess -eq 0) {
-        Write-Host "$(Get-Date) - Failed to obtain license for mssql$($currentSQLVersion)-1 - $result"
-    }
-    
-    $licenseSuccess = 0
-    $attempts = 1
-    while (($licenseSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
-        $result = kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-2 -- dxcli activate-server $Env:dH2iLicenseKey --accept-eula
-        if ($result -eq "Result: License successfully set")	{
-            $licenseSuccess = 1
-        }
-        
-        if (($licenseSuccess -eq 0) -and ($attempts -lt $maxAttempts)) {
-            Write-Host "$(Get-Date) - Failed to obtain license for mssql$($currentSQLVersion)-2 - Attempt $attempts out of $maxAttempts"
-            Start-Sleep -Seconds 10
-        }
-        $attempts += 1
-    }
-    if ($licenseSuccess -eq 0) {
-        Write-Host "$(Get-Date) - Failed to obtain license for mssql$($currentSQLVersion)-2 - $result"
-    }
-
-    Write-Host "$(Get-Date) - Creating HA Cluster on mssql$($currentSQLVersion)-0"
-    kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli cluster-add-vhost mssql$($currentSQLVersion)-agl1 *127.0.0.1 mssql$($currentSQLVersion)-0
+    Write-Host "$(Get-Date) - Creating HA Cluster on mssql$($Env:currentSqlVersion)-0"
+    kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli cluster-add-vhost mssql$($Env:currentSqlVersion)-agl1 *127.0.0.1 mssql$($Env:currentSqlVersion)-0
 
     Write-Host "$(Get-Date) - Getting encrypted password for sa"
-    $saSecurePassword = kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli encrypt-text $Env:adminPassword
+    $saSecurePassword = kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli encrypt-text $Env:adminPassword
 
-    Write-Host "$(Get-Date) - Creating Availability Group on mssql$($currentSQLVersion)-0"
-    if ($currentSQLVersion == "19") {
-        kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli add-ags mssql$($currentSQLVersion)-agl1 mssql$($currentSQLVersion)-ag1 "mssql$($currentSQLVersion)-0|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
+    Write-Host "$(Get-Date) - Creating Availability Group on mssql$($Env:currentSqlVersion)-0"
+    if ($Env:currentSqlVersion == "19") {
+        kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli add-ags mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-0|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
     }
     else {
-        kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli add-ags mssql$($currentSQLVersion)-agl1 mssql$($currentSQLVersion)-ag1 "mssql$($currentSQLVersion)-0|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0" "CONTAINED"
+        kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli add-ags mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-0|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0" "CONTAINED"
         Start-Sleep -Seconds 30
     }
 
     Write-Host "$(Get-Date) - Setting the cluster passkey using admin password"
-    kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli cluster-set-secret-ex $Env:adminPassword
+    kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli cluster-set-secret-ex $Env:adminPassword
 
     Write-Host "$(Get-Date) - Enabling vhost lookup in DxEnterprise's global settings"
-    kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli set-globalsetting membername.lookup true
+    kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli set-globalsetting membername.lookup true
 
-    Write-Host "$(Get-Date) - Joining mssql$($currentSQLVersion)-1 to cluster"
-    kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-1 -- dxcli join-cluster-ex mssql$($currentSQLVersion)-0 $Env:adminPassword
+    Write-Host "$(Get-Date) - Joining mssql$($Env:currentSqlVersion)-1 to cluster"
+    kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-1 -- dxcli join-cluster-ex mssql$($Env:currentSqlVersion)-0 $Env:adminPassword
 
-    Write-Host "$(Get-Date) - Joining mssql$($currentSQLVersion)-1 to the Availability Group"
-    if ($currentSQLVersion == "19") {
-        kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-1 -- dxcli add-ags-node mssql$($currentSQLVersion)-agl1 mssql$($currentSQLVersion)-ag1 "mssql$($currentSQLVersion)-1|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
+    Write-Host "$(Get-Date) - Joining mssql$($Env:currentSqlVersion)-1 to the Availability Group"
+    if ($Env:currentSqlVersion == "19") {
+        kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-1 -- dxcli add-ags-node mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-1|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
     }
     else {
-        kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-1 -- dxcli add-ags-node mssql$($currentSQLVersion)-agl1 mssql$($currentSQLVersion)-ag1 "mssql$($currentSQLVersion)-1|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
+        kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-1 -- dxcli add-ags-node mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-1|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
         Start-Sleep -Seconds 30
     }
 
-    Write-Host "$(Get-Date) - Joining mssql$($currentSQLVersion)-2 to cluster"
-    kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-2 -- dxcli join-cluster-ex mssql$($currentSQLVersion)-0 $Env:adminPassword
+    Write-Host "$(Get-Date) - Joining mssql$($Env:currentSqlVersion)-2 to cluster"
+    kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-2 -- dxcli join-cluster-ex mssql$($Env:currentSqlVersion)-0 $Env:adminPassword
 
-    Write-Host "$(Get-Date) - Joining mssql$($currentSQLVersion)-2 to the Availability Group"
-    if ($currentSQLVersion == "19") {
-        kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-2 -- dxcli add-ags-node mssql$($currentSQLVersion)-agl1 mssql$($currentSQLVersion)-ag1 "mssql$($currentSQLVersion)-2|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
+    Write-Host "$(Get-Date) - Joining mssql$($Env:currentSqlVersion)-2 to the Availability Group"
+    if ($Env:currentSqlVersion == "19") {
+        kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-2 -- dxcli add-ags-node mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-2|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
     }
     else {
-        kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-2 -- dxcli add-ags-node mssql$($currentSQLVersion)-agl1 mssql$($currentSQLVersion)-ag1 "mssql$($currentSQLVersion)-2|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
+        kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-2 -- dxcli add-ags-node mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-2|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
         Start-Sleep -Seconds 30
     }
 
     Write-Host "$(Get-Date) - Creating Tunnel for Listener"
-    kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql$($currentSQLVersion)-agl1
+    kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli add-tunnel listener true ".ACTIVE" "127.0.0.1:14033" ".INACTIVE,0.0.0.0:14033" mssql$($Env:currentSqlVersion)-agl1
 
     Write-Host "$(Get-Date) - Setting the Listener Port to 14033"
-    kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli add-ags-listener mssql$($currentSQLVersion)-agl1 mssql$($currentSQLVersion)-ag1 14033
+    kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli add-ags-listener mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 14033
 
     Write-Host "$(Get-Date) - Creating Load Balancer Service"
 $mssqlListenerServiceScript = @"
@@ -502,14 +513,14 @@ $mssqlListenerServiceScript = @"
 apiVersion: v1
 kind: Service
 metadata:
-name: mssql$($currentSQLVersion)-cluster-lb
+name: mssql$($Env:currentSqlVersion)-cluster-lb
 annotations:
 service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
 type: LoadBalancer
-loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($vnetIpAddressRangeStr2).3
+loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).3
 selector:
-app: mssql$($currentSQLVersion)
+app: mssql$($Env:currentSqlVersion)
 ports:
 - name: sql
 protocol: TCP
@@ -525,35 +536,17 @@ port: 7979
 targetPort: 7979
 "@
 
-    $mssqlListenerServiceFile = "$Env:DeploymentDir\yaml\SQL20$($currentSQLVersion)\service.yaml"
+    $mssqlListenerServiceFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\service.yaml"
     $mssqlListenerServiceScript | Out-File -FilePath $mssqlListenerServiceFile -force
-    kubectl apply -f $mssqlListenerServiceFile -n sql$($currentSQLVersion)
+    kubectl apply -f $mssqlListenerServiceFile -n sql$($Env:currentSqlVersion)
 
     Write-Host "$(Get-Date) - Verifying listener service started successfully"
-    $listenerDeployed = 0
-    $attempts = 1
-    $maxAttempts = 60
-    while (($listenerDeployed -eq 0) -and ($attempts -le $maxAttempts)) {
-        $listenerService = kubectl get services -n sql$($currentSQLVersion) mssql$($currentSQLVersion)-cluster-lb -o jsonpath="{.spec.loadBalancerIP}"
-        if ($listenerService -eq "10.$Env:vnetIpAddressRangeStr.$($vnetIpAddressRangeStr2).3") {
-            $listenerDeployed = 1
-        }
+    VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-cluster-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).3" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
 
-        if (($listenerDeployed -eq 0) -and ($attempts -lt $maxAttempts)) {
-            Write-Host "$(Get-Date) - Listener Service is not yet available - Attempt $attempts out of $maxAttempts"
-            Start-Sleep -Seconds 10
-        }
-        $attempts += 1
-    }
-    if ($listenerDeployed -eq 0) {
-        Write-Host "$(Get-Date) - Failed to start Listener Service"
-    }
-    Start-Sleep -Seconds 10
+    Write-Host "$(Get-Date) - Copying backup file to mssql$($Env:currentSqlVersion)-0"
+    kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql$($Env:currentSqlVersion)
 
-    Write-Host "$(Get-Date) - Copying backup file to mssql$($currentSQLVersion)-0"
-    kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql$($currentSQLVersion)-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql$($currentSQLVersion)
-
-    Write-Host "$(Get-Date) - Restoring database backup to mssql$($currentSQLVersion)-0 and configuring for High Availability"
+    Write-Host "$(Get-Date) - Restoring database backup to mssql$($Env:currentSqlVersion)-0 and configuring for High Availability"
 $sqlRestoreScript = @"
 RESTORE DATABASE AdventureWorks2019
 FROM DISK = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
@@ -574,8 +567,8 @@ GO
     
     $sqlRestoreFile = "$Env:DeploymentDir\scripts\RestoreDatabase.sql"
     $sqlRestoreScript | Out-File -FilePath $sqlRestoreFile -force
-    SQLCMD -S "mssql$($currentSQLVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlRestoreFile
+    SQLCMD -S "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlRestoreFile
 
     Write-Host "$(Get-Date) - Adding database to Availability Group"
-    kubectl exec -n sql$($currentSQLVersion) -c dxe mssql$($currentSQLVersion)-0 -- dxcli add-ags-databases mssql$($currentSQLVersion)-agl1 mssql$($currentSQLVersion)-ag1 AdventureWorks2019
+    kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli add-ags-databases mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 AdventureWorks2019
 }

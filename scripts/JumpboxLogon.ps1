@@ -159,7 +159,7 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" 
 
 # Install SQL Server 2019 Containers
 if ($Env:installSQL2019 -eq "Yes") {
-    [System.Environment]::SetEnvironmentVariable('$currentSQLVersion', "19", [System.EnvironmentVariableTarget]::Machine)
+    [System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
     [System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
     
     & $DeploymentDir\scripts\InstallSQL.ps1
@@ -167,7 +167,7 @@ if ($Env:installSQL2019 -eq "Yes") {
 
 # Install SQL Server 2022 Containers
 if ($Env:installSQL2022 -eq "Yes") {
-    [System.Environment]::SetEnvironmentVariable('$currentSQLVersion', "22", [System.EnvironmentVariableTarget]::Machine)
+    [System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
     [System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
     
     & $DeploymentDir\scripts\InstallSQL.ps1
@@ -200,5 +200,5 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 [System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$currentSQLVersion', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "", [System.EnvironmentVariableTarget]::Machine)
