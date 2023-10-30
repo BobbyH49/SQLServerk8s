@@ -142,9 +142,9 @@ spec:
     matchLabels:
       app: mssql$($Env:currentSqlVersion)
   template:
-  metadata:
-    labels:
-      app: mssql$($Env:currentSqlVersion)
+    metadata:
+      labels:
+        app: mssql$($Env:currentSqlVersion)
     spec:
       securityContext:
         fsGroup: 10001
@@ -462,7 +462,7 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
     $saSecurePassword = kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli encrypt-text $Env:adminPassword
 
     Write-Host "$(Get-Date) - Creating Availability Group on mssql$($Env:currentSqlVersion)-0"
-    if ($Env:currentSqlVersion == "19") {
+    if ($Env:currentSqlVersion -eq "19") {
         kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli add-ags mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-0|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
     }
     else {
@@ -480,7 +480,7 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
     kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-1 -- dxcli join-cluster-ex mssql$($Env:currentSqlVersion)-0 $Env:adminPassword
 
     Write-Host "$(Get-Date) - Joining mssql$($Env:currentSqlVersion)-1 to the Availability Group"
-    if ($Env:currentSqlVersion == "19") {
+    if ($Env:currentSqlVersion -eq "19") {
         kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-1 -- dxcli add-ags-node mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-1|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
     }
     else {
@@ -492,7 +492,7 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
     kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-2 -- dxcli join-cluster-ex mssql$($Env:currentSqlVersion)-0 $Env:adminPassword
 
     Write-Host "$(Get-Date) - Joining mssql$($Env:currentSqlVersion)-2 to the Availability Group"
-    if ($Env:currentSqlVersion == "19") {
+    if ($Env:currentSqlVersion -eq "19") {
         kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-2 -- dxcli add-ags-node mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 "mssql$($Env:currentSqlVersion)-2|mssqlserver|sa|$saSecurePassword|5022|synchronous_commit|0"
     }
     else {
