@@ -161,16 +161,20 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" 
 if ($Env:installSQL2019 -eq "Yes") {
     [System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
     [System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
+    $Env:currentSqlVersion = "19"
+    $Env:vnetIpAddressRangeStr2 = "4"
     
-    & $DeploymentDir\scripts\InstallSQL.ps1
+    & $Env:DeploymentDir\scripts\InstallSQL.ps1
 }
 
 # Install SQL Server 2022 Containers
 if ($Env:installSQL2022 -eq "Yes") {
     [System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
     [System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
+    $Env:currentSqlVersion = "22"
+    $Env:vnetIpAddressRangeStr2 = "5"
     
-    & $DeploymentDir\scripts\InstallSQL.ps1
+    & $Env:DeploymentDir\scripts\InstallSQL.ps1
 }
 
 # Cleanup

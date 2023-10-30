@@ -283,8 +283,8 @@ volumeClaimTemplates:
 "@
 
 $mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\dxemssql.yaml"
-$mssqlPodScript | Out-File -FilePath $mssqlPodFile -force    
-kubectl apply -f $mssqlPodFile -n sql$($Env:currentSqlVersion)    
+$mssqlPodScript | Out-File -FilePath $mssqlPodFile -force
+kubectl apply -f $mssqlPodFile -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Installing SQL Server Pod Services"
 $mssqlPodServiceScript = @"
