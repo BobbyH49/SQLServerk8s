@@ -157,23 +157,37 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-0.pem" 
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 
+# Generate yaml files for SQL Server 2019 pod and service creation
+[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
+$Env:currentSqlVersion = "19"
+$Env:vnetIpAddressRangeStr2 = "4"
+if ($Env:dH2iLicenseKey.length -ne 19) {
+    & $Env:DeploymentDir\scripts\DynamicYaml.ps1
+}
+else {
+    & $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
+}
+
 # Install SQL Server 2019 Containers
-if ($Env:installSQL2019 -eq "Yes") {
-    [System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
-    [System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
-    $Env:currentSqlVersion = "19"
-    $Env:vnetIpAddressRangeStr2 = "4"
-    
+if ($Env:installSQL2019 -eq "Yes") {    
     & $Env:DeploymentDir\scripts\InstallSQL.ps1
+}
+
+# Generate yaml files for SQL Server 2022 pod and service creation
+[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
+$Env:currentSqlVersion = "22"
+$Env:vnetIpAddressRangeStr2 = "5"
+if ($Env:dH2iLicenseKey.length -ne 19) {
+    & $Env:DeploymentDir\scripts\DynamicYaml.ps1
+}
+else {
+    & $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
 }
 
 # Install SQL Server 2022 Containers
 if ($Env:installSQL2022 -eq "Yes") {
-    [System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
-    [System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
-    $Env:currentSqlVersion = "22"
-    $Env:vnetIpAddressRangeStr2 = "5"
-    
     & $Env:DeploymentDir\scripts\InstallSQL.ps1
 }
 

@@ -1,3 +1,5 @@
+Write-Host "$(Get-Date) - Generating dxemssql.yaml"
+$mssqlPodScript = @"
 #DxEnterprise + MSSQL StatefulSet
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -11,30 +13,30 @@ parameters:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mssql19
+  name: mssql$($Env:currentSqlVersion)
   labels:
-    app: mssql19
+    app: mssql$($Env:currentSqlVersion)
 spec:
-  serviceName: mssql19
-  replicas: 3
+  serviceName: mssql$($Env:currentSqlVersion)
+  replicas: 1
   podManagementPolicy: Parallel
   selector:
     matchLabels:
-      app: mssql19
+      app: mssql$($Env:currentSqlVersion)
   template:
     metadata:
       labels:
-        app: mssql19
+        app: mssql$($Env:currentSqlVersion)
     spec:
       securityContext:
         fsGroup: 10001
       containers:
-        - name: mssql19
+        - name: mssql$($Env:currentSqlVersion)
           command:
             - /bin/bash
             - -c
             - cp /var/opt/config/mssql.conf /var/opt/mssql/mssql.conf && /opt/mssql/bin/sqlservr
-          image: 'mcr.microsoft.com/mssql/server:2019-latest'
+          image: 'mcr.microsoft.com/mssql/server:20$($Env:currentSqlVersion)-latest'
           resources:
             limits:
               memory: 8Gi
@@ -49,7 +51,7 @@ spec:
             - name: MSSQL_SA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mssql19
+                  name: mssql$($Env:currentSqlVersion)
                   key: MSSQL_SA_PASSWORD
           volumeMounts:
             - name: mssql
@@ -77,13 +79,13 @@ spec:
           - name: MSSQL_SA_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: mssql19
+                name: mssql$($Env:currentSqlVersion)
                 key: MSSQL_SA_PASSWORD
           volumeMounts:
           - name: dxe
             mountPath: /etc/dh2i
       hostAliases:
-        - ip: "10.<IP Address Value>.16.4"
+        - ip: "10.$Env:vnetIpAddressRangeStr.16.4"
           hostnames:
             - "sqlk8sdc.sqlk8s.local"
             - "sqlk8s.local"
@@ -91,7 +93,7 @@ spec:
       volumes:
         - name: mssql-config-volume
           configMap:
-            name: mssql19
+            name: mssql$($Env:currentSqlVersion)
         - name: krb5-config-volume
           configMap:
             name: krb5
@@ -160,3 +162,41 @@ spec:
         resources:
           requests:
             storage: 1Gi
+"@
+
+$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\dxemssql.yaml"
+$mssqlPodScript | Out-File -FilePath $mssqlPodFile -force
+
+Write-Host "$(Get-Date) - Generating pod-service.yaml"
+$mssqlPodServiceScript = @"
+#Access for SQL server, AG listener, and DxE management
+apiVersion: v1
+kind: Service
+metadata:
+  #Unique name
+  name: mssql$($Env:currentSqlVersion)-0-lb
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).0
+  selector:
+    #Assign load balancer to a specific pod
+    statefulset.kubernetes.io/pod-name: mssql$($Env:currentSqlVersion)-0
+  ports:
+  - name: sql
+    protocol: TCP
+    port: 1433
+    targetPort: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+    targetPort: 14033
+  - name: dxe
+    protocol: TCP
+    port: 7979
+    targetPort: 7979
+"@
+
+$mssqlPodServiceFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\pod-service.yaml"
+$mssqlPodServiceScript | Out-File -FilePath $mssqlPodServiceFile -force    

@@ -91,29 +91,25 @@ Invoke-WebRequest ($templateBaseUrl + "templates/linux.json") -OutFile $Env:Depl
 
 Write-Host "$(Get-Date) - Downloading scripts"
 Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogon.ps1") -OutFile $Env:DeploymentDir\scripts\JumpboxLogon.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicYaml.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYaml.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicYamlHA.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYaml.ps1
 Invoke-WebRequest ($templateBaseUrl + "scripts/InstallSQL.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
 
 Write-Host "$(Get-Date) - Downloading SQL Server 2019 yaml and ini files"
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/dxemssql.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\dxemssql.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/headless-services.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\headless-services.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/krb5-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\krb5-conf.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/logger_debug.ini") -OutFile $Env:DeploymentDir\yaml\SQL2019\logger_debug.ini
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/logger.ini") -OutFile $Env:DeploymentDir\yaml\SQL2019\logger.ini
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/mssql-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\mssql-conf.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/mssql-conf-encryption.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\mssql-conf-encryption.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/pod-service.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\pod-service.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/service.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\service.yaml
 
 Write-Host "$(Get-Date) - Downloading SQL Server 2022 yaml and ini files"
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/dxemssql.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\dxemssql.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/headless-services.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\headless-services.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/krb5-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\krb5-conf.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/logger_debug.ini") -OutFile $Env:DeploymentDir\yaml\SQL2022\logger_debug.ini
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/logger.ini") -OutFile $Env:DeploymentDir\yaml\SQL2022\logger.ini
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/mssql-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\mssql-conf.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/mssql-conf-encryption.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\mssql-conf-encryption.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/pod-service.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\pod-service.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/service.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\service.yaml
 
 Write-Host "$(Get-Date) - Downloading SQL Monitor yaml and json files"
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/Dashboard.json") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\Dashboard.json
