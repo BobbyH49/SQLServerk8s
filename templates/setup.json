@@ -629,9 +629,9 @@
                     {
                         "name": "agentpool",
                         "osDiskSizeGB": 0,
-                        "count": 2,
+                        "count": 1,
                         "enableAutoScaling": true,
-                        "minCount": 2,
+                        "minCount": 1,
                         "maxCount": 4,
                         "vmSize": "Standard_D8s_v3",
                         "osType": "Linux",

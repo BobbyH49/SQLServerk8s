@@ -125,19 +125,10 @@ Write-Host "$(Get-Date) - Installing SQL Server Pod Services"
 kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\pod-service.yaml -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Verifying pods and services started successfully"
-if (($Env:currentSqlVersion -eq "22") -and ($null -ne $podStatus)) {
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
-  if ($Env:dH2iLicenseKey.length -eq 19) {
-    VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
-    VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0  
-  }
-}
-else {
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-  if ($Env:dH2iLicenseKey.length -eq 19) {
-    VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-    VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-  }
+VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
+if ($Env:dH2iLicenseKey.length -eq 19) {
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0  
 }
 
 VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-0-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
