@@ -190,11 +190,6 @@ $nic = Get-AzNetworkInterface -ResourceGroupName $resourceGroup -Name $Env:jumpb
 $nic.DnsSettings.DnsServers.Clear()
 $nic | Set-AzNetworkInterface
 
-# Refresh DNS Settings
-Write-Header "$(Get-Date) - Refreshing DNS Settings"
-ipconfig /release
-ipconfig /renew
-
 # Join Azure VM to domain
 Write-Header "$(Get-Date) - Joining $Env:jumpboxVM to the domain"
 Write-Host "$(Get-Date) - Joining $Env:jumpboxVM to domain"
@@ -203,24 +198,32 @@ $securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
 
 $joinSuccess = 0
-$attempts = 1
-$maxAttempts = 120
-while (($joinSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
-  try {
-    Write-Host "$(Get-Date) - Joining $Env:jumpboxVM to the domain - Attempt $attempts"
-    Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential -ErrorAction Stop
-    $joinSuccess = 1
-  }
-  catch {
-    Write-Host "$(Get-Date) - Failed to join $Env:jumpboxVM to the domain - Attempt $attempts out of $maxAttempts"
-    if ($attempts -lt $maxAttempts) {
-      Start-Sleep -Seconds 10
+$retries = 1
+$maxAttempts = 60
+while (($joinSuccess -eq 0) -and ($retries -le 2)) {
+  # Refresh DNS Settings
+  Write-Header "$(Get-Date) - Refreshing DNS Settings"
+  ipconfig /release
+  ipconfig /renew
+  $attempts = 1
+  while (($joinSuccess -eq 0) -and ($attempts -le $maxAttempts)) {
+    try {
+      Write-Host "$(Get-Date) - Joining $Env:jumpboxVM to the domain - Attempt $attempts"
+      Add-Computer -DomainName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -Credential $credential -ErrorAction Stop
+      $joinSuccess = 1
     }
-    else {
-      Write-Host $Error[0]
+    catch {
+      Write-Host "$(Get-Date) - Failed to join $Env:jumpboxVM to the domain - Attempt $attempts out of $maxAttempts"
+      if ($attempts -lt $maxAttempts) {
+        Start-Sleep -Seconds 10
+      }
+      else {
+        Write-Host $Error[0]
+      }
+      $attempts += 1
     }
-    $attempts += 1
   }
+  $retries += 1
 }
 
 Write-Header "$(Get-Date) - Configuring Domain and DNS on $Env:dcVM"
