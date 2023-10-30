@@ -92,7 +92,7 @@ Invoke-WebRequest ($templateBaseUrl + "templates/linux.json") -OutFile $Env:Depl
 Write-Host "$(Get-Date) - Downloading scripts"
 Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogon.ps1") -OutFile $Env:DeploymentDir\scripts\JumpboxLogon.ps1
 Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicYaml.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYaml.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicYamlHA.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYaml.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicYamlHA.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
 Invoke-WebRequest ($templateBaseUrl + "scripts/InstallSQL.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
 
 Write-Host "$(Get-Date) - Downloading SQL Server 2019 yaml and ini files"
