@@ -1,4 +1,4 @@
-Write-Host "$(Get-Date) - Generating dxemssql.yaml"
+Write-Host "$(Get-Date) - Generating mssql.yaml"
 $mssqlPodScript = @"
 #DxEnterprise + MSSQL StatefulSet
 kind: StorageClass
@@ -164,7 +164,7 @@ spec:
             storage: 1Gi
 "@
 
-$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\dxemssql.yaml"
+$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\mssql.yaml"
 $mssqlPodScript | Out-File -FilePath $mssqlPodFile -force
 
 Write-Host "$(Get-Date) - Generating pod-service.yaml"

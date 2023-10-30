@@ -119,7 +119,7 @@ Write-Host "$(Get-Date) - Applying SQL Server configurations"
 kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\mssql-conf.yaml -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Installing SQL Server Pods"
-kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\dxemssql.yaml -n sql$($Env:currentSqlVersion)
+kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\mssql.yaml -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Installing SQL Server Pod Services"
 kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\pod-service.yaml -n sql$($Env:currentSqlVersion)

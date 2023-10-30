@@ -1,4 +1,4 @@
-Write-Host "$(Get-Date) - Generating dxemssql.yaml"
+Write-Host "$(Get-Date) - Generating mssql.yaml"
 $mssqlPodScript = @"
 #DxEnterprise + MSSQL StatefulSet
 kind: StorageClass
@@ -73,17 +73,6 @@ spec:
               mountPath: /var/opt/mssql/certs
             - name: tls-keys
               mountPath: /var/opt/mssql/private
-        - name: dxe
-          image: dh2i/dxe
-          env:
-          - name: MSSQL_SA_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: mssql$($Env:currentSqlVersion)
-                key: MSSQL_SA_PASSWORD
-          volumeMounts:
-          - name: dxe
-            mountPath: /etc/dh2i
       hostAliases:
         - ip: "10.$Env:vnetIpAddressRangeStr.16.4"
           hostnames:
@@ -154,22 +143,14 @@ spec:
         resources:
           requests:
             storage: 1Gi
-    - metadata:
-        name: dxe
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
 "@
 
-$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\dxemssql.yaml"
+$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\mssql.yaml"
 $mssqlPodScript | Out-File -FilePath $mssqlPodFile -force
 
 Write-Host "$(Get-Date) - Generating pod-service.yaml"
 $mssqlPodServiceScript = @"
-#Access for SQL server, AG listener, and DxE management
+#Access for SQL server
 apiVersion: v1
 kind: Service
 metadata:
@@ -188,14 +169,6 @@ spec:
     protocol: TCP
     port: 1433
     targetPort: 1433
-  - name: listener
-    protocol: TCP
-    port: 14033
-    targetPort: 14033
-  - name: dxe
-    protocol: TCP
-    port: 7979
-    targetPort: 7979
 "@
 
 $mssqlPodServiceFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\pod-service.yaml"
