@@ -86,7 +86,7 @@ function LicenseSqlPod
       }
     }
     else {
-      Write-Host "$(Get-Date) - Pod is now licensed"
+      Write-Host "$(Get-Date) - Pod $podName is now licensed"
     }
     $attempts += 1
   }
@@ -376,15 +376,16 @@ $mssqlPodServiceScript | Out-File -FilePath $mssqlPodServiceFile -force
 kubectl apply -f $mssqlPodServiceFile -n sql$($Env:currentSqlVersion)
 
 Write-Host "$(Get-Date) - Verifying pods and services started successfully"
-if ($Env:currentSqlVersion -eq "19") {
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0  
-}
-else {
+$podStatus = kubectl get pods -n sql19 mssql19-0 -o jsonpath="{.status.phase}"
+if (($Env:currentSqlVersion -eq "22") -and ($null -ne $podStatus)) {
   VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
   VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0  
+}
+else {
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
 }
 
 VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-0-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
