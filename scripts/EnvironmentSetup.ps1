@@ -78,7 +78,7 @@ catch {
 
 Write-Header "$(Get-Date) - Chocolatey Apps Specified"
 
-$appsToInstall = $chocolateyAppList -split "," | foreach { "$($_.Trim())" }
+$appsToInstall = $chocolateyAppList -split "," | ForEach-Object { "$($_.Trim())" }
 
 foreach ($app in $appsToInstall) {
     Write-Host "$(Get-Date) - Installing $app"
