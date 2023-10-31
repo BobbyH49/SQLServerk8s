@@ -1,4 +1,4 @@
-# Setup Environment with AKS Cluster using privatelink connections
+# Lab Setup with AKS Cluster using privatelink connections
 
 **[Home](../README.md)** - [Next Module >](../modules/sql19.md)
 
