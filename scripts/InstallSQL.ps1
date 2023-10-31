@@ -212,7 +212,7 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
   VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
 }
 
-Write-Host "$(Get-Date) - Creating Windows sysadmin login and Telegraf monitoring login"
+Write-Host "$(Get-Date) - Generating T-SQL scripts"
 $sqlLoginScript = @"
 USE [master];
 GO
@@ -229,10 +229,37 @@ GO
 
 $sqlLoginFile = "$Env:DeploymentDir\scripts\CreateLogins.sql"
 $sqlLoginScript | Out-File -FilePath $sqlLoginFile -force
+
+$sqlRestoreScript = @"
+RESTORE DATABASE AdventureWorks2019
+FROM DISK = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
+WITH
+MOVE N'AdventureWorks2017' TO N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
+, MOVE N'AdventureWorks2017_log' TO N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
+, RECOVERY, STATS = 10;
+GO
+
+ALTER DATABASE AdventureWorks2019 SET RECOVERY FULL;
+GO
+
+BACKUP DATABASE AdventureWorks2019
+TO DISK = N'/var/opt/mssql/backup/AdventureWorks2019_Full_Recovery.bak'
+WITH FORMAT, INIT, COMPRESSION, STATS = 10;
+GO
+"@
+
+$sqlRestoreFile = "$Env:DeploymentDir\scripts\RestoreDatabase.sql"
+$sqlRestoreScript | Out-File -FilePath $sqlRestoreFile -force
+
+Write-Host "$(Get-Date) - Creating Windows sysadmin login and Telegraf monitoring login"
 RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
 if ($Env:dH2iLicenseKey.length -eq 19) {
   RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
   RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-2.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
+}
+else {
+  Write-Host "$(Get-Date) - Restoring database backup"
+  RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlRestoreFile -maxAttempts 60 -failedSleepTime 10
 }
 
 # Configure High Availability
@@ -303,28 +330,8 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
 
     Write-Host "$(Get-Date) - Copying backup file to mssql$($Env:currentSqlVersion)-0"
     kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql$($Env:currentSqlVersion)
-
-    Write-Host "$(Get-Date) - Restoring database backup to mssql$($Env:currentSqlVersion)-0 and configuring for High Availability"
-$sqlRestoreScript = @"
-RESTORE DATABASE AdventureWorks2019
-FROM DISK = N'/var/opt/mssql/backup/AdventureWorks2019.bak'
-WITH
-MOVE N'AdventureWorks2017' TO N'/var/opt/mssql/userdata/AdventureWorks2019.mdf'
-, MOVE N'AdventureWorks2017_log' TO N'/var/opt/mssql/userlog/AdventureWorks2019_log.ldf'
-, RECOVERY, STATS = 10;
-GO
-
-ALTER DATABASE AdventureWorks2019 SET RECOVERY FULL;
-GO
-
-BACKUP DATABASE AdventureWorks2019
-TO DISK = N'/var/opt/mssql/backup/AdventureWorks2019_Full_Recovery.bak'
-WITH FORMAT, INIT, COMPRESSION, STATS = 10;
-GO
-"@
     
-    $sqlRestoreFile = "$Env:DeploymentDir\scripts\RestoreDatabase.sql"
-    $sqlRestoreScript | Out-File -FilePath $sqlRestoreFile -force
+    Write-Host "$(Get-Date) - Restoring database backup"
     RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlRestoreFile -maxAttempts 60 -failedSleepTime 10
 
     Write-Host "$(Get-Date) - Adding database to Availability Group"

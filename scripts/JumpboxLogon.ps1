@@ -195,6 +195,10 @@ if ($Env:installSQL2022 -eq "Yes") {
 Write-Header "$(Get-Date) - Cleanup environment"
 Get-ScheduledTask -TaskName JumpboxLogon | Unregister-ScheduledTask -Confirm:$false
 
+Remove-Item -Path "$Env:DeploymentDir\scripts\CreateDC.ps1" -Force
+Remove-Item -Path "$Env:DeploymentDir\scripts\ConfigureDC.ps1" -Force
+Remove-Item -Path "$Env:DeploymentDir\scripts\GenerateLinuxFiles.sh" -Force
+
 Stop-Transcript
 $logSuppress = Get-Content $Env:DeploymentLogsDir\JumpboxLogon.log | Where-Object { $_ -notmatch "Host Application: powershell.exe" }
 $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
