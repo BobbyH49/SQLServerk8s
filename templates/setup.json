@@ -45,9 +45,9 @@
         "domainSuffix": "local",
         "contributorRole": "b24988ac-6180-42a0-ab88-20f7382dd24c",
         "networkContributorRole": "4d97b98b-1d4f-4787-a291-c67834d212e7",
-        "dcVM": "SqlK8sDC",
-        "linuxVM": "SqlK8sLinux",
-        "jumpboxVM": "SqlK8sJumpbox",
+        "dcVM": "[concat(variables('netbiosName'), 'DC')]",
+        "linuxVM": "[concat(variables('netbiosName'), 'Linux')]",
+        "jumpboxVM": "[concat(variables('netbiosName'), 'Jumpbox')]",
         "jumpboxNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', concat(variables('jumpboxVM'), '-nsg'))]",
         "vmsNsgName": "[concat(variables('netbiosName'), 'VMs-nsg')]",
         "vmsNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('vmsNsgName'))]",
@@ -60,10 +60,11 @@
         "vnetIpAddressRangeStr": "[string(parameters('ipAddressRange_10.X.0.0'))]",
         "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
         "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
-        "aksCluster": "sqlk8saks",
+        "aksCluster": "[concat(toLower(variables('netbiosName')), 'aks')]",
         "aksVersion": "1.26.6",
         "resourceGroupRoleGuid": "[guid(resourceGroup().id)]",
-        "aksSubnetRoleGuid": "[guid(resourceGroup().id, 'AKS')]"
+        "aksSubnetRoleGuid": "[guid(resourceGroup().id, 'AKS')]",
+        "dH2iLicenseKey": "[if(equals(parameters('DH2iLicenseKey'),''), '1', parameters('DH2iLicenseKey'))]"
     },
     "resources": [
         {
@@ -599,7 +600,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', variables('vnetIpAddressRangeStr'), ' -dcVM ', variables('dcVM'), ' -linuxVM ', variables('linuxVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -aksCluster ', variables('aksCluster'), ' -dH2iLicenseKey ', parameters('DH2iLicenseKey'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', variables('vnetIpAddressRangeStr'), ' -dcVM ', variables('dcVM'), ' -linuxVM ', variables('linuxVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -aksCluster ', variables('aksCluster'), ' -dH2iLicenseKey ', variables('dH2iLicenseKey'))]"
                 }
             }
         },
@@ -695,9 +696,9 @@
         }
     ],
     "outputs": {
-        "adminUsername": {
+        "domainAdminUsername": {
             "type": "string",
-            "value": "[parameters('adminUsername')]"
+            "value": "[concat(parameters('adminUsername'), '@', toLower(variables('netbiosName')), '.', variables('domainSuffix'))]"
         },
         "controlPlaneFQDN": {
             "type": "string",

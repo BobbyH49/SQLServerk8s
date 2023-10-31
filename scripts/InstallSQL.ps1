@@ -175,10 +175,10 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
 }
 
 Write-Host "$(Get-Date) - Verifying pods restarted successfully"
-VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
+VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 20
 if ($Env:dH2iLicenseKey.length -eq 19) {
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 20
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 20
 }
 
 Write-Host "$(Get-Date) - Creating Windows sysadmin login and Telegraf monitoring login"
