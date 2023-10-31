@@ -17,6 +17,27 @@
             "defaultValue": 0,
             "minValue": 0,
             "maxValue": 255
+        },
+        "installSQL2019": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "installSQL2022": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "DH2iLicenseKey": {
+            "type": "string",
+            "maxLength": 19,
+            "defaultValue": ""
         }
     },
     "variables": {
@@ -24,9 +45,9 @@
         "domainSuffix": "local",
         "contributorRole": "b24988ac-6180-42a0-ab88-20f7382dd24c",
         "networkContributorRole": "4d97b98b-1d4f-4787-a291-c67834d212e7",
-        "dcVM": "SqlK8sDC",
-        "linuxVM": "SqlK8sLinux",
-        "jumpboxVM": "SqlK8sJumpbox",
+        "dcVM": "[concat(variables('netbiosName'), 'DC')]",
+        "linuxVM": "[concat(variables('netbiosName'), 'Linux')]",
+        "jumpboxVM": "[concat(variables('netbiosName'), 'Jumpbox')]",
         "jumpboxNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', concat(variables('jumpboxVM'), '-nsg'))]",
         "vmsNsgName": "[concat(variables('netbiosName'), 'VMs-nsg')]",
         "vmsNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('vmsNsgName'))]",
@@ -39,10 +60,11 @@
         "vnetIpAddressRangeStr": "[string(parameters('ipAddressRange_10.X.0.0'))]",
         "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
         "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
-        "aksCluster": "sqlk8saks",
+        "aksCluster": "[concat(toLower(variables('netbiosName')), 'aks')]",
         "aksVersion": "1.26.6",
         "resourceGroupRoleGuid": "[guid(resourceGroup().id)]",
-        "aksSubnetRoleGuid": "[guid(resourceGroup().id, 'AKS')]"
+        "aksSubnetRoleGuid": "[guid(resourceGroup().id, 'AKS')]",
+        "dH2iLicenseKey": "[if(equals(parameters('DH2iLicenseKey'),''), '1', parameters('DH2iLicenseKey'))]"
     },
     "resources": [
         {
@@ -429,16 +451,19 @@
                 },
                 "storageProfile": {
                     "osDisk": {
+                        "name": "[concat(variables('dcVM'),'-OSDisk')]",
+                        "caching": "ReadWrite",
                         "createOption": "fromImage",
                         "managedDisk": {
                             "storageAccountType": "Premium_LRS"
                         },
+                        "diskSizeGB": 128,
                         "deleteOption": "Delete"
                     },
                     "imageReference": {
                         "publisher": "MicrosoftWindowsServer",
                         "offer": "WindowsServer",
-                        "sku": "2019-datacenter-gensecond",
+                        "sku": "2022-datacenter-g2",
                         "version": "latest"
                     }
                 },
@@ -469,57 +494,6 @@
             }
         },
         {
-            "name": "[variables('linuxVM')]",
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2022-03-01",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('linuxVM'), '-nic')]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('dcVM'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "Standard_D2s_v3"
-                },
-                "storageProfile": {
-                    "osDisk": {
-                        "createOption": "fromImage",
-                        "managedDisk": {
-                            "storageAccountType": "Premium_LRS"
-                        },
-                        "deleteOption": "Delete"
-                    },
-                    "imageReference": {
-                        "publisher": "Canonical",
-                        "offer": "UbuntuServer",
-                        "sku": "18_04-lts-gen2",
-                        "version": "latest"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('linuxVM'), '-nic'))]",
-                            "properties": {
-                                "deleteOption": "Detach"
-                            }
-                        }
-                    ]
-                },
-                "osProfile": {
-                    "computerName": "[variables('linuxVM')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "linuxConfiguration": {
-                        "patchSettings": {
-                            "patchMode": "ImageDefault"
-                        }
-                    }
-                }
-            }
-        },
-        {
             "name": "[concat(variables('jumpboxVM'), '-ip')]",
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-08-01",
@@ -540,7 +514,7 @@
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('jumpboxVM'), '-nic')]",
                 "[concat('Microsoft.Network/publicIpAddresses/', variables('jumpboxVM'), '-ip')]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', variables('linuxVM'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('dcVM'))]"
             ],
             "identity": {
                 "type": "systemAssigned"
@@ -551,16 +525,19 @@
                 },
                 "storageProfile": {
                     "osDisk": {
+                        "name": "[concat(variables('jumpboxVM'),'-OSDisk')]",
+                        "caching": "ReadWrite",
                         "createOption": "fromImage",
                         "managedDisk": {
                             "storageAccountType": "Premium_LRS"
                         },
+                        "diskSizeGB": 128,
                         "deleteOption": "Delete"
                     },
                     "imageReference": {
-                        "publisher": "MicrosoftWindowsDesktop",
-                        "offer": "Windows-10",
-                        "sku": "win10-21h2-pro",
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2022-datacenter-g2",
                         "version": "latest"
                     }
                 },
@@ -623,7 +600,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -dcVM ', variables('dcVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', variables('vnetIpAddressRangeStr'), ' -dcVM ', variables('dcVM'), ' -linuxVM ', variables('linuxVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -aksCluster ', variables('aksCluster'), ' -dH2iLicenseKey ', variables('dH2iLicenseKey'))]"
                 }
             }
         },
@@ -653,9 +630,9 @@
                     {
                         "name": "agentpool",
                         "osDiskSizeGB": 0,
-                        "count": 2,
+                        "count": 1,
                         "enableAutoScaling": true,
-                        "minCount": 2,
+                        "minCount": 1,
                         "maxCount": 4,
                         "vmSize": "Standard_D8s_v3",
                         "osType": "Linux",
@@ -704,7 +681,7 @@
                 "type": "SystemAssigned"
             }
         },
-       {
+        {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
             "name": "[variables('aksSubnetRoleGuid')]",
@@ -719,9 +696,9 @@
         }
     ],
     "outputs": {
-        "adminUsername": {
+        "domainAdminUsername": {
             "type": "string",
-            "value": "[parameters('adminUsername')]"
+            "value": "[concat(parameters('adminUsername'), '@', toLower(variables('netbiosName')), '.', variables('domainSuffix'))]"
         },
         "controlPlaneFQDN": {
             "type": "string",

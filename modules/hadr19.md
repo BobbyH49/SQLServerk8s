@@ -4,7 +4,7 @@
 
 ## Install and configure Availability Group using DxEnterprise
 
-For this solution, you will be using DxEnterprise which is a licensed product from DH2I.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.
+For this solution, you will be using DxEnterprise which is a licensed product from DH2i.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.
 
 The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.
 
@@ -16,17 +16,13 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Open Powershell](media/OpenPowershell.jpg)
 
-3. Login to Azure AD with an account that has ownership permissions to your subscription
+3. Login to Azure AD using the System Managed Identity for SqlK8sJumpbox
 
     ```text
-    az login
+    az login --identity
     ```
 
-    ![Azure CLI Signin](media/AzureCLISignin.jpg)
-
-    ![Azure CLI SignedIn](media/AzureCLISignedIn.jpg)
-
-    ![Azure CLI SignedIn Powershell](media/AzureCLISignedInPowershell.jpg)
+    ![Azure CLI SignedIn Powershell](media/AzureCLILogin.jpg)
 
 4. Activate cluster licensing software (developer in this case) on each pod
 

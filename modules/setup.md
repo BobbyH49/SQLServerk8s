@@ -1,6 +1,6 @@
-# Setup Environment with AKS Cluster using privatelink connections
+# Lab Setup with AKS Cluster using privatelink connections
 
-**[Home](../README.md)** - [Next Module >](../modules/kerberos.md)
+**[Home](../README.md)** - [Next Module >](../modules/sql19.md)
 
 ## Prerequisites
 
@@ -10,7 +10,24 @@
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2Fsetup.json)
 
-The following resources will be deployed (takes around 40 minutes to deploy).
+The following options are available
+
+1. Deploy lab environment including domain, kerberos authentication, and TLS certificates. You can then follow instructions on how to install a standalone instance of SQL Server 2019 and \/ or SQL Server 2022.
+    1. Select **NO** for the **Install SQL 2019** and **Install SQL 2022** parameters
+    2. Leave the **DH2i License Key** parameter blank
+2. Deploy lab environment including domain, kerberos authenticion, and TLS certificates.  You can then follow instructions on how to install an Availability Group on SQL Server 2019 and \/ or a Contained Availability Group on SQL Server 2022 using DH2i\'s DxEnterprise Clustering solution (each contains 3 replicas).
+    1. Select **NO** for the **Install SQL 2019** and **Install SQL 2022** parameters
+    2. Add your **DH2i License Key**
+3. Deploy a standalone SQL Server 2019 and \/ or SQL Server 2022 instance on an AKS Cluster.
+    1. Select **Yes** for the **Install SQL 2019** and \/ or **Install SQL 2022** parameters
+    2. Leave the **DH2i License Key** parameter blank
+4. Deploy an Availability Group on SQL Server 2019 and \/ or a Contained Availability Group on SQL Server 2022 using DH2i\'s DxEnterprise Clustering solution (each contains 3 replicas).
+    1. Select **Yes** for the **Install SQL 2019** and \/ or **Install SQL 2022** parameters
+    2. Add your **DH2i License Key**
+
+**NB: For the Always-on Availability Group solutions, you will be using DxEnterprise which is a licensed product from DH2i.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.  The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.**
+
+The following resources will be deployed (takes around 30-40 minutes to deploy resources followed by another 5-20 minute to exeucte the Jumpbox (SqlK8sJumpbox) logon script).
 
 * Virtual Network (SqlK8s-vnet)
 * 3 subnets (AKS, VMs, AzureBastionSubnet)
@@ -23,7 +40,9 @@ The following resources will be deployed (takes around 40 minutes to deploy).
 * 2 Public IP Addresses (1 for Bastion and 1 for Jumpbox)
 * Azure Kubernetes Cluster (VM Scale Set with 2 - 4 Standard_D8s_v3 VMs)
 
-**NB: This deployment can be expensive to keep running but you can reduce costs by shutting down the 3 Virtual Machines and AKS Cluster and starting up when required.  You can also drop the bastion host when shutting down the Virtual Machines and then re-create when required.** 
+**NB: This deployment can be expensive to keep running but you can reduce costs by shutting down the 3 Virtual Machines and AKS Cluster, and starting up when required.  You can also drop the bastion host when shutting down the Virtual Machines and then re-create when required.**
+
+**The Linux server (SqlK8sLinux) is not required once deployment has completed.  It can be permanently deleted.**
 
 ## Deploy Azure Resources
 
@@ -34,10 +53,13 @@ The following resources will be deployed (takes around 40 minutes to deploy).
     * Subscription - Your Subscription
     * Resource group - New or existing Resource Group
     * Region - Region where you want all resources to be deployed
-    * Admin Username - Username that will initially be local admin of your jumpbox but will then be promoted to domain admin
-    * Admin Password - Password for Admin Username
+    * Admin Username - This will become the domain admin of the **SqlK8s** domain
+    * Admin Password - This will become the password for your domain admin username and for the SQL Server sa account
     * Github Branch - This should be left as **main** which will use the main branch from the Github repository
     * Ip Address Range_10.X.0.0 - A number between 0 and 255 to set the IP Address range of your network (default is 0 for 10.0.0.0, max is 255 for 10.255.0.0)
+    * Install SQL2019 - Select **Yes** if you want SQL Server 2019 to be automatically installed
+    * Install SQL2022 - Select **Yes** if you want SQL Server 2022 to be automatically installed
+    * DH2i License Key - Leave blank to install standalone instances or populate to automatically configure an Availability Group (SQL Server 2019) and \/ or a Contained Availability Group (SQL Server 2022)
 
     ![Deploy Resources](media/DeployResources.jpg)
 
@@ -45,38 +67,32 @@ The following resources will be deployed (takes around 40 minutes to deploy).
 
     ![Deployment Complete](media/DeploymentComplete.jpg)
 
-4. Go to your new Resource group
+4. Go to **Outputs** and copy the **domainAdminUsername**
+
+    ![Copy Domain Admin Username](media/CopyDomainAdminUsername.jpg)
+
+5. Go to your new Resource group
 
     ![New Resource Group](media/NewResourceGroup.jpg)
 
-5. Find and select your SqlK8sJumpbox Virtual Machine
+6. Find and select your SqlK8sJumpbox Virtual Machine
 
     ![Connect to Jumpbox](media/ConnectToJumpbox.jpg)
 
-6. Connect to SqlK8sJumpbox using Bastion
+7. Connect to SqlK8sJumpbox using Bastion
 
     ![Connect via Bastion](media/ConnectViaBastion.jpg)
 
-7. Enter the credentials you supplied on the Azure resource deployment template
+8. Enter the credentials you supplied on the Azure resource deployment template (the user was copied in **Step 4**)
 
-    ![Supply Credentials](media/SupplyCredentials.jpg)
+    ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 
-8. Accept the privacy settings
+9. A Powershell window will open and setup the lab (usually takes between 5-20 minutes).  Once the script has completed, your lab environment should be ready.
 
-    ![Accept Privacy Settings](media/AcceptPrivacySettings.jpg)
+    ![Jumbbox Logon Script](media/JumpboxLogonScript.jpg)
 
-9. Click on the desktop away from the Networks message
+10. Should an error occur during the setup process you should be able to refer to the logs in **C:\Deployment\Logs**.  Collect the logs and raise a bug in the Github project.
 
-    ![Networks Message](media/NetworksMessage.jpg)
+If you have opted to automatically setup your SQL Server instances then go to the page on "[How to configure logins and users on SQL Server Availability Groups](../modules/logins.md)".  Otherwise hit **Continue** at the bottom of the page to move to the SQL Server 2019 installation tutorial or "[Create SQL Server 2022 Container Instances](./modules/sql22.md)" to install SQL Server 2022.
 
-10. A Powershell window will open and begin joining the jumpbox to the domain.  Once the script has completed it will prompt you to press a key to reboot and then logon using the new domain credentials with the same password.  Follow these instructions to complete the setup process.
-
-    ![Join Domain Script](media/JoinDomainScript.jpg)
-
-    ![Close Bastion Session](media/CloseBastionSession.jpg)
-
-    ![Logon Domain Account](media/SupplyADCredentials.jpg)
-
-11. Should an error occur during the domain setup process you should be able to refer to the logs in **C:\Deployment\Logs**.  Collect the logs and raise a bug in the Github project.
-
-[Continue >](../modules/kerberos.md)
+[Continue >](../modules/sql19.md)
