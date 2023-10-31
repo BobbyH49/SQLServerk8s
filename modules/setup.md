@@ -27,7 +27,7 @@ The following options are available
 
 **NB: For the Always-on Availability Group solutions, you will be using DxEnterprise which is a licensed product from DH2i.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.  The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.**
 
-The following resources will be deployed (takes around 30-40 minutes to deploy resources followed by another 5-20 minute to exeucte the Jumpbox (SqlK8sJumpbox) logon script).
+The following resources will be deployed (takes around 30-40 minutes to deploy resources followed by another 5-20 minute to execute the SqlK8sJumpbox logon script).
 
 * Virtual Network (SqlK8s-vnet)
 * 3 subnets (AKS, VMs, AzureBastionSubnet)
