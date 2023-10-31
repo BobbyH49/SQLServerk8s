@@ -123,13 +123,6 @@ $linuxResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMNa
 Write-Host "$(Get-Date) - Script returned a result of $($linuxResult.Status)"
 $linuxResult | Out-File -FilePath $Env:DeploymentLogsDir\GenerateLinuxFiles.log -force
 
-# Add known host
-Write-Host "$(Get-Date) - Adding $Env:linuxVM as known host"
-Remove-Item -Path $HOME\.ssh\known_hosts -Force
-ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> $HOME\.ssh\known_hosts
-ssh-keyscan -t ecdsa $Env:linuxVM >> $HOME\.ssh\known_hosts
-(Get-Content $HOME\.ssh\known_hosts) | Set-Content -Encoding UTF8 $HOME\.ssh\known_hosts
-
 Write-Host "$(Get-Date) - Downloading keytab files from $Env:linuxVM"
 New-Item -Path $Env:DeploymentDir\keytab  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\keytab\SQL2019  -ItemType directory -Force

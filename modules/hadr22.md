@@ -16,17 +16,13 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Open Powershell](media/OpenPowershell.jpg)
 
-3. Login to Azure AD with an account that has ownership permissions to your subscription
+3. Login to Azure AD using the System Managed Identity for SqlK8sJumpbox
 
     ```text
-    az login
+    az login --identity
     ```
 
-    ![Azure CLI Signin](media/AzureCLISignin.jpg)
-
-    ![Azure CLI SignedIn](media/AzureCLISignedIn.jpg)
-
-    ![Azure CLI SignedIn Powershell](media/AzureCLISignedInPowershell.jpg)
+    ![Azure CLI SignedIn Powershell](media/AzureCLILogin.jpg)
 
 4. Activate cluster licensing software (developer in this case) on each pod
 
