@@ -92,6 +92,37 @@ function LicenseSqlPod
   }
 }
 
+function RunSqlCmd
+{
+  param(
+    [string]$sqlInstance,
+    [string]$username,
+    [string]$password,
+    [string]$inputFile,
+    [string]$maxAttempts,
+    [string]$failedSleepTime
+  )
+  $runOutput = $null
+  $attempts = 1
+  while (($null -eq $runOutput) -and ($attempts -le $maxAttempts)) {
+    $runOutput = SQLCMD -S $sqlInstance -U $username -P $password -i $inputFile
+
+    if ($null -eq $runOutput) {
+      Write-Host "$(Get-Date) - Failed to run script on $sqlInstance - Attempt $attempts out of $maxAttempts"
+      if ($attempts -lt $maxAttempts) {
+        Start-Sleep -Seconds $failedSleepTime
+      }
+      else {
+        Write-Host "$(Get-Date) - Failed to run script on $sqlInstance after $maxAttempts attempts"
+      }
+    }
+    else {
+      Write-Host "$(Get-Date) - Script successfully run on $sqlInstance"
+    }
+    $attempts += 1
+  }
+}
+
 # Main
 Write-Header "$(Get-Date) - Installing SQL Server 20$($Env:currentSqlVersion) Containers"
 
@@ -175,10 +206,10 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
 }
 
 Write-Host "$(Get-Date) - Verifying pods restarted successfully"
-VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 20
+VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
 if ($Env:dH2iLicenseKey.length -eq 19) {
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 20
-  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 20
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
+  VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
 }
 
 Write-Host "$(Get-Date) - Creating Windows sysadmin login and Telegraf monitoring login"
@@ -198,10 +229,10 @@ GO
 
 $sqlLoginFile = "$Env:DeploymentDir\scripts\CreateLogins.sql"
 $sqlLoginScript | Out-File -FilePath $sqlLoginFile -force
-SQLCMD -S "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
+RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
 if ($Env:dH2iLicenseKey.length -eq 19) {
-  SQLCMD -S "mssql$($Env:currentSqlVersion)-1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
-  SQLCMD -S "mssql$($Env:currentSqlVersion)-2.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlLoginFile
+  RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
+  RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-2.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
 }
 
 # Configure High Availability
@@ -294,7 +325,7 @@ GO
     
     $sqlRestoreFile = "$Env:DeploymentDir\scripts\RestoreDatabase.sql"
     $sqlRestoreScript | Out-File -FilePath $sqlRestoreFile -force
-    SQLCMD -S "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -U sa -P $Env:adminPassword -i $sqlRestoreFile
+    RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlRestoreFile -maxAttempts 60 -failedSleepTime 10
 
     Write-Host "$(Get-Date) - Adding database to Availability Group"
     kubectl exec -n sql$($Env:currentSqlVersion) -c dxe mssql$($Env:currentSqlVersion)-0 -- dxcli add-ags-databases mssql$($Env:currentSqlVersion)-agl1 mssql$($Env:currentSqlVersion)-ag1 AdventureWorks2019
