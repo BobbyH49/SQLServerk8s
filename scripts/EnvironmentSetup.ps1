@@ -190,7 +190,6 @@ $nic | Set-AzNetworkInterface
 
 # Join Azure VM to domain
 Write-Header "$(Get-Date) - Joining $Env:jumpboxVM to the domain"
-Write-Host "$(Get-Date) - Joining $Env:jumpboxVM to domain"
 $domainUsername="$($Env:netbiosName.toUpper())\$Env:adminUsername"
 $securePassword = ConvertTo-SecureString $Env:adminPassword -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($domainUsername, $securePassword)
