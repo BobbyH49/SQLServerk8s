@@ -21,17 +21,13 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Open Powershell](media/OpenPowershell.jpg)
 
-4. Login to Azure AD with an account that has ownership permissions to your subscription
+4. Login to Azure AD using the System Managed Identity for SqlK8sJumpbox
 
     ```text
-    az login
+    az login --identity
     ```
 
-    ![Azure CLI Signin](media/AzureCLISignin.jpg)
-
-    ![Azure CLI SignedIn](media/AzureCLISignedIn.jpg)
-
-    ![Azure CLI SignedIn Powershell](media/AzureCLISignedInPowershell.jpg)
+    ![Azure CLI SignedIn Powershell](media/AzureCLILogin.jpg)
 
 5. Create sqlmonitor namespace
 
