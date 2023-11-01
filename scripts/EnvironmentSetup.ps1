@@ -15,7 +15,8 @@ param (
     [string]$installSQL2019,
     [string]$installSQL2022,
     [string]$aksCluster,
-    [string]$dH2iLicenseKey
+    [string]$dH2iLicenseKey,
+    [string]$installMonitoring
 )
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', $adminUsername, [System.EnvironmentVariableTarget]::Machine)
@@ -35,6 +36,7 @@ param (
 [System.Environment]::SetEnvironmentVariable('installSQL2022', $installSQL2022, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('aksCluster', $aksCluster, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', $dH2iLicenseKey, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('installMonitoring', $installMonitoring, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "C:\Deployment", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "C:\Deployment\Logs", [System.EnvironmentVariableTarget]::Machine)
 

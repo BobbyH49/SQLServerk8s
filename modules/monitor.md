@@ -40,7 +40,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 6. Configure storage for InfluxDB
 
     ```text
-    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\storage.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\storage.yaml" -n sqlmonitor
     ```
 
     ![Configure InfluxDB Storage](media/ConfigureInfluxDBStorage.jpg)
@@ -48,7 +48,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 7. Deploy InfluxDB
 
     ```text
-    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\deployment.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\deployment.yaml" -n sqlmonitor
     ```
 
     ![Deploy InfluxDB](media/DeployInfluxDB.jpg)
@@ -56,7 +56,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 8. Expose internal IP Address and Port for InfluxDB
 
     ```text
-    kubectl expose deployment influxdb --port=8086 --target-port=8086 --protocol=TCP --type=ClusterIP --namespace sqlmonitor
+    kubectl expose deployment influxdb --port=8086 --target-port=8086 --protocol=TCP --type=ClusterIP -n sqlmonitor
     ```
 
     ![Expose InfluxDB Service](media/ExposeInfluxDBService.jpg)
@@ -64,7 +64,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 9. Create internal load balancer for InfluxDB
 
     ```text
-    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\service.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\service.yaml" -n sqlmonitor
     ```
 
     ![Create InfluxDB Internal Load Balancer](media/CreateInfluxDbIlb.jpg)
@@ -165,7 +165,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 19. Deploy the Telegraf configuration file
 
     ```text
-        kubectl apply -f "C:\Deployment\yaml\Monitor\Telegraf\config.yaml" --namespace sqlmonitor
+        kubectl apply -f "C:\Deployment\yaml\Monitor\Telegraf\config.yaml" -n sqlmonitor
     ```
 
     ![Deploy Telegraf Config](media/DeployTelegrafConfig.jpg)
@@ -173,7 +173,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 20. Deploy the Telegraf agent
 
     ```text
-        kubectl apply -f "C:\Deployment\yaml\Monitor\Telegraf\deployment.yaml" --namespace sqlmonitor
+        kubectl apply -f "C:\Deployment\yaml\Monitor\Telegraf\deployment.yaml" -n sqlmonitor
     ```
 
     ![Deploy Telegraf](media/DeployTelegraf.jpg)
@@ -181,7 +181,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 21. Explose the Telegraf agent service
 
     ```text
-        kubectl expose deployment telegraf --port=8125 --target-port=8125 --protocol=UDP --type=NodePort --namespace sqlmonitor
+        kubectl expose deployment telegraf --port=8125 --target-port=8125 --protocol=UDP --type=NodePort -n sqlmonitor
     ```
 
     ![Expose Telegraf Service](media/ExposeTelegrafService.jpg)
@@ -245,21 +245,21 @@ This solution currently creates Grafana as a pod on your AKS cluster but you cou
 1. Create the credentials for Grafana as a secret
 
     ```text
-    kubectl create secret generic grafana-creds --from-literal=GF_SECURITY_ADMIN_USER=admin --from-literal=GF_SECURITY_ADMIN_PASSWORD=admin1234 --namespace sqlmonitor
+    kubectl create secret generic grafana-creds --from-literal=GF_SECURITY_ADMIN_USER=admin --from-literal=GF_SECURITY_ADMIN_PASSWORD=admin1234 -n sqlmonitor
     ```
 
     ![Create Grafana Credentials](media/CreateGrafanaCredentials.jpg)
 
 2. Deploy Grafana
     ```text
-    kubectl apply -f "C:\Deployment\yaml\Monitor\Grafana\deployment.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\Grafana\deployment.yaml" -n sqlmonitor
     ```
 
     ![Deploy Grafana](media/DeployGrafana.jpg)
 
 3. Deploy Internal Load Balancer for Grafana
     ```text
-    kubectl apply -f "C:\Deployment\yaml\Monitor\Grafana\service.yaml" --namespace sqlmonitor
+    kubectl apply -f "C:\Deployment\yaml\Monitor\Grafana\service.yaml" -n sqlmonitor
     ```
 
     ![Deploy Grafana Service](media/DeployGrafanaService.jpg)

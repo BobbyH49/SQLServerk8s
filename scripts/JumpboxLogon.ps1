@@ -184,6 +184,16 @@ if ($Env:installSQL2022 -eq "Yes") {
     & $Env:DeploymentDir\scripts\InstallSQL.ps1
 }
 
+# Generate yaml files for Monitor pod and service creation
+[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "6", [System.EnvironmentVariableTarget]::Machine)
+$Env:vnetIpAddressRangeStr2 = "6"
+& $Env:DeploymentDir\scripts\DynamicMonitoringYaml.ps1
+
+# Install Monitor Containers
+if ($Env:installMonitoring -eq "Yes") {
+    & $Env:DeploymentDir\scripts\InstallMonitoring.ps1
+}
+
 # Cleanup
 Write-Header "$(Get-Date) - Cleanup environment"
 Get-ScheduledTask -TaskName JumpboxLogon | Unregister-ScheduledTask -Confirm:$false
@@ -213,6 +223,7 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 [System.Environment]::SetEnvironmentVariable('installSQL2022', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('aksCluster', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('installMonitoring', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "", [System.EnvironmentVariableTarget]::Machine)
