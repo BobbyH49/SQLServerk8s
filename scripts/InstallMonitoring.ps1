@@ -98,7 +98,7 @@ kubectl exec -n sqlmonitor -c influxdb $podName -- influx setup -u $Env:adminUse
 Write-Host "$(Get-Date) - Generate Telegraf Configuration Files"
 & $Env:DeploymentDir\scripts\DynamicTelegrafConfig.ps1
 
-Write-Host "$(Get-Date) - "Copy telegraf_config.conf"
+Write-Host "$(Get-Date) - Copy telegraf_config.conf"
 $kubectlDeploymentDir = $Env:DeploymentDir -replace 'C:\\', '\..\'
 kubectl cp "$kubectlDeploymentDir\yaml\Monitor\InfluxDB\telegraf.conf" "$($podName):/home/influxdb" -n sqlmonitor
 
