@@ -1,4 +1,4 @@
-# Configure Monitoring
+# Monitoring with InfluxDB and Grafana
 
 [< Previous Module](../modules/hadr22.md) - **[Home](../README.md)** - [Next Module >](../modules/logins.md)
 
@@ -376,4 +376,4 @@ This solution currently creates Grafana as a pod on your AKS cluster but you cou
 
 25. Try failing over and verifying performance on each pod
 
-[Continue >](../modules/monitor.md)
+[Continue >](../modules/logins.md)
