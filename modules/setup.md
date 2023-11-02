@@ -27,7 +27,7 @@ The following options are available
 
 **NB: For the Always-on Availability Group solutions, you will be using DxEnterprise which is a licensed product from DH2i.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.  The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.**
 
-The following resources will be deployed (takes around 30-40 minutes to deploy resources followed by another 5-20 minute to execute the SqlK8sJumpbox logon script).
+The following resources will be deployed.  It takes around 30-40 minutes to deploy resources followed by between 5 minutes (no sql or monitoring deployed) and 30 minutes (all sql and monitoring deployed) to execute the SqlK8sJumpbox logon script.
 
 * Virtual Network (SqlK8s-vnet)
 * 3 subnets (AKS, VMs, AzureBastionSubnet)
@@ -54,7 +54,7 @@ The following resources will be deployed (takes around 30-40 minutes to deploy r
     * Resource group - New or existing Resource Group
     * Region - Region where you want all resources to be deployed
     * Admin Username - This will become the domain admin of the **SqlK8s** domain
-    * Admin Password - This will become the password for your domain admin username and for the SQL Server sa account
+    * Admin Password - This will become the password for your domain admin username
     * Github Branch - This should be left as **main** which will use the main branch from the Github repository
     * Ip Address Range_10.X.0.0 - A number between 0 and 255 to set the IP Address range of your network (default is 0 for 10.0.0.0, max is 255 for 10.255.0.0)
     * Install SQL2019 - Select **Yes** if you want SQL Server 2019 to be automatically installed
@@ -87,11 +87,30 @@ The following resources will be deployed (takes around 30-40 minutes to deploy r
 
     ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 
-9. A Powershell window will open and setup the lab (usually takes between 5-20 minutes).  Once the script has completed, your lab environment should be ready.
+9. A Powershell window will open and setup the lab.  This can take between 5 minutes (no sql or monitoring deployed) and 30 minutes (all sql and monitoring deployed).  Once the script has completed, your lab environment should be ready.
 
     ![Jumbbox Logon Script](media/JumpboxLogonScript.jpg)
 
 10. Should an error occur during the setup process you should be able to refer to the logs in **C:\Deployment\Logs**.  Collect the logs and raise a bug in the Github project.
+
+The full lab setup consists of:
+
+* SQL Server 2019 (login with windows \<adminUsername\> and \<adminPassword\> or sql sa and \<adminPassword\>)
+    * mssql19-0.sqlk8s.local
+    * mssql19-1.sqlk8s.local
+    * mssql19-2.sqlk8s.local
+    * mssql19-agl1.sqlk8s.local,14033
+* SQL Server 2022 (login with windows \<adminUsername\> and \<adminPassword\> or sql sa and \<adminPassword\>)
+    * mssql22-0.sqlk8s.local
+    * mssql22-1.sqlk8s.local
+    * mssql22-2.sqlk8s.local
+    * mssql22-agl1.sqlk8s.local,14033
+* SQL Server Monitoring
+    * InfluxDB (URL http://influxdb.sqlk8s.local:8086 User \<adminUsername\> and Password \<adminPassword\>)
+    * Telegraf Agent connected to InfluxDB
+    * Grafana Dashboard (URL http://grafana.sqlk8s.local:3000 User \<adminUsername\> and Password \<adminPassword\>)
+        
+To access the Grafana dashboard, login and go to the home menu in the top left corner and select **Dashboards**.  From the dashboards window select **SQL Container Metrics**
 
 If you have opted to automatically setup your SQL Server instances then go to the page on "[How to configure logins and users on SQL Server Availability Groups](../modules/logins.md)".  Otherwise hit **Continue** at the bottom of the page to move to the SQL Server 2019 installation tutorial or "[Create SQL Server 2022 Container Instances](./modules/sql22.md)" to install SQL Server 2022.
 

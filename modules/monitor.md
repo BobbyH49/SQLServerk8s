@@ -1,6 +1,6 @@
 # Configure Monitoring
 
-[< Previous Module](../modules/logins.md) - **[Home](../README.md)**
+[< Previous Module](../modules/hadr22.md) - **[Home](../README.md)** - [Next Module >](../modules/logins.md)
 
 ## Install and configure InfluxDB and Telegraf Agent
 
@@ -375,3 +375,5 @@ This solution currently creates Grafana as a pod on your AKS cluster but you cou
 24. Try Running some problematic queries against the primary and monitor the performance
 
 25. Try failing over and verifying performance on each pod
+
+[Continue >](../modules/monitor.md)

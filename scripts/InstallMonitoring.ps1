@@ -70,7 +70,7 @@ az login --identity
 Write-Host "$(Get-Date) - Connecting to $Env:aksCluster"
 az aks get-credentials -n $Env:aksCluster -g $Env:resourceGroup
 
-Write-Host "$(Get-Date) - Creating sql$($Env:currentSqlVersion) namespace"
+Write-Host "$(Get-Date) - Creating sqlmonitor namespace"
 kubectl create namespace sqlmonitor
 
 Write-Host "$(Get-Date) - Configure Storage for InfluxDB"

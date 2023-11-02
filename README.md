@@ -9,5 +9,5 @@ The following topics are covered
 * SQL Server 2022 with Always-on Contained Availability Groups (Optional)
     * [Create SQL Server 2022 Container Instances](./modules/sql22.md)
     * [Create Always-on Contained Availability Group](./modules/hadr22.md)
-* [How to configure logins and users on SQL Server Availability Groups](./modules/logins.md)
 * [Monitoring with InfluxDB and Grafana](./modules/monitor.md)
+* [How to configure logins and users on SQL Server Availability Groups](./modules/logins.md)
