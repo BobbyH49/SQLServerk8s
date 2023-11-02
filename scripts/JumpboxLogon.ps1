@@ -201,6 +201,7 @@ Get-ScheduledTask -TaskName JumpboxLogon | Unregister-ScheduledTask -Confirm:$fa
 Remove-Item -Path "$Env:DeploymentDir\scripts\CreateDC.ps1" -Force
 Remove-Item -Path "$Env:DeploymentDir\scripts\ConfigureDC.ps1" -Force
 Remove-Item -Path "$Env:DeploymentDir\scripts\GenerateLinuxFiles.sh" -Force
+Remove-Item -Path "$Env:DeploymentDir\yaml\Monitor\InfluxDB\telegraf.conf" -Force
 
 Stop-Transcript
 $logSuppress = Get-Content $Env:DeploymentLogsDir\JumpboxLogon.log | Where-Object { $_ -notmatch "Host Application: powershell.exe" }
