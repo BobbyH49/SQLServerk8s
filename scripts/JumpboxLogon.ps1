@@ -156,10 +156,10 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" 
 $Env:currentSqlVersion = "19"
 $Env:vnetIpAddressRangeStr2 = "4"
 if ($Env:dH2iLicenseKey.length -ne 19) {
-    & $Env:DeploymentDir\scripts\DynamicYaml.ps1
+    & $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
 }
 else {
-    & $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
+    & $Env:DeploymentDir\scripts\GenerateSqlYamlHA.ps1
 }
 
 # Install SQL Server 2019 Containers
@@ -173,10 +173,10 @@ if ($Env:installSQL2019 -eq "Yes") {
 $Env:currentSqlVersion = "22"
 $Env:vnetIpAddressRangeStr2 = "5"
 if ($Env:dH2iLicenseKey.length -ne 19) {
-    & $Env:DeploymentDir\scripts\DynamicYaml.ps1
+    & $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
 }
 else {
-    & $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
+    & $Env:DeploymentDir\scripts\GenerateSqlYamlHA.ps1
 }
 
 # Install SQL Server 2022 Containers
@@ -187,7 +187,7 @@ if ($Env:installSQL2022 -eq "Yes") {
 # Generate yaml files for Monitor pod and service creation
 [System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "6", [System.EnvironmentVariableTarget]::Machine)
 $Env:vnetIpAddressRangeStr2 = "6"
-& $Env:DeploymentDir\scripts\DynamicMonitoringYaml.ps1
+& $Env:DeploymentDir\scripts\GenerateMonitorServiceYaml.ps1
 
 # Install Monitor Containers
 if ($Env:installMonitoring -eq "Yes") {

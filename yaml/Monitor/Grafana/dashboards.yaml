@@ -1,0 +1,17 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: dashboard-config
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+
+    providers:
+      - name: 'InfluxDB'
+        orgId: 1
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: true

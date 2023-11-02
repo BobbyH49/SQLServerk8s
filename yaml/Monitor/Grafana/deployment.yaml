@@ -35,8 +35,28 @@ spec:
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
+        volumeMounts:
+          - name: datasource-config-volume
+            mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+            subPath: datasources.yaml
+          - name: dashboard-config-volume
+            mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml
+            subPath: dashboards.yaml
+          - name: influxdb-volume
+            mountPath: /var/lib/grafana/dashboards/influxdb.json
+            subPath: influxdb.json
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
+      volumes:
+        - name: datasource-config-volume
+          configMap:
+            name: datasource-config
+        - name: dashboard-config-volume
+          configMap:
+            name: dashboard-config
+        - name: influxdb-volume
+          configMap:
+            name: influxdb

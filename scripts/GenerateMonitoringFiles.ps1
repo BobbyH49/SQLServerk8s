@@ -1,9 +1,9 @@
 $podName = kubectl get pods -n sqlmonitor -o jsonpath="{.items[?(@.metadata.labels.app=='influxdb')].metadata.name}"
 $influxClusterIP = kubectl get services -n sqlmonitor influxdb -o jsonpath="{.spec.clusterIP}"
-$sqlmonBucket = kubectl exec -n sqlmonitor -c influxdb $podName -- influx bucket list -n sqlmon --hide-headers
+$sqlmonBucket = kubectl exec -n sqlmonitor -c influxdb $podName -- influx bucket list -o sqlmon -n sqlmon --hide-headers
 $sqlmonBucketId = $sqlmonBucket.substring(0, 16)
-$influxApiTokenData = kubectl exec -n sqlmonitor -c influxdb $podName -- influx auth create -o sqlmon --write-bucket $sqlmonBucketId --hide-headers
-$influxApiToken = $InfluxAPITokenData.substring(18, 88)
+$influxTokenWriteData = kubectl exec -n sqlmonitor -c influxdb $podName -- influx auth create -o sqlmon --write-bucket $sqlmonBucketId --hide-headers
+$influxTokenWrite = $influxTokenWriteData.substring(18, 88)
 $mssql19_0_lb_ClusterIP = kubectl get services -n sql19 mssql19-0-lb -o jsonpath="{.spec.clusterIP}"
 $mssql19_1_lb_ClusterIP = kubectl get services -n sql19 mssql19-1-lb -o jsonpath="{.spec.clusterIP}"
 $mssql19_2_lb_ClusterIP = kubectl get services -n sql19 mssql19-2-lb -o jsonpath="{.spec.clusterIP}"
@@ -124,7 +124,7 @@ data:
       urls = ["http://$($influxClusterIP):8086"]
 
       ## Token for authentication.
-      token = "$($influxApiToken)"
+      token = "$($influxTokenWrite)"
 
       ## Organization is the name of the organization you wish to write to; must exist.
       organization = "sqlmon"
@@ -525,3 +525,34 @@ $connectionsConf
 $telegrafInfluxFile = "$Env:DeploymentDir\yaml\Monitor\InfluxDB\telegraf.conf"
 $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 [System.IO.File]::WriteAllLines($telegrafInfluxFile, $telegrafInfluxScript, $Utf8NoBomEncoding)
+
+$influxTokenReadData = kubectl exec -n sqlmonitor -c influxdb $podName -- influx auth create -o sqlmon --read-bucket $sqlmonBucketId --hide-headers
+$influxTokenRead = $influxTokenReadData.substring(18, 88)
+
+Write-Host "$(Get-Date) - Generate datasources.yaml for Grafana"
+$grafanaSourcesYaml = @"
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: datasource-config
+data:
+  datasources.yaml: |
+    apiVersion: 1
+
+    datasources:
+      - name: InfluxDB
+        type: influxdb
+        access: proxy
+        orgId: 1
+        uid: f2897f6e-4b6d-4055-a061-555b6dc76574
+        url: http://$($influxClusterIP):8086
+        jsonData:
+          version: Flux
+          organization: sqlmon
+          defaultBucket: sqlmon
+        secureJsonData:
+          token: $influxTokenRead
+"@
+
+$grafanaSourcesFile = "$Env:DeploymentDir\yaml\Monitor\Grafana\datasources.yaml"
+$grafanaSourcesYaml | Out-File -FilePath $grafanaSourcesFile -force

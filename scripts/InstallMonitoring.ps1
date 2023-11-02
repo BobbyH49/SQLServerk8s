@@ -90,20 +90,20 @@ VerifyPodRunning -podApp "influxdb" -namespace "sqlmonitor" -maxAttempts 60 -fai
 VerifyServiceRunning -serviceName "influxdb-lb" -namespace "sqlmonitor" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
 
 Write-Host "$(Get-Date) - Get the InfluxDB Pod Name"
-$podName = kubectl get pods -n sqlmonitor -o jsonpath="{.items[?(@.metadata.labels.app=='influxdb')].metadata.name}"
+$influxDbPodName = kubectl get pods -n sqlmonitor -o jsonpath="{.items[?(@.metadata.labels.app=='influxdb')].metadata.name}"
 
 Write-Host "$(Get-Date) - Create InfluxDB user, org and bucket with retention of 1 week"
-kubectl exec -n sqlmonitor -c influxdb $podName -- influx setup -u $Env:adminUsername -p $Env:adminPassword -o sqlmon -b sqlmon -r 1w -f
+kubectl exec -n sqlmonitor -c influxdb $influxDbPodName -- influx setup -u $Env:adminUsername -p $Env:adminPassword -o sqlmon -b sqlmon -r 1w -f
 
-Write-Host "$(Get-Date) - Generate Telegraf Configuration Files"
-& $Env:DeploymentDir\scripts\DynamicTelegrafConfig.ps1
+Write-Host "$(Get-Date) - Generate Telegraf and Grafana Configuration Files"
+& $Env:DeploymentDir\scripts\GenerateMonitoringFiles.ps1
 
-Write-Host "$(Get-Date) - Copy telegraf_config.conf"
+Write-Host "$(Get-Date) - Copy telegraf_config.conf to $influxDbPodName"
 $kubectlDeploymentDir = $Env:DeploymentDir -replace 'C:\\', '\..\'
-kubectl cp "$kubectlDeploymentDir\yaml\Monitor\InfluxDB\telegraf.conf" "$($podName):/home/influxdb" -n sqlmonitor
+kubectl cp "$kubectlDeploymentDir\yaml\Monitor\InfluxDB\telegraf.conf" "$($influxDbPodName):/home/influxdb" -n sqlmonitor
 
 Write-Host "$(Get-Date) - Create Telegraf Agent Configuration in InfluxDB"
-kubectl exec -n sqlmonitor -c influxdb $podName -- influx telegrafs create -n "sqlmon" -f /home/influxdb/telegraf.conf
+kubectl exec -n sqlmonitor -c influxdb $influxDbPodName -- influx telegrafs create -n "sqlmon" -f /home/influxdb/telegraf.conf
 
 Write-Host "$(Get-Date) - Apply Telegraf Configuration"
 kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\Telegraf\config.yaml" -n sqlmonitor
@@ -116,3 +116,19 @@ kubectl expose deployment telegraf --port=8125 --target-port=8125 --protocol=UDP
 
 Write-Host "$(Get-Date) - Verify pod started successfully"
 VerifyPodRunning -podApp "telegraf" -namespace "sqlmonitor" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+
+Write-Host "$(Get-Date) - Create the credentials for Grafana as a secret"
+kubectl create secret generic grafana-creds --from-literal=GF_SECURITY_ADMIN_USER=$Env:adminUsername --from-literal=GF_SECURITY_ADMIN_PASSWORD=$Env:adminPassword -n sqlmonitor
+
+Write-Host "$(Get-Date) - Deploy Grafana"
+kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\Grafana\datasources.yaml" -n sqlmonitor
+kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\Grafana\dashboards.yaml" -n sqlmonitor
+kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\Grafana\influxdb.yaml" -n sqlmonitor
+kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\Grafana\deployment.yaml" -n sqlmonitor
+
+Write-Host "$(Get-Date) - Deploy Internal Load Balancer for Grafana"
+kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\Grafana\service.yaml" -n sqlmonitor
+
+Write-Host "$(Get-Date) - Verify pod and service started successfully"
+VerifyPodRunning -podApp "grafana" -namespace "sqlmonitor" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+VerifyServiceRunning -serviceName "grafana-lb" -namespace "sqlmonitor" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).1" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0

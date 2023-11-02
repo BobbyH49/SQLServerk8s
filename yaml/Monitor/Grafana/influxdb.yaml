@@ -1,0 +1,2699 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: influxdb
+data:
+  influxdb.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "target": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            },
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": 1,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "f2897f6e-4b6d-4055-a061-555b6dc76574"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 27,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "from(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_cpu\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> keep(columns: [\"_time\", \"_field\", \"_value\"])\r\n",
+              "refId": "A"
+            }
+          ],
+          "title": "Percent CPU Usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "deckbytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 29,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "from(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_server_properties\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"server_memory\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> keep(columns: [\"_time\", \"_field\", \"_value\"])\r\n",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Memory Manager\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Target Server Memory (KB)\" or r[\"counter\"] == \"Total Server Memory (KB)\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "B"
+            }
+          ],
+          "title": "Memory Manager (KB)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "id": 20,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "Transactions/sec",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "query": "from(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Databases\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Transactions/sec\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"instance\", \"_value\"])\r\n",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      "1s"
+                    ],
+                    "type": "non_negative_derivative"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=",
+                  "value": "Transactions_sec-_Total"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            }
+          ],
+          "title": "Transactions/sec",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "id": 21,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "Batch Requests/sec",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "from(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:SQL Statistics\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Batch Requests/sec\" or r[\"counter\"] == \"SQL Compilations/sec\" or r[\"counter\"] == \"SQL Re-Compilations/sec\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])\r\n",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      "1s"
+                    ],
+                    "type": "non_negative_derivative"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/Batch_Requests_sec-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            }
+          ],
+          "title": "SQL Statistics",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "ms"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 15
+          },
+          "id": 15,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "$tag_type_instance",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_wait_time_ms",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_waitstats\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"wait_time_ms\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"wait_type\", \"_value\"])",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      "1s"
+                    ],
+                    "type": "non_negative_derivative"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            }
+          ],
+          "title": "Wait Statistics (Wait time ms)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 15
+          },
+          "id": 16,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "$tag_type_instance",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_waiting_tasks_count",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_waitstats\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"waiting_tasks_count\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"wait_type\", \"_value\"])",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      "1s"
+                    ],
+                    "type": "non_negative_derivative"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            }
+          ],
+          "title": "Wait Statistics (Waiting task count)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 22
+          },
+          "id": 25,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "$hostname",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "groupBy": [
+                {
+                  "params": [
+                    "$__interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Buffer Manager\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Buffer cache hit ratio\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": []
+            }
+          ],
+          "title": "Buffer Cache Hit Ratio",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 22
+          },
+          "id": 3,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Buffer Manager\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Page lookups/sec\" or r[\"counter\"] == \"Page reads/sec\" or r[\"counter\"] == \"Page writes/sec\" or r[\"counter\"] == \"Readahead pages/sec\" or r[\"counter\"] == \"Checkpoint pages/sec\" or r[\"counter\"] == \"Lazy writes/sec\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Access Methods\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Full Scans/sec\" or r[\"counter\"] == \"Index Searches/sec\" or r[\"counter\"] == \"Page Splits/sec\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Buffer Manager\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Page life expectancy\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "C"
+            }
+          ],
+          "title": "Buffer Cache - Memory",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "deckbytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 29
+          },
+          "id": 5,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "Database Cache",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1s"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_memory_clerks\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"size_kb\")\r\n  |> filter(fn: (r) => r[\"clerk_type\"] == \"Buffer Pool\" or r[\"clerk_type\"] == \"Connection Pool\" or r[\"clerk_type\"] == \"Log Pool\" or r[\"clerk_type\"] == \"Object Plans\" or r[\"clerk_type\"] == \"SQL Plans\" or r[\"clerk_type\"] == \"SQL Optimizer\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> keep(columns: [\"_time\", \"clerk_type\", \"_value\"])\r\n",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/Database_Cache_Memory_\\(KB\\)-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            },
+            {
+              "alias": "Optimizer",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1s"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/Optimizer_Memory_\\(KB\\)-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            },
+            {
+              "alias": "SQL Cache",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1s"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/SQL_Cache_Memory_\\(KB\\)-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            },
+            {
+              "alias": "Log Pool",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1s"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/Log_Pool_Memory_\\(KB\\)-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            },
+            {
+              "alias": "Connection",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1s"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "refId": "E",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/Connection_Memory_\\(KB\\)-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            },
+            {
+              "alias": "Lock",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1s"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "refId": "F",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/Lock_Memory_\\(KB\\)-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            }
+          ],
+          "title": "Memory Clerks",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "ms"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 29
+          },
+          "id": 33,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "query": "from(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_database_io\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"read_latency_ms\" or r[\"_field\"] == \"write_latency_ms\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"_field\", \"logical_filename\", \"_value\"])\r\n",
+              "refId": "A"
+            }
+          ],
+          "title": "Disk Latency",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 36
+          },
+          "id": 31,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "query": "from(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_database_io\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"reads\" or r[\"_field\"] == \"writes\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"_field\", \"logical_filename\", \"_value\"])\r\n",
+              "refId": "A"
+            }
+          ],
+          "title": "Disk IOPs",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "binBps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 36
+          },
+          "id": 32,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "query": "from(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_database_io\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"read_bytes\" or r[\"_field\"] == \"write_bytes\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"_field\", \"logical_filename\", \"_value\"])\r\n",
+              "refId": "A"
+            }
+          ],
+          "title": "Disk Throughput",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "deckbytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 43
+          },
+          "id": 34,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "Database Cache",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1s"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Databases\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Data File(s) Size (KB)\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> keep(columns: [\"_time\", \"instance\", \"_value\"])",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/Database_Cache_Memory_\\(KB\\)-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            }
+          ],
+          "title": "Data File Size",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "deckbytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 43
+          },
+          "id": 35,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "Database Cache",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "1s"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Databases\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Log File(s) Size (KB)\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> keep(columns: [\"_time\", \"instance\", \"_value\"])",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=~",
+                  "value": "/Database_Cache_Memory_\\(KB\\)-[ ]{0,1}/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            }
+          ],
+          "title": "Log File Size",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 50
+          },
+          "id": 2,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "Transactions/sec",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "hide": false,
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Latches\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Latch Waits/sec\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      "1s"
+                    ],
+                    "type": "non_negative_derivative"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "type_instance",
+                  "operator": "=",
+                  "value": "Transactions_sec-_Total"
+                },
+                {
+                  "condition": "AND",
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                }
+              ]
+            },
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Locks\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Lock Waits/sec\" or r[\"counter\"] == \"Lock Timeouts/sec\" or r[\"counter\"] == \"Number of Deadlocks/sec\")\r\n  |> filter(fn: (r) => r[\"instance\"] == \"Total\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Databases\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Log Flushes/sec\" or r[\"counter\"] == \"Log Flush Wait Time\" or r[\"counter\"] == \"Write Transactions/sec\")\r\n  |> filter(fn: (r) => r[\"instance\"] == \"Total\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "C"
+            }
+          ],
+          "title": "Database Activity",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 50
+          },
+          "id": 13,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:General Statistics\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Logins/sec\" or r[\"counter\"] == \"Logouts/sec\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:General Statistics\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"User Connections\" or r[\"counter\"] == \"Processes blocked\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "B"
+            }
+          ],
+          "title": "SQL Server Activity",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "ms"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 57
+          },
+          "id": 23,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "$tag_type_instance",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Database Replica\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Transaction Delay\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"instance\", \"_value\"])",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      "1s"
+                    ],
+                    "type": "non_negative_derivative"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "type_instance",
+                  "operator": "=",
+                  "value": "\\\"Transaction_Delay.\"\\"
+                }
+              ]
+            }
+          ],
+          "title": "AlwaysOn (Transaction Delay)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 57
+          },
+          "id": 22,
+          "links": [],
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "9.4.7",
+          "targets": [
+            {
+              "alias": "Log Bytes Flushed/sec",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "type_instance"
+                  ],
+                  "type": "tag"
+                }
+              ],
+              "measurement": "dbi_perf_stats_value",
+              "policy": "default",
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Database Replica\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Log Apply Ready Queue\" or r[\"counter\"] == \"Recovery Queue\" or r[\"counter\"] == \"Log Apply Pending Queue\" or r[\"counter\"] == \"Redone Bytes/sec\" or r[\"counter\"] == \"Log Bytes Received/sec\")\r\n  |> filter(fn: (r) => r[\"instance\"] == \"Total\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      "1s"
+                    ],
+                    "type": "non_negative_derivative"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$hostname$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "type_instance",
+                  "operator": "=",
+                  "value": "Log_Bytes_Flushed_sec-_Total"
+                }
+              ]
+            },
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Availability Replica\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Bytes Sent to Transport/sec\" or r[\"counter\"] == \"Bytes Sent to Replica/sec\")\r\n  |> filter(fn: (r) => r[\"instance\"] == \"Total\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "${datasource}"
+              },
+              "hide": false,
+              "query": "\r\nfrom(bucket: \"sqlmon\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sqlserver_performance\")\r\n  |> filter(fn: (r) => r[\"object\"] == \"SQLServer:Databases\")\r\n  |> filter(fn: (r) => r[\"counter\"] == \"Log Bytes Flushed/sec\")\r\n  |> filter(fn: (r) => r[\"instance\"] == \"Total\")\r\n  |> filter(fn: (r) => r[\"measurement_db_type\"] == \"SQLServer\")\r\n  |> filter(fn: (r) => r[\"sql_instance\"] == \"${hostname}\")\r\n  |> derivative(unit: 1s, nonNegative: true)\r\n  |> keep(columns: [\"_time\", \"counter\", \"_value\"])",
+              "refId": "C"
+            }
+          ],
+          "title": "AlwaysOn",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "",
+      "revision": 1,
+      "schemaVersion": 38,
+      "tags": [],
+      "templating": {
+        "list": [
+          {
+            "current": {
+              "selected": false,
+              "text": "mssql19-0",
+              "value": "mssql19-0"
+            },
+            "datasource": {
+              "type": "influxdb",
+              "uid": "${datasource}"
+            },
+            "definition": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"sql_instance\",\r\n    predicate: (r) => true,\r\n    start: -1d\r\n)",
+            "hide": 0,
+            "includeAll": false,
+            "label": "Host",
+            "multi": false,
+            "name": "hostname",
+            "options": [],
+            "query": "import \"influxdata/influxdb/v1\"\r\nv1.tagValues(\r\n    bucket: v.bucket,\r\n    tag: \"sql_instance\",\r\n    predicate: (r) => true,\r\n    start: -1d\r\n)",
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "sort": 1,
+            "tagValuesQuery": "",
+            "tagsQuery": "",
+            "type": "query",
+            "useTags": false
+          },
+          {
+            "current": {
+              "selected": false,
+              "text": "f2897f6e-4b6d-4055-a061-555b6dc76574",
+              "value": "f2897f6e-4b6d-4055-a061-555b6dc76574"
+            },
+            "hide": 2,
+            "includeAll": false,
+            "multi": false,
+            "name": "datasource",
+            "options": [
+              {
+                "selected": true,
+                "text": "f2897f6e-4b6d-4055-a061-555b6dc76574",
+                "value": "f2897f6e-4b6d-4055-a061-555b6dc76574"
+              }
+            ],
+            "query": "f2897f6e-4b6d-4055-a061-555b6dc76574",
+            "skipUrlSync": false,
+            "type": "custom"
+          }
+        ]
+      },
+      "time": {
+        "from": "now-5m",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "1s",
+          "5s",
+          "10s",
+          "30s",
+          "1m",
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "2h",
+          "1d"
+        ],
+        "time_options": [
+          "5m",
+          "15m",
+          "1h",
+          "6h",
+          "12h",
+          "24h",
+          "2d",
+          "7d",
+          "30d"
+        ]
+      },
+      "timezone": "browser",
+      "title": "SQL Container Metrics",
+      "uid": "40q72HnGk",
+      "version": 2,
+      "weekStart": ""
+    }
+    

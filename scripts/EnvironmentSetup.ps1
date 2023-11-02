@@ -93,11 +93,11 @@ Invoke-WebRequest ($templateBaseUrl + "templates/linux.json") -OutFile $Env:Depl
 
 Write-Host "$(Get-Date) - Downloading scripts"
 Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogon.ps1") -OutFile $Env:DeploymentDir\scripts\JumpboxLogon.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicYaml.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYaml.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicYamlHA.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/GenerateSqlYaml.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYaml.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/GenerateSqlYamlHA.ps1") -OutFile $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
 Invoke-WebRequest ($templateBaseUrl + "scripts/InstallSQL.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicMonitoringYaml.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/DynamicTelegrafConfig.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/GenerateMonitorServiceYaml.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
+Invoke-WebRequest ($templateBaseUrl + "scripts/GenerateMonitoringFiles.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
 Invoke-WebRequest ($templateBaseUrl + "scripts/InstallMonitoring.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
 
 Write-Host "$(Get-Date) - Downloading SQL Server 2019 yaml and ini files"
@@ -117,8 +117,10 @@ Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/mssql-conf.yaml") -OutFile $
 Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/mssql-conf-encryption.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\mssql-conf-encryption.yaml
 
 Write-Host "$(Get-Date) - Downloading SQL Monitor yaml and json files"
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/Dashboard.json") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\Dashboard.json
+Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/dashboards.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\deployment.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\deployment.yaml
+Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/influxdb.json") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\Dashboard.json
+Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/influxdb.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\Dashboard.json
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\deployment.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/storage.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\storage.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\config.yaml
