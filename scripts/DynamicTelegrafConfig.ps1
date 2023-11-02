@@ -11,24 +11,24 @@ $mssql22_0_lb_ClusterIP = kubectl get services -n sql22 mssql22-0-lb -o jsonpath
 $mssql22_1_lb_ClusterIP = kubectl get services -n sql22 mssql22-1-lb -o jsonpath="{.spec.clusterIP}"
 $mssql22_2_lb_ClusterIP = kubectl get services -n sql22 mssql22-2-lb -o jsonpath="{.spec.clusterIP}"
 
-$connectionsConf = ""
+$connectionsYaml = ""
 if ($null -ne $mssql19_0_lb_ClusterIP) {
-  $connectionsConf += "    `"Server=$($mssql19_0_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsYaml += "        `"Server=$($mssql19_0_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql19_1_lb_ClusterIP) {
-  $connectionsConf += "    `"Server=$($mssql19_1_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsYaml += "        `"Server=$($mssql19_1_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql19_2_lb_ClusterIP) {
-  $connectionsConf += "    `"Server=$($mssql19_2_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsYaml += "        `"Server=$($mssql19_2_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql22_0_lb_ClusterIP) {
-  $connectionsConf += "    `"Server=$($mssql22_0_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsYaml += "        `"Server=$($mssql22_0_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql22_1_lb_ClusterIP) {
-  $connectionsConf += "    `"Server=$($mssql22_1_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsYaml += "        `"Server=$($mssql22_1_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql22_2_lb_ClusterIP) {
-  $connectionsConf += "    `"Server=$($mssql22_2_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`","
+  $connectionsYaml += "        `"Server=$($mssql22_2_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`","
 }
 
 Write-Host "$(Get-Date) - Generate config.yaml for telegraf"
@@ -309,24 +309,24 @@ $connectionsYaml
 $telegrafConfFile = "$Env:DeploymentDir\yaml\Monitor\Telegraf\config.yaml"
 $telegrafConfScript | Out-File -FilePath $telegrafConfFile -force
 
-$connectionsYaml = ""
+$connectionsConf = ""
 if ($null -ne $mssql19_0_lb_ClusterIP) {
-  $connectionsYaml += "        `"Server=$($mssql19_0_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsConf += "    `"Server=$($mssql19_0_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql19_1_lb_ClusterIP) {
-  $connectionsYaml += "        `"Server=$($mssql19_1_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsConf += "    `"Server=$($mssql19_1_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql19_2_lb_ClusterIP) {
-  $connectionsYaml += "        `"Server=$($mssql19_2_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsConf += "    `"Server=$($mssql19_2_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql22_0_lb_ClusterIP) {
-  $connectionsYaml += "        `"Server=$($mssql22_0_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsConf += "    `"Server=$($mssql22_0_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql22_1_lb_ClusterIP) {
-  $connectionsYaml += "        `"Server=$($mssql22_1_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
+  $connectionsConf += "    `"Server=$($mssql22_1_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`",`r`n"
 }
 if ($null -ne $mssql22_2_lb_ClusterIP) {
-  $connectionsYaml += "        `"Server=$($mssql22_2_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`","
+  $connectionsConf += "    `"Server=$($mssql22_2_lb_ClusterIP);Port=1433;User Id=Telegraf;Password=$($Env:adminPassword);app name=telegraf;log=1;`","
 }
 
 Write-Host "$(Get-Date) - Generate telegraf.conf for InfluxDB"
