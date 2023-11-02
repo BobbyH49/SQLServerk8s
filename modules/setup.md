@@ -60,6 +60,7 @@ The following resources will be deployed.  It takes around 30-40 minutes to depl
     * Install SQL2019 - Select **Yes** if you want SQL Server 2019 to be automatically installed
     * Install SQL2022 - Select **Yes** if you want SQL Server 2022 to be automatically installed
     * DH2i License Key - Leave blank to install standalone instances or populate to automatically configure an Availability Group (SQL Server 2019) and \/ or a Contained Availability Group (SQL Server 2022)
+    * Install Monitoring - Select **Yes** if you want the Grafana monitoring solution to be installed
 
     ![Deploy Resources](media/DeployResources.jpg)
 
