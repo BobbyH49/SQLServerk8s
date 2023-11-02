@@ -95,7 +95,7 @@ $podName = kubectl get pods -n sqlmonitor -o jsonpath="{.items[?(@.metadata.labe
 Write-Host "$(Get-Date) - Create InfluxDB user, org and bucket with retention of 1 week"
 kubectl exec -n sqlmonitor -c influxdb $podName -- influx setup -u $Env:adminUsername -p $Env:adminPassword -o sqlmon -b sqlmon -r 1w -f
 
-Write-Host "$(Get-Date) - "Generate Telegraf Configuration Files"
+Write-Host "$(Get-Date) - Generate Telegraf Configuration Files"
 & $Env:DeploymentDir\scripts\DynamicTelegrafConfig.ps1
 
 Write-Host "$(Get-Date) - "Copy telegraf_config.conf"
