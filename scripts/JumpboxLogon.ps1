@@ -151,8 +151,8 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-1.pem" 
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 
 # Generate yaml files for SQL Server 2019 pod and service creation
-[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
 $Env:currentSqlVersion = "19"
 $Env:vnetIpAddressRangeStr2 = "4"
 if ($Env:dH2iLicenseKey.length -ne 19) {
@@ -168,8 +168,8 @@ if ($Env:installSQL2019 -eq "Yes") {
 }
 
 # Generate yaml files for SQL Server 2022 pod and service creation
-[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
 $Env:currentSqlVersion = "22"
 $Env:vnetIpAddressRangeStr2 = "5"
 if ($Env:dH2iLicenseKey.length -ne 19) {
@@ -185,7 +185,7 @@ if ($Env:installSQL2022 -eq "Yes") {
 }
 
 # Generate yaml files for Monitor pod and service creation
-[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "6", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "6", [System.EnvironmentVariableTarget]::Machine)
 $Env:vnetIpAddressRangeStr2 = "6"
 & $Env:DeploymentDir\scripts\DynamicMonitoringYaml.ps1
 
@@ -227,5 +227,5 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 [System.Environment]::SetEnvironmentVariable('installMonitoring', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('currentSqlVersion', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "", [System.EnvironmentVariableTarget]::Machine)
