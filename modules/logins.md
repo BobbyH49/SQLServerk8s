@@ -1,6 +1,6 @@
 # How to configure logins and users on SQL Server Availability Groups
 
-[< Previous Module](../modules/hadr22.md) - **[Home](../README.md)** - [Next Module >](../modules/monitor.md)
+[< Previous Module](../modules/monitor.md) - **[Home](../README.md)**
 
 ## The problem
 
@@ -55,5 +55,3 @@ Contained Availability Groups offer a different solution.  They contain their ow
   ![Login Not on Primary](media/LoginNotOnPrimary.jpg)
 
 This solution makes Contained Availability Groups so much easier to use.  Logins, Credentials, Linked Servers, SQL Audits, and SQL Agent Jobs can all follow the user databases by creating them once while connected to the Listener.
-
-[Continue >](../modules/monitor.md)

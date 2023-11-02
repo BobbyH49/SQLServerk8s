@@ -38,6 +38,14 @@
             "type": "string",
             "maxLength": 19,
             "defaultValue": ""
+        },
+        "installMonitoring": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
         }
     },
     "variables": {
@@ -600,7 +608,7 @@
                     "fileUris": [
                         "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', variables('vnetIpAddressRangeStr'), ' -dcVM ', variables('dcVM'), ' -linuxVM ', variables('linuxVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -aksCluster ', variables('aksCluster'), ' -dH2iLicenseKey ', variables('dH2iLicenseKey'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', variables('vnetIpAddressRangeStr'), ' -dcVM ', variables('dcVM'), ' -linuxVM ', variables('linuxVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -aksCluster ', variables('aksCluster'), ' -dH2iLicenseKey ', variables('dH2iLicenseKey'), ' -installMonitoring ', parameters('installMonitoring'))]"
                 }
             }
         },

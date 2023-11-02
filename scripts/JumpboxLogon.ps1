@@ -151,15 +151,15 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-1.pem" 
 Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 
 # Generate yaml files for SQL Server 2019 pod and service creation
-[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
 $Env:currentSqlVersion = "19"
 $Env:vnetIpAddressRangeStr2 = "4"
 if ($Env:dH2iLicenseKey.length -ne 19) {
-    & $Env:DeploymentDir\scripts\DynamicYaml.ps1
+    & $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
 }
 else {
-    & $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
+    & $Env:DeploymentDir\scripts\GenerateSqlYamlHA.ps1
 }
 
 # Install SQL Server 2019 Containers
@@ -168,20 +168,30 @@ if ($Env:installSQL2019 -eq "Yes") {
 }
 
 # Generate yaml files for SQL Server 2022 pod and service creation
-[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
 $Env:currentSqlVersion = "22"
 $Env:vnetIpAddressRangeStr2 = "5"
 if ($Env:dH2iLicenseKey.length -ne 19) {
-    & $Env:DeploymentDir\scripts\DynamicYaml.ps1
+    & $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
 }
 else {
-    & $Env:DeploymentDir\scripts\DynamicYamlHA.ps1
+    & $Env:DeploymentDir\scripts\GenerateSqlYamlHA.ps1
 }
 
 # Install SQL Server 2022 Containers
 if ($Env:installSQL2022 -eq "Yes") {
     & $Env:DeploymentDir\scripts\InstallSQL.ps1
+}
+
+# Generate yaml files for Monitor pod and service creation
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "6", [System.EnvironmentVariableTarget]::Machine)
+$Env:vnetIpAddressRangeStr2 = "6"
+& $Env:DeploymentDir\scripts\GenerateMonitorServiceYaml.ps1
+
+# Install Monitor Containers
+if ($Env:installMonitoring -eq "Yes") {
+    & $Env:DeploymentDir\scripts\InstallMonitoring.ps1
 }
 
 # Cleanup
@@ -191,6 +201,7 @@ Get-ScheduledTask -TaskName JumpboxLogon | Unregister-ScheduledTask -Confirm:$fa
 Remove-Item -Path "$Env:DeploymentDir\scripts\CreateDC.ps1" -Force
 Remove-Item -Path "$Env:DeploymentDir\scripts\ConfigureDC.ps1" -Force
 Remove-Item -Path "$Env:DeploymentDir\scripts\GenerateLinuxFiles.sh" -Force
+Remove-Item -Path "$Env:DeploymentDir\yaml\Monitor\InfluxDB\telegraf.conf" -Force
 
 Stop-Transcript
 $logSuppress = Get-Content $Env:DeploymentLogsDir\JumpboxLogon.log | Where-Object { $_ -notmatch "Host Application: powershell.exe" }
@@ -213,7 +224,8 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 [System.Environment]::SetEnvironmentVariable('installSQL2022', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('aksCluster', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('installMonitoring', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$currentSqlVersion', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('$vnetIpAddressRangeStr2', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('currentSqlVersion', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "", [System.EnvironmentVariableTarget]::Machine)
