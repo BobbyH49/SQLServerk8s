@@ -13,16 +13,16 @@ function VerifyPodRunning
     $podStatus = kubectl get pods -n $namespace -o jsonpath="{.items[?(@.metadata.labels.app=='$podApp')].status.phase}"
 
     if ($podStatus -ne "Running") {
-      Write-Host "$(Get-Date) - Pod $podName is not yet available - Attempt $attempts out of $maxAttempts"
+      Write-Host "$(Get-Date) - Pod App $podApp is not yet available - Attempt $attempts out of $maxAttempts"
       if ($attempts -lt $maxAttempts) {
         Start-Sleep -Seconds $failedSleepTime
       }
       else {
-        Write-Host "$(Get-Date) - Failed to restart $podName after $maxAttempts attempts"
+        Write-Host "$(Get-Date) - Failed to restart $podApp after $maxAttempts attempts"
       }
     }
     else {
-      Write-Host "$(Get-Date) - Pod $podName is now available"
+      Write-Host "$(Get-Date) - Pod App $podApp is now available"
       Start-Sleep -Seconds $successSleepTime
     }
     $attempts += 1
