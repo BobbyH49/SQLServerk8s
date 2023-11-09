@@ -121,6 +121,7 @@ Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/dashboards.yaml") -O
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\deployment.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/influxdb.json") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\influxdb.json
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/influxdb.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\influxdb.yaml
+Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\config.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\deployment.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/storage.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\storage.yaml
 Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\config.yaml

@@ -3,10 +3,10 @@ kind: PersistentVolumeClaim
 metadata:
   labels:
     app: influxdb
-  name: influxdb-pvc
+  name: influxdb-data
 spec:
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 2Gi
