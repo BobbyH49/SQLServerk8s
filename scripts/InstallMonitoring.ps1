@@ -76,6 +76,9 @@ kubectl create namespace sqlmonitor
 Write-Host "$(Get-Date) - Configure Storage for InfluxDB"
 kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\InfluxDB\storage.yaml" -n sqlmonitor
 
+Write-Host "$(Get-Date) - Add configuration file for InfluxDB"
+kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\InfluxDB\config.yaml" -n sqlmonitor
+
 Write-Host "$(Get-Date) - Deploy InfluxDB"
 kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\InfluxDB\deployment.yaml" -n sqlmonitor
 

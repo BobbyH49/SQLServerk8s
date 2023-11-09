@@ -34,14 +34,21 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
-        - mountPath: /var/lib/influxdb
-          name: var-lib-influxdb
+        - mountPath: /var/lib/influxdb2
+          name: influxdb-data
+        - mountPath: /etc/influxdb/influxdb.conf
+          name: influxdb-conf
+          subPath: influxdb.conf
+          readOnly: true
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
       volumes:
-      - name: var-lib-influxdb
+      - name: influxdb-data
         persistentVolumeClaim:
-          claimName: influxdb-pvc
+          claimName: influxdb-data
+      - name: influxdb-conf
+        configMap:
+          name: influxdb-conf
