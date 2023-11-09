@@ -38,7 +38,15 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Configure InfluxDB Storage](media/ConfigureInfluxDBStorage.jpg)
 
-6. Deploy InfluxDB
+6. Add configuration file for InfluxDB
+
+    ```text
+    kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\config.yaml" -n sqlmonitor
+    ```
+
+    ![Configure InfluxDB Storage](media/AddInfluxDBConfig.jpg)
+
+7. Deploy InfluxDB
 
     ```text
     kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\deployment.yaml" -n sqlmonitor
@@ -46,7 +54,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Deploy InfluxDB](media/DeployInfluxDB.jpg)
 
-7. Expose internal IP Address and Port for InfluxDB
+8. Expose internal IP Address and Port for InfluxDB
 
     ```text
     kubectl expose deployment influxdb --port=8086 --target-port=8086 --protocol=TCP --type=ClusterIP -n sqlmonitor
@@ -54,7 +62,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Expose InfluxDB Service](media/ExposeInfluxDBService.jpg)
 
-8. Create internal load balancer for InfluxDB
+8=9. Create internal load balancer for InfluxDB
 
     ```text
     kubectl apply -f "C:\Deployment\yaml\Monitor\InfluxDB\service.yaml" -n sqlmonitor
@@ -62,7 +70,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Create InfluxDB Internal Load Balancer](media/CreateInfluxDbIlb.jpg)
 
-9. Verify pod and services are running
+10. Verify pod and services are running
 
     ```text
     kubectl get pods -n sqlmonitor
@@ -74,11 +82,11 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Verify InfluxDB Pod and Services](media/VerifyInfluxDB.jpg)
 
-10. Connect to InfluxDB via Edge (http://influxdb.sqlk8s.local:8086) and click **Get Started**
+11. Connect to InfluxDB via Edge (http://influxdb.sqlk8s.local:8086) and click **Get Started**
 
     ![Connect to InfluxDB](media/ConnectToInfluxDB.jpg)
 
-11. Enter the following and click **Continue**
+12. Enter the following and click **Continue**
 
 * User = \<adminUsername\>
 * Password = \<adminPassword\>
@@ -87,19 +95,19 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![InfluxDB Account Setup](media/InfluxDBAccount.jpg)
 
-12. Click the **Advanced** button on the Complete page
+13. Click the **Advanced** button on the Complete page
 
     ![InfluxDB Advanced](media/InfluxDBAdvanced.jpg)
 
-13. On the Load Data page, click the **Add Data** button in the sqlmon panel, then click **Configure Telegraf Agent**
+14. On the Load Data page, click the **Add Data** button in the sqlmon panel, then click **Configure Telegraf Agent**
 
     ![InfluxDB Buckets](media/InfluxDBBuckets.jpg)
 
-14. Ensure the bucket says **sqlmon** and then filter for, and choose the **SQL Server** data source. Click **Continue Configuring**
+15. Ensure the bucket says **sqlmon** and then filter for, and choose the **SQL Server** data source. Click **Continue Configuring**
 
     ![InfluxDB Config Telegraf for SQL](media/InfluxDBConfigureTelegrafSQL.jpg)
 
-15. Make the following configuration changes
+16. Make the following configuration changes
 
 * Configuration Name = sqlmon
     
@@ -131,7 +139,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Edit InfluxDB Config](media/EditInfluxDBConfig.jpg)
 
-16. Edit **C:\Deployment\yaml\Monitor\Telegraf\config.yaml** in notepad
+17. Edit **C:\Deployment\yaml\Monitor\Telegraf\config.yaml** in notepad
 
     Replace lines 143-145 with the server configurations created in **Step 15**
 
@@ -151,11 +159,11 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Telegraf Config Destination](media/TelegrafConfigDest.jpg)
 
-17. Go back to the \"Test your Configuration\" page and click **Finish**
+18. Go back to the \"Test your Configuration\" page and click **Finish**
 
     ![Test InfluxDB Config](media/TestInfluxDBConfig.jpg)
 
-18. Deploy the Telegraf configuration file
+19. Deploy the Telegraf configuration file
 
     ```text
         kubectl apply -f "C:\Deployment\yaml\Monitor\Telegraf\config.yaml" -n sqlmonitor
@@ -163,7 +171,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Deploy Telegraf Config](media/DeployTelegrafConfig.jpg)
 
-19. Deploy the Telegraf agent
+20. Deploy the Telegraf agent
 
     ```text
         kubectl apply -f "C:\Deployment\yaml\Monitor\Telegraf\deployment.yaml" -n sqlmonitor
@@ -171,7 +179,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Deploy Telegraf](media/DeployTelegraf.jpg)
 
-20. Explose the Telegraf agent service
+21. Explose the Telegraf agent service
 
     ```text
         kubectl expose deployment telegraf --port=8125 --target-port=8125 --protocol=UDP --type=NodePort -n sqlmonitor
@@ -179,7 +187,7 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Expose Telegraf Service](media/ExposeTelegrafService.jpg)
 
-21. Verify pod and service are running
+22. Verify pod and service are running
 
     ```text
     kubectl get pods -n sqlmonitor
@@ -191,11 +199,11 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Verify Telegraf Pod and Service](media/VerifyTelegraf.jpg)
 
-22. Go back to the InfluxDB web app and select **Buckets** and then **sqlmon**
+23. Go back to the InfluxDB web app and select **Buckets** and then **sqlmon**
 
     ![Query sqlmon bucket](media/QueryBucket.jpg)
 
-23. Verify data is being collected by replacing the contents of the flux script with the script below and then click **Run**
+24. Verify data is being collected by replacing the contents of the flux script with the script below and then click **Run**
 
     ```text
     from(bucket: "sqlmon")
@@ -213,17 +221,17 @@ For this solution, you will be using InfluxDB to store the metric data, Telegraf
 
     ![Run Flux Query](media/RunFluxQuery.jpg)
 
-24. Go to API Tokens from the left menu blade and click **Generate API Token** followed by **Custom API Token**
+25. Go to API Tokens from the left menu blade and click **Generate API Token** followed by **Custom API Token**
 
     ![API Tokens](media/APITokens.jpg)
 
     ![Generate API Token](media/GenerateAPIToken.jpg)
 
-25. Click **Buckets** to expand the selection, then tick the **Read** box for **sqlmon** and click **Generate**
+26. Click **Buckets** to expand the selection, then tick the **Read** box for **sqlmon** and click **Generate**
 
     ![Read sqlmon token](media/ReadBucketToken.jpg)
 
-26. Copy the API Token to the clipboard and then paste into a notepad file to be used when configuring Grafana
+27. Copy the API Token to the clipboard and then paste into a notepad file to be used when configuring Grafana
 
     **NB: The Copy to Clipboard may not work.  If it doesn't then highlight the token and copy manually.**
 
