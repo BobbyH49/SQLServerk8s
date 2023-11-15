@@ -107,10 +107,18 @@ function RunSqlCmd
   while (($success -eq 0) -and ($attempts -le $maxAttempts)) {
     $runOutput = $null
     $runOutput = SQLCMD -S $sqlInstance -U $username -P $password -i $inputFile
-    if (!$runOutput[0].Contains("no named pipe instance matching")) {
-      $success = 1
-    }
 
+    if ($runOutput.GetType().ToString() -eq "System.String") {
+      if (!$runOutput.Contains("no named pipe instance matching")) {
+        $success = 1
+      }
+    }
+    else {
+      if (!$runOutput[0].Contains("no named pipe instance matching")) {
+        $success = 1
+      }
+    }
+          
     if ($success -eq 0) {
       Write-Host "$(Get-Date) - Failed to run script on $sqlInstance - Attempt $attempts out of $maxAttempts"
       if ($attempts -lt $maxAttempts) {
