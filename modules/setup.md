@@ -38,7 +38,7 @@ The following resources will be deployed.  It takes around 30-40 minutes to depl
     * SqlK8sJumpbox (Client used to run scripts with 1 Nic and 1 OS Disk)
 * 4 Network Security Groups (1 for each subnet and 1 for Nic on SqlK8sJumpbox)
 * 2 Public IP Addresses (1 for Bastion and 1 for Jumpbox)
-* Azure Kubernetes Cluster (VM Scale Set with 2 - 4 Standard_D8s_v3 VMs)
+* Azure Kubernetes Cluster (VM Scale Set with 1 - 4 Standard_D8s_v3 VMs)
 
 **NB: This deployment can be expensive to keep running but you can reduce costs by shutting down the 3 Virtual Machines and AKS Cluster, and starting up when required.  You can also drop the bastion host when shutting down the Virtual Machines and then re-create when required.**
 
