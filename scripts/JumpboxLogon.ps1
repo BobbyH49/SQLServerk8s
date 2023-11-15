@@ -30,6 +30,7 @@ $templateParameters.add("linuxVM", $Env:linuxVM)
 # Deploy Linux server
 Write-Host "$(Get-Date) - Deploying $Env:linuxVM"
 New-AzResourceGroupDeployment -ResourceGroupName $Env:resourceGroup -Mode Incremental -Force -TemplateFile "C:\Deployment\templates\linux.json" -TemplateParameterObject $templateParameters
+Start-Sleep -Seconds 20
 
 # Add known host
 Write-Host "$(Get-Date) - Adding $Env:linuxVM as known host"
