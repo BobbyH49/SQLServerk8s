@@ -114,7 +114,7 @@ function RunSqlCmd
       }
     }
     else {
-      if (!$runOutput[0].Contains("no named pipe instance matching")) {
+      if (!$runOutput[$runOutput.Count - 1].Contains("no named pipe instance matching")) {
         $success = 1
       }
     }
@@ -270,6 +270,9 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
   RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-2.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
 }
 else {
+  Write-Host "$(Get-Date) - Copying backup file to mssql$($Env:currentSqlVersion)-0"
+  kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql$($Env:currentSqlVersion)
+
   Write-Host "$(Get-Date) - Restoring database backup"
   RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlRestoreFile -maxAttempts 60 -failedSleepTime 10
 }
