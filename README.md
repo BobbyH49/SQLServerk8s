@@ -11,3 +11,8 @@ The following topics are covered
     * [Create Always-on Contained Availability Group](./modules/hadr22.md)
 * [Monitoring with InfluxDB and Grafana](./modules/monitor.md) (Manual Deployment)
 * [How to configure logins and users on SQL Server Availability Groups](./modules/logins.md)
+
+Please view the following recordings for more info
+
+* [SQLServerk8s Project Review](https://www.youtube.com/watch?v=kmFJfY_0ces)
+* [Migration of SQL Server 2022 Instances from Windows to Kubernetes using Contained Availability Group](https://www.youtube.com/watch?v=B_zUgvAsDlo)
