@@ -1,3 +1,35 @@
+Write-Host "$(Get-Date) - Generating headless-services.yaml"
+$mssqlHeadlessScript = @"
+#Headless services for local connections/resolution
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql$($Env:currentSqlVersion)-0
+spec:
+  clusterIP: None
+  selector:
+    statefulset.kubernetes.io/pod-name: mssql$($Env:currentSqlVersion)-0
+  ports:
+  - name: dxl
+    protocol: TCP
+    port: 7979
+  - name: dxc-tcp
+    protocol: TCP
+    port: 7980
+  - name: dxc-udp
+    protocol: UDP
+    port: 7981
+  - name: sql
+    protocol: TCP
+    port: 1433
+  - name: listener
+    protocol: TCP
+    port: 14033
+"@
+
+$mssqlHeadlessFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\headless-services.yaml"
+$mssqlHeadlessScript | Out-File -FilePath $mssqlHeadlessFile -force
+
 Write-Host "$(Get-Date) - Generating mssql.yaml"
 $mssqlPodScript = @"
 #DxEnterprise + MSSQL StatefulSet
