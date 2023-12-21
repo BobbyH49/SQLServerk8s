@@ -3,7 +3,7 @@ param (
     [string]$adminPassword,
     [string]$resourceGroup,
     [string]$azureLocation,
-    [string]$templateBaseUrl,
+    [string]$templateAksUrl,
     [string]$netbiosName,
     [string]$domainSuffix,
     [string]$vnetName,
@@ -15,6 +15,7 @@ param (
     [string]$installSQL2019,
     [string]$installSQL2022,
     [string]$aksCluster,
+    [string]$dH2iAvailabilityGroup,
     [string]$dH2iLicenseKey,
     [string]$installMonitoring
 )
@@ -23,7 +24,7 @@ param (
 [System.Environment]::SetEnvironmentVariable('adminPassword', $adminPassword, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('resourceGroup', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('azureLocation', $azureLocation, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('templateBaseUrl', $templateBaseUrl, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('templateAksUrl', $templateAksUrl, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('netbiosName', $netbiosName, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('domainSuffix', $domainSuffix, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('vnetName', $vnetName, [System.EnvironmentVariableTarget]::Machine)
@@ -35,6 +36,7 @@ param (
 [System.Environment]::SetEnvironmentVariable('installSQL2019', $installSQL2019, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2022', $installSQL2022, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('aksCluster', $aksCluster, [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('dH2iAvailabilityGroup', $dH2iAvailabilityGroup, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', $dH2iLicenseKey, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installMonitoring', $installMonitoring, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "C:\Deployment", [System.EnvironmentVariableTarget]::Machine)
@@ -59,7 +61,7 @@ New-Item -Path "$Env:DeploymentDir\backups" -ItemType directory -Force
 Start-Transcript -Path $Env:DeploymentLogsDir\EnvironmentSetup.log
 
 # Copy PowerShell Profile and Reload
-Invoke-WebRequest ($templateBaseUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
+Invoke-WebRequest ($templateAksUrl + "scripts/PSProfile.ps1") -OutFile $PsHome\Profile.ps1
 .$PsHome\Profile.ps1
 
 # Installing PowerShell Module Dependencies
@@ -89,44 +91,44 @@ foreach ($app in $appsToInstall) {
 
 Write-Header "$(Get-Date) - Fetching Artifacts for SqlServerK8s"
 Write-Host "$(Get-Date) - Downloading templates"
-Invoke-WebRequest ($templateBaseUrl + "templates/linux.json") -OutFile $Env:DeploymentDir\templates\linux.json
+Invoke-WebRequest ($templateAksUrl + "templates/linux.json") -OutFile $Env:DeploymentDir\templates\linux.json
 
 Write-Host "$(Get-Date) - Downloading scripts"
-Invoke-WebRequest ($templateBaseUrl + "scripts/JumpboxLogon.ps1") -OutFile $Env:DeploymentDir\scripts\JumpboxLogon.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/GenerateSqlYaml.ps1") -OutFile $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/GenerateSqlYamlHA.ps1") -OutFile $Env:DeploymentDir\scripts\GenerateSqlYamlHA.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/InstallSQL.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/GenerateMonitorServiceYaml.ps1") -OutFile $Env:DeploymentDir\scripts\GenerateMonitorServiceYaml.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/GenerateMonitoringFiles.ps1") -OutFile $Env:DeploymentDir\scripts\GenerateMonitoringFiles.ps1
-Invoke-WebRequest ($templateBaseUrl + "scripts/InstallMonitoring.ps1") -OutFile $Env:DeploymentDir\scripts\InstallMonitoring.ps1
+Invoke-WebRequest ($templateAksUrl + "scripts/JumpboxLogon.ps1") -OutFile $Env:DeploymentDir\scripts\JumpboxLogon.ps1
+Invoke-WebRequest ($templateAksUrl + "scripts/GenerateSqlYaml.ps1") -OutFile $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
+Invoke-WebRequest ($templateAksUrl + "scripts/GenerateSqlYamlHA.ps1") -OutFile $Env:DeploymentDir\scripts\GenerateSqlYamlHA.ps1
+Invoke-WebRequest ($templateAksUrl + "scripts/InstallSQL.ps1") -OutFile $Env:DeploymentDir\scripts\InstallSQL.ps1
+Invoke-WebRequest ($templateAksUrl + "scripts/GenerateMonitorServiceYaml.ps1") -OutFile $Env:DeploymentDir\scripts\GenerateMonitorServiceYaml.ps1
+Invoke-WebRequest ($templateAksUrl + "scripts/GenerateMonitoringFiles.ps1") -OutFile $Env:DeploymentDir\scripts\GenerateMonitoringFiles.ps1
+Invoke-WebRequest ($templateAksUrl + "scripts/InstallMonitoring.ps1") -OutFile $Env:DeploymentDir\scripts\InstallMonitoring.ps1
 
 Write-Host "$(Get-Date) - Downloading SQL Server 2019 yaml and ini files"
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/krb5-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\krb5-conf.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/logger_debug.ini") -OutFile $Env:DeploymentDir\yaml\SQL2019\logger_debug.ini
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/logger.ini") -OutFile $Env:DeploymentDir\yaml\SQL2019\logger.ini
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/mssql-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\mssql-conf.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2019/mssql-conf-encryption.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\mssql-conf-encryption.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2019/krb5-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\krb5-conf.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2019/logger_debug.ini") -OutFile $Env:DeploymentDir\yaml\SQL2019\logger_debug.ini
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2019/logger.ini") -OutFile $Env:DeploymentDir\yaml\SQL2019\logger.ini
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2019/mssql-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\mssql-conf.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2019/mssql-conf-encryption.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2019\mssql-conf-encryption.yaml
 
 Write-Host "$(Get-Date) - Downloading SQL Server 2022 yaml and ini files"
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/krb5-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\krb5-conf.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/logger_debug.ini") -OutFile $Env:DeploymentDir\yaml\SQL2022\logger_debug.ini
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/logger.ini") -OutFile $Env:DeploymentDir\yaml\SQL2022\logger.ini
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/mssql-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\mssql-conf.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/SQL2022/mssql-conf-encryption.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\mssql-conf-encryption.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2022/krb5-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\krb5-conf.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2022/logger_debug.ini") -OutFile $Env:DeploymentDir\yaml\SQL2022\logger_debug.ini
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2022/logger.ini") -OutFile $Env:DeploymentDir\yaml\SQL2022\logger.ini
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2022/mssql-conf.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\mssql-conf.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/SQL2022/mssql-conf-encryption.yaml") -OutFile $Env:DeploymentDir\yaml\SQL2022\mssql-conf-encryption.yaml
 
 Write-Host "$(Get-Date) - Downloading SQL Monitor yaml and json files"
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/dashboards.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\dashboards.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\deployment.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/influxdb.json") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\influxdb.json
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Grafana/influxdb.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\influxdb.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\config.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\deployment.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/InfluxDB/storage.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\storage.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\config.yaml
-Invoke-WebRequest ($templateBaseUrl + "yaml/Monitor/Telegraf/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\deployment.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/Grafana/dashboards.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\dashboards.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/Grafana/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\deployment.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/Grafana/influxdb.json") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\influxdb.json
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/Grafana/influxdb.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Grafana\influxdb.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/InfluxDB/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\config.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/InfluxDB/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\deployment.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/InfluxDB/storage.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\InfluxDB\storage.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/Telegraf/config.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\config.yaml
+Invoke-WebRequest ($templateAksUrl + "yaml/Monitor/Telegraf/deployment.yaml") -OutFile $Env:DeploymentDir\yaml\Monitor\Telegraf\deployment.yaml
 
 Write-Host "$(Get-Date) - Downloading AdventureWorks2019 backup file"
-Invoke-WebRequest ($templateBaseUrl + "backups/AdventureWorks2019.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019.bak
+Invoke-WebRequest ($templateAksUrl + "backups/AdventureWorks2019.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019.bak
 
 Write-Header "$(Get-Date) - Making alterations to Edge"
 # Disable Microsoft Edge sidebar
