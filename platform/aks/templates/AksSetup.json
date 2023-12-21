@@ -2,84 +2,74 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "resourceGroup": {
+            "type": "string"
+        },
+        "region": {
+            "type": "string"
+        },
         "adminUsername": {
             "type": "string"
         },
         "adminPassword": {
             "type": "secureString"
         },
-        "githubBranch": {
-            "type": "string",
-            "defaultValue": "main"
+        "netbiosName": {
+            "type": "string"
         },
-        "ipAddressRange_10.X.0.0": {
-            "type": "int",
-            "defaultValue": 0,
-            "minValue": 0,
-            "maxValue": 255
+        "domainSuffix": {
+            "type": "string"
+        },
+        "templateAksUrl": {
+            "type": "string"
+        },
+        "vnetIpAddressRangeStr": {
+            "type": "string"
         },
         "installSQL2019": {
-            "type": "string",
-            "allowedValues": [
-                "Yes",
-                "No"
-            ],
-            "defaultValue": "Yes"
+            "type": "string"
         },
         "installSQL2022": {
-            "type": "string",
-            "allowedValues": [
-                "Yes",
-                "No"
-            ],
-            "defaultValue": "Yes"
+            "type": "string"
+        },
+        "installMonitoring": {
+            "type": "string"
+        },
+        "DH2iAvailabilityGroup": {
+            "type": "string"
         },
         "DH2iLicenseKey": {
             "type": "string",
-            "maxLength": 19,
             "defaultValue": ""
-        },
-        "installMonitoring": {
-            "type": "string",
-            "allowedValues": [
-                "Yes",
-                "No"
-            ],
-            "defaultValue": "Yes"
         }
     },
     "variables": {
-        "netbiosName": "SqlK8s",
-        "domainSuffix": "local",
         "contributorRole": "b24988ac-6180-42a0-ab88-20f7382dd24c",
         "networkContributorRole": "4d97b98b-1d4f-4787-a291-c67834d212e7",
-        "dcVM": "[concat(variables('netbiosName'), 'DC')]",
-        "linuxVM": "[concat(variables('netbiosName'), 'Linux')]",
-        "jumpboxVM": "[concat(variables('netbiosName'), 'Jumpbox')]",
-        "jumpboxNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', concat(variables('jumpboxVM'), '-nsg'))]",
-        "vmsNsgName": "[concat(variables('netbiosName'), 'VMs-nsg')]",
-        "vmsNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('vmsNsgName'))]",
-        "bastionNsgName": "[concat(variables('netbiosName'), 'AzureBastionSubnet-nsg')]",
-        "bastionNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('bastionNsgName'))]",
-        "aksNsgName": "[concat(variables('netbiosName'), 'AKS-nsg')]",
-        "aksNsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('aksNsgName'))]",
-        "vnetName": "[concat(variables('netbiosName'), '-vnet')]",
-        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-        "vnetIpAddressRangeStr": "[string(parameters('ipAddressRange_10.X.0.0'))]",
+        "dcVM": "[concat(parameters('netbiosName'), 'DC')]",
+        "linuxVM": "[concat(parameters('netbiosName'), 'Linux')]",
+        "jumpboxVM": "[concat(parameters('netbiosName'), 'Jumpbox')]",
+        "jumpboxNsgId": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', concat(variables('jumpboxVM'), '-nsg'))]",
+        "vmsNsgName": "[concat(parameters('netbiosName'), 'VMs-nsg')]",
+        "vmsNsgId": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', variables('vmsNsgName'))]",
+        "bastionNsgName": "[concat(parameters('netbiosName'), 'AzureBastionSubnet-nsg')]",
+        "bastionNsgId": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', variables('bastionNsgName'))]",
+        "aksNsgName": "[concat(parameters('netbiosName'), 'AKS-nsg')]",
+        "aksNsgId": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', variables('aksNsgName'))]",
+        "vnetName": "[concat(parameters('netbiosName'), '-vnet')]",
+        "vnetId": "[resourceId(parameters('resourceGroup'),'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
         "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]",
-        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
-        "aksCluster": "[concat(toLower(variables('netbiosName')), 'aks')]",
+        "aksCluster": "[concat(toLower(parameters('netbiosName')), 'aks')]",
         "aksVersion": "1.26.6",
         "resourceGroupRoleGuid": "[guid(resourceGroup().id)]",
-        "aksSubnetRoleGuid": "[guid(resourceGroup().id, 'AKS')]",
-        "dH2iLicenseKey": "[if(equals(parameters('DH2iLicenseKey'),''), '1', parameters('DH2iLicenseKey'))]"
+        "aksSubnetRoleGuid": "[guid(resourceGroup().id, 'AKS')]"
     },
     "resources": [
         {
             "name": "[concat(variables('dcVM'), '-nic')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2021-03-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
             ],
@@ -92,7 +82,7 @@
                                 "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.4')]"
+                            "privateIpAddress": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.16.4')]"
                         }
                     }
                 ],
@@ -103,7 +93,7 @@
             "name": "[concat(variables('linuxVM'), '-nic')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2021-03-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
             ],
@@ -116,7 +106,7 @@
                                 "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.5')]"
+                            "privateIpAddress": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.16.5')]"
                         }
                     }
                 ],
@@ -127,7 +117,7 @@
             "name": "[concat(variables('jumpboxVM'), '-nic')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2021-03-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkSecurityGroups/', concat(variables('jumpboxVM'), '-nsg'))]",
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
@@ -142,9 +132,9 @@
                                 "id": "[variables('subnetRefVMs')]"
                             },
                             "privateIPAllocationMethod": "Static",
-                            "privateIpAddress": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.6')]",
+                            "privateIpAddress": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.16.6')]",
                             "publicIpAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('jumpboxVM'), '-ip'))]",
+                                "id": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/publicIpAddresses', concat(variables('jumpboxVM'), '-ip'))]",
                                 "properties": {
                                     "deleteOption": "Detach"
                                 }
@@ -167,13 +157,13 @@
             "name": "[variables('vmsNsgName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
-            "location": "[resourceGroup().location]"
+            "location": "[parameters('region')]"
         },
         {
             "name": "[variables('bastionNsgName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "properties": {
                 "securityRules": [
                     {
@@ -303,7 +293,7 @@
             "name": "[variables('aksNsgName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "properties": {
                 "securityRules": [
                     {
@@ -353,13 +343,13 @@
             "name": "[concat(variables('jumpboxVM'), '-nsg')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
-            "location": "[resourceGroup().location]"
+            "location": "[parameters('region')]"
         },
         {
             "name": "[variables('vnetName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2020-11-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkSecurityGroups/', variables('vmsNsgName'))]",
                 "[concat('Microsoft.Network/networkSecurityGroups/', variables('bastionNsgName'))]",
@@ -367,18 +357,18 @@
             ],
             "properties": {
                 "addressSpace": {
-                    "addressPrefixes": ["[concat('10.', variables('vnetIpAddressRangeStr'), '.0.0/16')]"]
+                    "addressPrefixes": ["[concat('10.', parameters('vnetIpAddressRangeStr'), '.0.0/16')]"]
                 },
                 "dhcpOptions": {
                     "dnsServers": [
-                        "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.4')]"
+                        "[concat('10.', parameters('vnetIpAddressRangeStr'), '.16.4')]"
                     ]
                 },
                 "subnets": [
                     {
                         "name": "AKS",
                         "properties": {
-                            "addressPrefix": "[concat('10.', variables('vnetIpAddressRangeStr'), '.0.0/20')]",
+                            "addressPrefix": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.0.0/20')]",
                             "networkSecurityGroup": {
                                 "id": "[variables('aksnsgId')]"
                             }
@@ -387,7 +377,7 @@
                     {
                         "name": "VMs",
                         "properties": {
-                            "addressPrefix": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.0/26')]",
+                            "addressPrefix": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.16.0/26')]",
                             "networkSecurityGroup": {
                                 "id": "[variables('vmsnsgId')]"
                             }
@@ -396,7 +386,7 @@
                     {
                         "name": "AzureBastionSubnet",
                         "properties": {
-                            "addressPrefix": "[concat('10.', variables('vnetIpAddressRangeStr'), '.16.64/26')]",
+                            "addressPrefix": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.16.64/26')]",
                             "networkSecurityGroup": {
                                 "id": "[variables('bastionnsgId')]"
                             }
@@ -408,8 +398,8 @@
         {
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-08-01",
-            "name": "[concat(variables('netbiosName'), '-bastion-ip')]",
-            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('netbiosName'), '-bastion-ip')]",
+            "location": "[parameters('region')]",
             "sku": {
                 "name": "Standard"
             },
@@ -420,11 +410,11 @@
         {
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2019-04-01",
-            "name": "[concat(variables('netbiosName'), '-bastion')]",
-            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('netbiosName'), '-bastion')]",
+            "location": "[parameters('region')]",
             "dependsOn": [
-                "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('netbiosName'), '-bastion-ip'))]",
+                "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/publicIpAddresses', concat(parameters('netbiosName'), '-bastion-ip'))]",
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]",
                 "[resourceId('Microsoft.Authorization/roleAssignments/', variables('resourceGroupRoleGuid'))]"
             ],
@@ -434,10 +424,10 @@
                         "name": "IpConf",
                         "properties": {
                             "subnet": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureBastionSubnet')]"
+                                "id": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureBastionSubnet')]"
                             },
                             "publicIPAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('netbiosName'), '-bastion-ip'))]"
+                                "id": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/publicIpAddresses', concat(parameters('netbiosName'), '-bastion-ip'))]"
                             }
                         }
                     }
@@ -448,7 +438,7 @@
             "name": "[variables('dcVM')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('dcVM'), '-nic')]"
@@ -505,7 +495,7 @@
             "name": "[concat(variables('jumpboxVM'), '-ip')]",
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-08-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "properties": {
                 "publicIpAllocationMethod": "Static"
             },
@@ -517,7 +507,7 @@
             "name": "[variables('jumpboxVM')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2022-03-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('jumpboxVM'), '-nic')]",
@@ -591,7 +581,7 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('jumpboxVM'), '/EnvironmentSetup')]",
             "apiVersion": "2022-03-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]",
                 "[resourceId('Microsoft.Authorization/roleAssignments/', variables('resourceGroupRoleGuid'))]"
@@ -606,16 +596,16 @@
                 "autoUpgradeMinorVersion": true,
                 "protectedSettings": {
                     "fileUris": [
-                        "[uri(variables('templateBaseUrl'), 'scripts/EnvironmentSetup.ps1')]"
+                        "[uri(parameters('templateAksUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', resourceGroup().name, ' -azureLocation ', resourceGroup().location, ' -templateBaseUrl ', variables('templateBaseUrl'), ' -netbiosName ', variables('netbiosName'), ' -domainSuffix ', variables('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', variables('vnetIpAddressRangeStr'), ' -dcVM ', variables('dcVM'), ' -linuxVM ', variables('linuxVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -aksCluster ', variables('aksCluster'), ' -dH2iLicenseKey ', variables('dH2iLicenseKey'), ' -installMonitoring ', parameters('installMonitoring'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', parameters('resourceGroup'), ' -azureLocation ', parameters('region'), ' -templateAksUrl ', parameters('templateAksUrl'), ' -netbiosName ', parameters('netbiosName'), ' -domainSuffix ', parameters('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', parameters('vnetIpAddressRangeStr'), ' -dcVM ', variables('dcVM'), ' -linuxVM ', variables('linuxVM'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -aksCluster ', variables('aksCluster'), ' -dH2iAvailabilityGroup', parameters('DH2iAvailabilityGroup'), ' -dH2iLicenseKey ', parameters('DH2iLicenseKey'), ' -installMonitoring ', parameters('installMonitoring'))]"
                 }
             }
         },
         {
             "apiVersion": "2022-06-01",
             "type": "Microsoft.ContainerService/managedClusters",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('region')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('jumpboxVM'), 'EnvironmentSetup')]"                
             ],
@@ -624,7 +614,7 @@
                 "kubernetesVersion": "[variables('aksVersion')]",
                 "enableRBAC": true,
                 "dnsPrefix": "[concat(variables('aksCluster'), 'dns')]",
-                "nodeResourceGroup": "[concat('MC_', resourceGroup().name, '_', variables('aksCluster'), '_', resourceGroup().location)]",
+                "nodeResourceGroup": "[concat('MC_', parameters('resourceGroup'), '_', variables('aksCluster'), '_', parameters('region'))]",
                 "azureMonitorProfile": {
                     "metrics": {
                         "enabled": true,
@@ -653,7 +643,7 @@
                         "nodeTaints": [],
                         "enableNodePublicIP": false,
                         "tags": {},
-                        "vnetSubnetID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('vnetName'), '/subnets/AKS')]"
+                        "vnetSubnetID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('resourceGroup'), '/providers/Microsoft.Network/virtualNetworks/', variables('vnetName'), '/subnets/AKS')]"
                     }
                 ],
                 "networkProfile": {
@@ -703,14 +693,5 @@
             }
         }
     ],
-    "outputs": {
-        "domainAdminUsername": {
-            "type": "string",
-            "value": "[concat(parameters('adminUsername'), '@', toLower(variables('netbiosName')), '.', variables('domainSuffix'))]"
-        },
-        "controlPlaneFQDN": {
-            "type": "string",
-            "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', variables('aksCluster'))).privateFQDN]"
-        }
-    }
+    "outputs": {}
 }

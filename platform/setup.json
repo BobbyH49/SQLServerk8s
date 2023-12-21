@@ -1,0 +1,198 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        },
+        "githubBranch": {
+            "type": "string",
+            "defaultValue": "main"
+        },
+        "ipAddressRange_10.X.0.0": {
+            "type": "int",
+            "defaultValue": 0,
+            "minValue": 0,
+            "maxValue": 255
+        },
+        "installSQL2019": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "installSQL2022": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "installMonitoring": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "DH2iAvailabilityGroup": {
+            "type": "string",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "defaultValue": "Yes"
+        },
+        "DH2iLicenseKey": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "Platform": {
+            "type": "string",
+            "allowedValues": [
+                "AKS",
+                "SUSE"
+            ],
+            "defaultValue": "AKS"
+        },
+        "suseLicenseKey": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "netbiosName": "SqlK8s",
+        "domainSuffix": "local",
+        "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
+        "templateAksUrl": "[concat(variables('templateBaseUrl'), 'platform/aks/')]",
+        "templateSuseUrl": "[concat(variables('templateBaseUrl'), 'platform/suse/')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "aksDeployment",
+            "dependsOn": [],
+            "condition": "[equals(parameters('Platform'), 'AKS')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('templateAksUrl'), 'templates/AksSetup.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "resourceGroup": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "region": {
+                        "value": "[resourceGroup().location]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "netbiosName": {
+                        "value": "[variables('netbiosName')]"
+                    },
+                    "domainSuffix": {
+                        "value": "[variables('domainSuffix')]"
+                    },
+                    "templateAksUrl": {
+                        "value": "[variables('templateAksUrl')]"
+                    },
+                    "vnetIpAddressRangeStr": {
+                        "value": "[string(parameters('ipAddressRange_10.X.0.0'))]"
+                    },
+                    "installSQL2019": {
+                        "value": "[parameters('installSQL2019')]"
+                    },
+                    "installSQL2022": {
+                        "value": "[parameters('installSQL2022')]"
+                    },
+                    "installMonitoring": {
+                        "value": "[parameters('installMonitoring')]"
+                    },
+                    "DH2iAvailabilityGroup": {
+                        "value": "[parameters('DH2iAvailabilityGroup')]"
+                    },
+                    "DH2iLicenseKey" : {
+                        "value": "[parameters('DH2iLicenseKey')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "suseDeployment",
+            "dependsOn": [],
+            "condition": "[equals(parameters('Platform'), 'SUSE')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('templateSuseUrl'), 'templates/SuseSetup.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "resourceGroup": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "region": {
+                        "value": "[resourceGroup().location]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "netbiosName": {
+                        "value": "[variables('netbiosName')]"
+                    },
+                    "domainSuffix": {
+                        "value": "[variables('domainSuffix')]"
+                    },
+                    "templateSuseUrl": {
+                        "value": "[variables('templateSuseUrl')]"
+                    },
+                    "vnetIpAddressRangeStr": {
+                        "value": "[string(parameters('ipAddressRange_10.X.0.0'))]"
+                    },
+                    "installSQL2019": {
+                        "value": "[parameters('installSQL2019')]"
+                    },
+                    "installSQL2022": {
+                        "value": "[parameters('installSQL2022')]"
+                    },
+                    "installMonitoring": {
+                        "value": "[parameters('installMonitoring')]"
+                    },
+                    "DH2iAvailabilityGroup": {
+                        "value": "[parameters('DH2iAvailabilityGroup')]"
+                    },
+                    "DH2iLicenseKey" : {
+                        "value": "[parameters('DH2iLicenseKey')]"
+                    },
+                    "suseLicenseKey" : {
+                        "value": "[parameters('suseLicenseKey')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "domainAdminUsername": {
+            "type": "string",
+            "value": "[concat(parameters('adminUsername'), '@', toLower(variables('netbiosName')), '.', variables('domainSuffix'))]"
+        }
+    }
+}
