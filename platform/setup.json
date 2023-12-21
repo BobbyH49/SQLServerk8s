@@ -57,8 +57,7 @@
         "Platform": {
             "type": "string",
             "allowedValues": [
-                "AKS",
-                "SUSE"
+                "AKS"
             ],
             "defaultValue": "AKS"
         },
