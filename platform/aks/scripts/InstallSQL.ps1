@@ -147,7 +147,7 @@ az aks get-credentials -n $Env:aksCluster -g $Env:resourceGroup
 Write-Host "$(Get-Date) - Creating sql$($Env:currentSqlVersion) namespace"
 kubectl create namespace sql$($Env:currentSqlVersion)
 
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   Write-Host "$(Get-Date) - Creating Headless Services for SQL Pods"
   kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\headless-services.yaml -n sql$($Env:currentSqlVersion)
 }
@@ -169,13 +169,13 @@ kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\pod-serv
 
 Write-Host "$(Get-Date) - Verifying pods and services started successfully"
 VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0
   VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0  
 }
 
 VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-0-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-1-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).1" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
   VerifyServiceRunning -serviceName "mssql$($Env:currentSqlVersion)-2-lb" -namespace "sql$($Env:currentSqlVersion)" -expectedServiceIP "10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).2" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
 }
@@ -183,14 +183,14 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
 Write-Host "$(Get-Date) - Uploading keytab files to pods"
 $kubectlDeploymentDir = $Env:DeploymentDir -replace 'C:\\', '\..\'
 kubectl cp $kubectlDeploymentDir\keytab\SQL20$($Env:currentSqlVersion)\mssql_mssql$($Env:currentSqlVersion)-0.keytab mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/secrets/mssql.keytab -n sql$($Env:currentSqlVersion)
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   kubectl cp $kubectlDeploymentDir\keytab\SQL20$($Env:currentSqlVersion)\mssql_mssql$($Env:currentSqlVersion)-1.keytab mssql$($Env:currentSqlVersion)-1:/var/opt/mssql/secrets/mssql.keytab -n sql$($Env:currentSqlVersion)
   kubectl cp $kubectlDeploymentDir\keytab\SQL20$($Env:currentSqlVersion)\mssql_mssql$($Env:currentSqlVersion)-2.keytab mssql$($Env:currentSqlVersion)-2:/var/opt/mssql/secrets/mssql.keytab -n sql$($Env:currentSqlVersion)
 }
 
 Write-Host "$(Get-Date) - Uploading logger.ini files to pods"
 kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\logger.ini" mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/logger.ini -n sql$($Env:currentSqlVersion)
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\logger.ini" mssql$($Env:currentSqlVersion)-1:/var/opt/mssql/logger.ini -n sql$($Env:currentSqlVersion)
   kubectl cp "$kubectlDeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\logger.ini" mssql$($Env:currentSqlVersion)-2:/var/opt/mssql/logger.ini -n sql$($Env:currentSqlVersion)
 }
@@ -198,7 +198,7 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
 Write-Host "$(Get-Date) - Uploading TLS certificates to pods"
 kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-0.pem" mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/certs/mssql.pem -n sql$($Env:currentSqlVersion)
 kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-0.key" mssql$($Env:currentSqlVersion)-0:/var/opt/mssql/private/mssql.key -n sql$($Env:currentSqlVersion)
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-1.pem" mssql$($Env:currentSqlVersion)-1:/var/opt/mssql/certs/mssql.pem -n sql$($Env:currentSqlVersion)
   kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-1.key" mssql$($Env:currentSqlVersion)-1:/var/opt/mssql/private/mssql.key -n sql$($Env:currentSqlVersion)
   kubectl cp "$kubectlDeploymentDir\certificates\SQL20$($Env:currentSqlVersion)\mssql$($Env:currentSqlVersion)-2.pem" mssql$($Env:currentSqlVersion)-2:/var/opt/mssql/certs/mssql.pem -n sql$($Env:currentSqlVersion)
@@ -210,7 +210,7 @@ kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\mssql-co
 
 Write-Host "$(Get-Date) - Deleting pods to apply new configurations"
 kubectl delete pod mssql$($Env:currentSqlVersion)-0 -n sql$($Env:currentSqlVersion)
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   Start-Sleep -Seconds 5
   kubectl delete pod mssql$($Env:currentSqlVersion)-1 -n sql$($Env:currentSqlVersion)
   Start-Sleep -Seconds 5
@@ -219,7 +219,7 @@ if ($Env:dH2iLicenseKey.length -eq 19) {
 
 Write-Host "$(Get-Date) - Verifying pods restarted successfully"
 VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-0" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-1" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
   VerifyPodRunning -podName "mssql$($Env:currentSqlVersion)-2" -namespace "sql$($Env:currentSqlVersion)" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
 }
@@ -265,7 +265,7 @@ $sqlRestoreScript | Out-File -FilePath $sqlRestoreFile -force
 
 Write-Host "$(Get-Date) - Creating Windows sysadmin login and Telegraf monitoring login"
 RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-0.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
   RunSqlCmd -sqlInstance "mssql$($Env:currentSqlVersion)-2.$($Env:netbiosName.toLower()).$Env:domainSuffix" -username "sa" -password $Env:adminPassword -inputFile $sqlLoginFile -maxAttempts 60 -failedSleepTime 10
 }
@@ -278,7 +278,7 @@ else {
 }
 
 # Configure High Availability
-if ($Env:dH2iLicenseKey.length -eq 19) {
+if ($Env:dH2iAvailabilityGroup -eq "Yes") {
     Write-Header "$(Get-Date) - Configuring High Availability"
 
     Write-Host "$(Get-Date) - Licensing pods"

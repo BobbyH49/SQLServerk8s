@@ -156,7 +156,7 @@ Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" 
 [System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
 $Env:currentSqlVersion = "19"
 $Env:vnetIpAddressRangeStr2 = "4"
-if ($Env:dH2iLicenseKey.length -ne 19) {
+if ($Env:dH2iAvailabilityGroup -eq "No") {
     & $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
 }
 else {
@@ -173,7 +173,7 @@ if ($Env:installSQL2019 -eq "Yes") {
 [System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
 $Env:currentSqlVersion = "22"
 $Env:vnetIpAddressRangeStr2 = "5"
-if ($Env:dH2iLicenseKey.length -ne 19) {
+if ($Env:dH2iAvailabilityGroup -eq "No") {
     & $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
 }
 else {
@@ -223,6 +223,7 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 [System.Environment]::SetEnvironmentVariable('installSQL2019', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2022', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('aksCluster', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('dH2iAvailabilityGroup', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installMonitoring', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
