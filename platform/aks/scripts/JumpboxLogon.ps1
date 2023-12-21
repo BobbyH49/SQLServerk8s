@@ -81,9 +81,9 @@ sudo ACCEPT_EULA=Y apt-get install -y adutil;
 echo $Env:adminPassword | kinit $Env:adminUsername@$($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper());
 
 # Generating keytab files
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-0.keytab -p 1433 -H mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-1.keytab -p 1433 -H mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p 1433 -H mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
 adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
 adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
 adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
