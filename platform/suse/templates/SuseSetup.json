@@ -1,0 +1,509 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceGroup": {
+            "type": "string"
+        },
+        "region": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        },
+        "netbiosName": {
+            "type": "string"
+        },
+        "domainSuffix": {
+            "type": "string"
+        },
+        "templateSuseUrl": {
+            "type": "string"
+        },
+        "vnetIpAddressRangeStr": {
+            "type": "string"
+        },
+        "installSQL2019": {
+            "type": "string"
+        },
+        "installSQL2022": {
+            "type": "string"
+        },
+        "installMonitoring": {
+            "type": "string"
+        },
+        "DH2iAvailabilityGroup": {
+            "type": "string"
+        },
+        "DH2iLicenseKey": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "suseLicenseKey": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "jumpboxVM": "[concat(parameters('netbiosName'), 'Jumpbox')]",
+        "jumpboxNsgId": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', concat(variables('jumpboxVM'), '-nsg'))]",
+        "vmsNsgName": "[concat(parameters('netbiosName'), 'VMs-nsg')]",
+        "vmsNsgId": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', variables('vmsNsgName'))]",
+        "bastionNsgName": "[concat(parameters('netbiosName'), 'AzureBastionSubnet-nsg')]",
+        "bastionNsgId": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/networkSecurityGroups', variables('bastionNsgName'))]",
+        "vnetName": "[concat(parameters('netbiosName'), '-vnet')]",
+        "vnetId": "[resourceId(parameters('resourceGroup'),'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "subnetRefVMs": "[concat(variables('vnetId'), '/subnets/', 'VMs')]"
+    },
+    "resources": [
+        {
+            "name": "[concat(variables('jumpboxVM'), '-nic')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2021-03-01",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', concat(variables('jumpboxVM'), '-nsg'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', concat(variables('jumpboxVM'), '-ip'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRefVMs')]"
+                            },
+                            "privateIPAllocationMethod": "Static",
+                            "privateIpAddress": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.0.4')]",
+                            "publicIpAddress": {
+                                "id": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/publicIpAddresses', concat(variables('jumpboxVM'), '-ip'))]",
+                                "properties": {
+                                    "deleteOption": "Detach"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "networkSecurityGroup": {
+                    "id": "[variables('jumpboxNsgId')]"
+                }
+            }
+        },
+        {
+            "name": "[variables('vmsNsgName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[parameters('region')]"
+        },
+        {
+            "name": "[variables('bastionNsgName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[parameters('region')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowGatewayManager",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowGatewayManager')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "description": "Allow GatewayManager",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "GatewayManager",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2702,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowHttpsInBound",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowHttpsInBound')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "description": "Allow HTTPs",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2703,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowSshRdpOutbound",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowSshRdpOutbound')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Outbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [
+                                "22",
+                                "3389"
+                            ],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowAzureCloudOutbound",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowAzureCloudOutbound')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "AzureCloud",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Outbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowCorpnet",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowCorpnet')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "description": "CSS Governance Security Rule.  Allow Corpnet inbound.  https://aka.ms/casg",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "CorpNetPublic",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2700,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowSAW",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('bastionNsgName'), 'AllowSAW')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "description": "CSS Governance Security Rule.  Allow SAW inbound.  https://aka.ms/casg",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "CorpNetSaw",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2701,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(variables('jumpboxVM'), '-nsg')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[parameters('region')]"
+        },
+        {
+            "name": "[variables('vnetName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-11-01",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('vmsNsgName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('bastionNsgName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": ["[concat('10.', parameters('vnetIpAddressRangeStr'), '.0.0/16')]"]
+                },
+                "subnets": [
+                    {
+                        "name": "VMs",
+                        "properties": {
+                            "addressPrefix": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.0.0/26')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('vmsnsgId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "AzureBastionSubnet",
+                        "properties": {
+                            "addressPrefix": "[concat('10.', parameters('vnetIpAddressRangeStr'), '.0.64/26')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('bastionnsgId')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2020-08-01",
+            "name": "[concat(parameters('netbiosName'), '-bastion-ip')]",
+            "location": "[parameters('region')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2019-04-01",
+            "name": "[concat(parameters('netbiosName'), '-bastion')]",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/publicIpAddresses', concat(parameters('netbiosName'), '-bastion-ip'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]",
+                "[resourceId('Microsoft.Authorization/roleAssignments/', variables('resourceGroupRoleGuid'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureBastionSubnet')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId(parameters('resourceGroup'), 'Microsoft.Network/publicIpAddresses', concat(parameters('netbiosName'), '-bastion-ip'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat(variables('jumpboxVM'), '-ip')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2020-08-01",
+            "location": "[parameters('region')]",
+            "properties": {
+                "publicIpAllocationMethod": "Static"
+            },
+            "sku": {
+                "name": "Standard"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2022-03-02",
+            "name": "[concat(variables('jumpboxVM'), '-DataDisk0')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Premium_LRS"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": 256,
+                "encryption": {
+                    "type": "EncryptionAtRestWithPlatformKey"
+                },
+                "networkAccessPolicy": "AllowAll",
+                "publicNetworkAccess": "Enabled",
+                "diskState": "Attached"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2022-03-02",
+            "name": "[concat(variables('jumpboxVM'), '-DataDisk1')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Premium_LRS"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": 256,
+                "encryption": {
+                    "type": "EncryptionAtRestWithPlatformKey"
+                },
+                "networkAccessPolicy": "AllowAll",
+                "publicNetworkAccess": "Enabled",
+                "diskState": "Attached"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2022-03-02",
+            "name": "[concat(variables('jumpboxVM'), '-DataDisk2')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Premium_LRS"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": 256,
+                "encryption": {
+                    "type": "EncryptionAtRestWithPlatformKey"
+                },
+                "networkAccessPolicy": "AllowAll",
+                "publicNetworkAccess": "Enabled",
+                "diskState": "Attached"
+            }
+        },
+        {
+            "name": "[variables('jumpboxVM')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2022-03-01",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('jumpboxVM'), '-nic')]",
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('jumpboxVM'), '-ip')]"
+            ],
+            "identity": {
+                "type": "systemAssigned"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_D48ls_v5"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "name": "[concat(variables('jumpboxVM'),'-OSDisk')]",
+                        "caching": "ReadWrite",
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": 128,
+                        "deleteOption": "Delete"
+                    },
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2022-datacenter-g2",
+                        "version": "latest"
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 0,
+                            "createOption": "attach",
+                            "caching": "ReadWrite",
+                            "diskSizeGB": "256",
+                            "managedDisk": {
+                                "id": "[resourceId('Microsoft.Compute/disks', concat(variables('jumpboxVM'),'-DataDisk0'))]"
+                            },
+                            "deleteOption": "Delete",
+                            "writeAcceleratorEnabled": "false"
+                        },
+                        {
+                            "lun": 1,
+                            "createOption": "attach",
+                            "caching": "ReadWrite",
+                            "diskSizeGB": "256",
+                            "managedDisk": {
+                                "id": "[resourceId('Microsoft.Compute/disks', concat(variables('jumpboxVM'),'-DataDisk1'))]"
+                            },
+                            "deleteOption": "Delete",
+                            "writeAcceleratorEnabled": "false"
+                        },
+                        {
+                            "lun": 2,
+                            "createOption": "attach",
+                            "caching": "ReadWrite",
+                            "diskSizeGB": "256",
+                            "managedDisk": {
+                                "id": "[resourceId('Microsoft.Compute/disks', concat(variables('jumpboxVM'),'-DataDisk2'))]"
+                            },
+                            "deleteOption": "Delete",
+                            "writeAcceleratorEnabled": "false"
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('jumpboxVM'), '-nic'))]",
+                            "properties": {
+                                "deleteOption": "Detach"
+                            }
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('jumpboxVM')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "enableAutomaticUpdates": true,
+                        "provisionVmAgent": true,
+                        "patchSettings": {
+                            "enableHotpatching": false,
+                            "patchMode": "AutomaticByOS"
+                        }
+                    }
+                },
+                "licenseType": "Windows_Server"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('jumpboxVM'), '/EnvironmentSetup')]",
+            "apiVersion": "2022-03-01",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', variables('jumpboxVM'))]"
+            ],
+            "tags": {
+                "displayName": "setup-environment"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.10",
+                "autoUpgradeMinorVersion": true,
+                "protectedSettings": {
+                    "fileUris": [
+                        "[uri(parameters('templateSuseUrl'), 'scripts/EnvironmentSetup.ps1')]"
+                    ],
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', parameters('resourceGroup'), ' -azureLocation ', parameters('region'), ' -templateSuseUrl ', parameters('templateSuseUrl'), ' -netbiosName ', parameters('netbiosName'), ' -domainSuffix ', parameters('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', parameters('vnetIpAddressRangeStr'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -dH2iAvailabilityGroup ', parameters('DH2iAvailabilityGroup'), ' -dH2iLicenseKey ', parameters('DH2iLicenseKey'), ' -installMonitoring ', parameters('installMonitoring'), ' -suseLicenseKey ', parameters('suseLicenseKey'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
