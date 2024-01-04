@@ -351,15 +351,15 @@ New-NetIPAddress -IPAddress 192.168.0.1 -PrefixLength 16 -InterfaceIndex $adapte
 Write-Header "$(Get-Date) - Setting up SUSE Server Storage"
 
 Initialize-Disk -Number 1 -PartitionStyle GPT
-Initialize-Disk -Number 2 -PartitionStyle GPT
-Initialize-Disk -Number 3 -PartitionStyle GPT
-
 New-Partition -disknumber 1 -usemaximumsize | Format-Volume -filesystem NTFS -newfilesystemlabel DataDisk0
-New-Partition -disknumber 2 -usemaximumsize | Format-Volume -filesystem NTFS -newfilesystemlabel DataDisk1
-New-Partition -disknumber 3 -usemaximumsize | Format-Volume -filesystem NTFS -newfilesystemlabel DataDisk2
-
 Get-Partition -disknumber 1 | Set-Partition -newdriveletter F
+
+Initialize-Disk -Number 2 -PartitionStyle GPT
+New-Partition -disknumber 2 -usemaximumsize | Format-Volume -filesystem NTFS -newfilesystemlabel DataDisk1
 Get-Partition -disknumber 2 | Set-Partition -newdriveletter G
+
+Initialize-Disk -Number 3 -PartitionStyle GPT
+New-Partition -disknumber 3 -usemaximumsize | Format-Volume -filesystem NTFS -newfilesystemlabel DataDisk2
 Get-Partition -disknumber 3 | Set-Partition -newdriveletter H
 
 New-Item -Path "C:\Hyper-V" -ItemType directory -Force
