@@ -49,7 +49,7 @@ function Install-SuseServer
     Start-VM -Name $susesrv
     Start-Sleep -Seconds 10
 
-    Verify-ServerStart -serverName "$susesrv" -ipAddress "192.168.0.4" -maxAttempts 60 -failedSleepTime 10
+    Verify-ServerStart -serverName "$serverName" -ipAddress "192.168.0.4" -maxAttempts 60 -failedSleepTime 10
 
     scp -i $HOME\.ssh\susesrv_id_rsa /../Deployment/susesrv/susesrv_id_rsa* root@192.168.0.4:~/
 
@@ -89,6 +89,8 @@ reboot
 "@
 
     ssh -i $HOME\.ssh\susesrv_id_rsa root@192.168.0.4 $($script)
+
+    Verify-ServerStart -serverName "$serverName" -ipAddress $ipAddress -maxAttempts 60 -failedSleepTime 10
 }
 
 function Connect-SuseServer
@@ -99,8 +101,6 @@ function Connect-SuseServer
         [string]$adminPassword,
         [string]$suseLicenseKey
     )
-    Verify-ServerStart -serverName "$susesrv" -ipAddress $susesrvip -maxAttempts 60 -failedSleepTime 10
-
 $script = @"
 # Register license key
 suseconnect -r $suseLicenseKey
@@ -414,6 +414,7 @@ Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $En
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
 New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
 Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
+ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
 Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
@@ -425,8 +426,9 @@ Write-Header "$(Get-Date) - Spinning up $susesrv"
 Write-Host "$(Get-Date) - Creating $susesrv"
 Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
-New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
-Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
+New-VHD -Path G:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
+Add-VMHardDiskDrive -VMName $susesrv -Path G:\$susesrv\datadisk.vhdx
+ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
 Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
@@ -438,8 +440,9 @@ Write-Header "$(Get-Date) - Spinning up $susesrv"
 Write-Host "$(Get-Date) - Creating $susesrv"
 Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
-New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
-Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
+New-VHD -Path H:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
+Add-VMHardDiskDrive -VMName $susesrv -Path H:\$susesrv\datadisk.vhdx
+ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
 Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
@@ -502,7 +505,6 @@ sudo zypper addrepo https://packages.microsoft.com/config/sles/15/prod.repo
 sudo zypper --gpg-auto-import-keys refresh
 sudo ACCEPT_EULA=Y zypper install -y adutil
 
-$script = @"
 # kinit using AD credentials
 echo "$Env:adminPassword" | kinit $($Env:adminUsername)@$($Env:netbiosName.ToUpper()).$($Env:domainSuffix.ToUpper());
 
@@ -541,7 +543,7 @@ $certFile = "$Env:DeploymentDir\scripts\GenerateCertificates.sh"
 $certscript | Out-File -FilePath $certFile -force    
 scp -i $HOME\.ssh\susesrv_id_rsa $Env:DeploymentDir\scripts\GenerateCertificates.sh $Env:adminUsername@susesrv01:/home/$Env:adminUsername/GenerateCertificates.sh
 
-ssh -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01 /home/$Env:adminUsername/GenerateCertificates.sh
+ssh -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01 "chmod +rx /home/$Env:adminUsername/GenerateCertificates.sh; /home/$Env:adminUsername/GenerateCertificates.sh"
 
 Write-Host "$(Get-Date) - Downloading keytab files and certificates"
 New-Item -Path $Env:DeploymentDir\keytab  -ItemType directory -Force

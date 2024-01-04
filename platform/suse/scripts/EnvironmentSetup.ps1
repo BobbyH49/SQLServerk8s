@@ -175,7 +175,7 @@ Install-WindowsFeature -Name Hyper-V -IncludeAllSubFeature -IncludeManagementToo
 Write-Header "$(Get-Date) - Configuring Jumpbox Logon Script"
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $Env:DeploymentDir\scripts\JumpboxLogon.ps1
-Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User "$($Env:netbiosName.toUpper())\$Env:adminUsername" -Action $Action -RunLevel "Highest" -Force
+Register-ScheduledTask -TaskName "JumpboxLogon" -Trigger $Trigger -User $Env:adminUsername -Action $Action -RunLevel "Highest" -Force
 
 # Stop logging and Reboot Jumpbox
 Write-Header "$(Get-Date) - Rebooting $Env:jumpboxVM"
