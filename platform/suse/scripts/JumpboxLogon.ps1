@@ -219,8 +219,11 @@ sudo systemctl start rke2-server.service
 }
 
 $script += @"
-# Install vim and nano plus other pre-reqs for Longhorn
+# Install open-iscsi and start service
 sudo zypper install -y open-iscsi
+sudo systemctl start iscsid
+
+# Install vim, nano and jq
 sudo zypper install -y vim
 sudo zypper addrepo https://download.opensuse.org/repositories/editors/15.5/editors.repo
 sudo zypper --gpg-auto-import-keys refresh
@@ -414,6 +417,7 @@ Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $En
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
 New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
 Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
+# Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
 ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
@@ -428,6 +432,7 @@ Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $En
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
 New-VHD -Path G:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
 Add-VMHardDiskDrive -VMName $susesrv -Path G:\$susesrv\datadisk.vhdx
+# Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
 ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
@@ -442,6 +447,7 @@ Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $En
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
 New-VHD -Path H:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
 Add-VMHardDiskDrive -VMName $susesrv -Path H:\$susesrv\datadisk.vhdx
+# Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
 ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
