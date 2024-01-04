@@ -1,46 +1,36 @@
 Write-Host "$(Get-Date) - Generating mssql.yaml"
 $mssqlPodScript = @"
-#DxEnterprise + MSSQL StatefulSet
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: azure-disk
-provisioner: kubernetes.io/azure-disk
-parameters:
-  storageaccounttype: Standard_LRS
-  kind: Managed
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mssql$($Env:currentSqlVersion)
+  name: mssql$($currentSqlVersion)
   labels:
-    app: mssql$($Env:currentSqlVersion)
+    app: mssql$($currentSqlVersion)
 spec:
-  serviceName: mssql$($Env:currentSqlVersion)
+  serviceName: mssql$($currentSqlVersion)
   replicas: 1
   podManagementPolicy: Parallel
   selector:
     matchLabels:
-      app: mssql$($Env:currentSqlVersion)
+      app: mssql$($currentSqlVersion)
   template:
     metadata:
       labels:
-        app: mssql$($Env:currentSqlVersion)
+        app: mssql$($currentSqlVersion)
     spec:
       securityContext:
         fsGroup: 10001
       containers:
-        - name: mssql$($Env:currentSqlVersion)
+        - name: mssql$($currentSqlVersion)
           command:
             - /bin/bash
             - -c
             - cp /var/opt/config/mssql.conf /var/opt/mssql/mssql.conf && /opt/mssql/bin/sqlservr
-          image: 'mcr.microsoft.com/mssql/server:20$($Env:currentSqlVersion)-latest'
+          image: 'mcr.microsoft.com/mssql/server:20$($currentSqlVersion)-latest'
           resources:
             limits:
-              memory: 8Gi
-              cpu: '2'
+              memory: 12Gi
+              cpu: '4'
           ports:
             - containerPort: 1433
           env:
@@ -51,7 +41,7 @@ spec:
             - name: MSSQL_SA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mssql$($Env:currentSqlVersion)
+                  name: mssql$($currentSqlVersion)
                   key: MSSQL_SA_PASSWORD
           volumeMounts:
             - name: mssql
@@ -74,7 +64,7 @@ spec:
             - name: tls-keys
               mountPath: /var/opt/mssql/private
       hostAliases:
-        - ip: "10.$Env:vnetIpAddressRangeStr.16.4"
+        - ip: "192.168.0.1"
           hostnames:
             - "sqlk8sdc.sqlk8s.local"
             - "sqlk8s.local"
@@ -82,7 +72,7 @@ spec:
       volumes:
         - name: mssql-config-volume
           configMap:
-            name: mssql$($Env:currentSqlVersion)
+            name: mssql$($currentSqlVersion)
         - name: krb5-config-volume
           configMap:
             name: krb5
@@ -92,7 +82,8 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        resources:
+        storageClassName: longhorn
+         resources:
           requests:
             storage: 8Gi
     - metadata:
@@ -100,6 +91,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: longhorn
         resources:
           requests:
             storage: 8Gi
@@ -108,6 +100,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: longhorn
         resources:
           requests:
             storage: 8Gi
@@ -116,6 +109,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: longhorn
         resources:
           requests:
             storage: 8Gi
@@ -124,6 +118,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: longhorn
         resources:
           requests:
             storage: 8Gi
@@ -132,6 +127,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: longhorn
         resources:
           requests:
             storage: 1Gi
@@ -140,12 +136,13 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: longhorn
         resources:
           requests:
             storage: 1Gi
 "@
 
-$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\mssql.yaml"
+$mssqlPodFile = "$Env:DeploymentDir\yaml\SQL20$($currentSqlVersion)\mssql.yaml"
 $mssqlPodScript | Out-File -FilePath $mssqlPodFile -force
 
 Write-Host "$(Get-Date) - Generating pod-service.yaml"
@@ -155,15 +152,13 @@ apiVersion: v1
 kind: Service
 metadata:
   #Unique name
-  name: mssql$($Env:currentSqlVersion)-0-lb
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+  name: mssql$($currentSqlVersion)-0-lb
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$($Env:vnetIpAddressRangeStr2).0
+  loadBalancerIP: 192.168.$($internalIpAddressRangeStr).0
   selector:
     #Assign load balancer to a specific pod
-    statefulset.kubernetes.io/pod-name: mssql$($Env:currentSqlVersion)-0
+    statefulset.kubernetes.io/pod-name: mssql$($currentSqlVersion)-0
   ports:
   - name: sql
     protocol: TCP
@@ -171,5 +166,5 @@ spec:
     targetPort: 1433
 "@
 
-$mssqlPodServiceFile = "$Env:DeploymentDir\yaml\SQL20$($Env:currentSqlVersion)\pod-service.yaml"
+$mssqlPodServiceFile = "$Env:DeploymentDir\yaml\SQL20$($currentSqlVersion)\pod-service.yaml"
 $mssqlPodServiceScript | Out-File -FilePath $mssqlPodServiceFile -force    

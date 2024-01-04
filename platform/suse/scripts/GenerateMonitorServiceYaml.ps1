@@ -6,11 +6,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: influxdb-lb
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$Env:vnetIpAddressRangeStr2.0
+  loadBalancerIP: 192.168.$internalIpAddressRangeStr.0
   selector:
     app: influxdb
   ports:
@@ -31,11 +29,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana-lb
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.$Env:vnetIpAddressRangeStr.$Env:vnetIpAddressRangeStr2.1
+  loadBalancerIP: 192.168.$internalIpAddressRangeStr.1
   selector:
     app: grafana
   ports:

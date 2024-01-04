@@ -422,7 +422,7 @@
                             "lun": 0,
                             "createOption": "attach",
                             "caching": "ReadWrite",
-                            "diskSizeGB": "256",
+                            "diskSizeGB": "512",
                             "managedDisk": {
                                 "id": "[resourceId('Microsoft.Compute/disks', concat(variables('jumpboxVM'),'-DataDisk0'))]"
                             },
@@ -433,7 +433,7 @@
                             "lun": 1,
                             "createOption": "attach",
                             "caching": "ReadWrite",
-                            "diskSizeGB": "256",
+                            "diskSizeGB": "512",
                             "managedDisk": {
                                 "id": "[resourceId('Microsoft.Compute/disks', concat(variables('jumpboxVM'),'-DataDisk1'))]"
                             },
@@ -444,7 +444,7 @@
                             "lun": 2,
                             "createOption": "attach",
                             "caching": "ReadWrite",
-                            "diskSizeGB": "256",
+                            "diskSizeGB": "512",
                             "managedDisk": {
                                 "id": "[resourceId('Microsoft.Compute/disks', concat(variables('jumpboxVM'),'-DataDisk2'))]"
                             },
@@ -499,7 +499,7 @@
                     "fileUris": [
                         "[uri(parameters('templateSuseUrl'), 'scripts/EnvironmentSetup.ps1')]"
                     ],
-                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -resourceGroup ', parameters('resourceGroup'), ' -azureLocation ', parameters('region'), ' -templateSuseUrl ', parameters('templateSuseUrl'), ' -netbiosName ', parameters('netbiosName'), ' -domainSuffix ', parameters('domainSuffix'), ' -vnetName ', variables('vnetName'), ' -vnetIpAddressRangeStr ', parameters('vnetIpAddressRangeStr'), ' -jumpboxVM ', variables('jumpboxVM'), ' -jumpboxNic ', concat(variables('jumpboxVM'), '-nic'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -dH2iAvailabilityGroup ', parameters('DH2iAvailabilityGroup'), ' -dH2iLicenseKey ', parameters('DH2iLicenseKey'), ' -installMonitoring ', parameters('installMonitoring'), ' -suseLicenseKey ', parameters('suseLicenseKey'))]"
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Bypass -File EnvironmentSetup.ps1', ' -adminUsername ', parameters('adminUsername'), ' -adminPassword ' , parameters('adminPassword'), ' -templateSuseUrl ', parameters('templateSuseUrl'), ' -netbiosName ', parameters('netbiosName'), ' -domainSuffix ', parameters('domainSuffix'), ' -jumpboxVM ', variables('jumpboxVM'), ' -installSQL2019 ', parameters('installSQL2019'), ' -installSQL2022 ', parameters('installSQL2022'), ' -dH2iAvailabilityGroup ', parameters('DH2iAvailabilityGroup'), ' -dH2iLicenseKey ', parameters('DH2iLicenseKey'), ' -installMonitoring ', parameters('installMonitoring'), ' -suseLicenseKey ', parameters('suseLicenseKey'))]"
                 }
             }
         }

@@ -237,7 +237,7 @@ sed 's/127.0.0.1/$($susesrvip)/' /home/$($Env:adminUsername)/.kube/config > /hom
 sudo sshpass -f /root/sshpassfile ssh-copy-id -i /root/susesrv_id_rsa.pub $($adminUsername)@$($susesrv)
 "@
 
-    ssh -i $HOME\.ssh\susesrv_id_rsa azureuser@$($ipAddress) $($script)
+    ssh -i $HOME\.ssh\susesrv_id_rsa $adminUsername@$($ipAddress) $($script)
 }
 
 function VerifyNodeRunning
@@ -263,6 +263,36 @@ function VerifyNodeRunning
     }
     else {
       Write-Host "$(Get-Date) - Node $serverName is now Ready"
+    }
+    $attempts += 1
+  }
+}
+
+function VerifyDeploymentRunning
+{
+  param(
+    [string]$namespace,
+    [string]$deploymentName,
+    [int]$replicas,
+    [string]$maxAttempts,
+    [string]$failedSleepTime
+  )
+  $availableReplicas = 0
+  $attempts = 1
+  while (($availableReplicas -lt $replicas) -and ($attempts -le $maxAttempts)) {
+    $availableReplicas = kubectl get deployment -n $namespace $deploymentName -o jsonpath="{.status.availableReplicas}"
+
+    if ($availableReplicas -lt $replicas) {
+      Write-Host "$(Get-Date) - Deployment $deploymentName in namespace $namespace is not yet available - Attempt $attempts out of $maxAttempts"
+      if ($attempts -lt $maxAttempts) {
+        Start-Sleep -Seconds $failedSleepTime
+      }
+      else {
+        Write-Host "$(Get-Date) - Deployment $deploymentName in namespace $namespace is not available after $maxAttempts attempts"
+      }
+    }
+    else {
+      Write-Host "$(Get-Date) - Deployment $deploymentName in namespace $namespace is now Ready"
     }
     $attempts += 1
   }
@@ -352,15 +382,15 @@ Write-Header "$(Get-Date) - Setting up SUSE Server Storage"
 
 Initialize-Disk -Number 1 -PartitionStyle GPT
 New-Partition -disknumber 1 -usemaximumsize | Format-Volume -filesystem NTFS -newfilesystemlabel DataDisk0
-Get-Partition -disknumber 1 | Set-Partition -newdriveletter F
+Set-Partition -newdriveletter F -diskNumber 1 -PartitionNumber 2
 
 Initialize-Disk -Number 2 -PartitionStyle GPT
 New-Partition -disknumber 2 -usemaximumsize | Format-Volume -filesystem NTFS -newfilesystemlabel DataDisk1
-Get-Partition -disknumber 2 | Set-Partition -newdriveletter G
+Set-Partition -newdriveletter G -diskNumber 2 -PartitionNumber 2
 
 Initialize-Disk -Number 3 -PartitionStyle GPT
 New-Partition -disknumber 3 -usemaximumsize | Format-Volume -filesystem NTFS -newfilesystemlabel DataDisk2
-Get-Partition -disknumber 3 | Set-Partition -newdriveletter H
+Set-Partition -newdriveletter H -diskNumber 3 -PartitionNumber 2
 
 New-Item -Path "C:\Hyper-V" -ItemType directory -Force
 New-Item -Path "C:\Hyper-V\susesrv01" -ItemType directory -Force
@@ -382,7 +412,7 @@ Write-Header "$(Get-Date) - Spinning up $susesrv"
 Write-Host "$(Get-Date) - Creating $susesrv"
 Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
-New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 256GB -Dynamic
+New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
 Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
@@ -395,7 +425,7 @@ Write-Header "$(Get-Date) - Spinning up $susesrv"
 Write-Host "$(Get-Date) - Creating $susesrv"
 Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
-New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 256GB -Dynamic
+New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
 Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
@@ -408,7 +438,7 @@ Write-Header "$(Get-Date) - Spinning up $susesrv"
 Write-Host "$(Get-Date) - Creating $susesrv"
 Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword
 Write-Host "$(Get-Date) - Adding data disk to $susesrv"
-New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 256GB -Dynamic
+New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
 Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
 Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
@@ -433,270 +463,114 @@ VerifyNodeRunning -serverName "susesrv01" -maxAttempts 60 -failedSleepTime 10
 VerifyNodeRunning -serverName "susesrv02" -maxAttempts 60 -failedSleepTime 10
 VerifyNodeRunning -serverName "susesrv03" -maxAttempts 60 -failedSleepTime 10
 
-Write-Header "$(Get-Date) - Deploy Longhorn to K8s"
+Write-Header "$(Get-Date) - Deploying Longhorn to K8s"
 kubectl apply -f $Env:DeploymentDir\longhorn-1.5.3\deploy\longhorn.yaml
 
+Write-Header "$(Get-Date) - Verifying availability of Longhorn Deployment"
+VerifyDeploymentRunning -namespace "longhorn-system" -deploymentName "csi-attacher" -replicas 3 -maxAttempts 60 -failedSleepTime 10
+VerifyDeploymentRunning -namespace "longhorn-system" -deploymentName "csi-provisioner" -replicas 3 -maxAttempts 60 -failedSleepTime 10
+VerifyDeploymentRunning -namespace "longhorn-system" -deploymentName "csi-resizer" -replicas 3 -maxAttempts 60 -failedSleepTime 10
+VerifyDeploymentRunning -namespace "longhorn-system" -deploymentName "csi-snapshotter" -replicas 3 -maxAttempts 60 -failedSleepTime 10
+VerifyDeploymentRunning -namespace "longhorn-system" -deploymentName "longhorn-driver-deployer" -replicas 1 -maxAttempts 60 -failedSleepTime 10
+VerifyDeploymentRunning -namespace "longhorn-system" -deploymentName "longhorn-ui" -replicas 2 -maxAttempts 60 -failedSleepTime 10
 
+Write-Header "$(Get-Date) - Configuring Longhorn GUI"
+$script = @"
+# Configure secrets for GUI username and password
+USER=$Env:adminUsername; PASSWORD=$Env:adminPassword; echo "`${USER}:`$(openssl passwd -stdin -apr1 <<< `${PASSWORD})" >> /home/$($Env:adminUsername)/auth
+kubectl -n longhorn-system create secret generic basic-auth --from-file=/home/$($Env:adminUsername)/auth
+"@
 
+ssh -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01 $($script)
 
+kubectl apply -f $Env:DeploymentDir\longhorn-1.5.3\longhorngui.yaml
 
-
-
-
-
-ssh -i $HOME\.ssh\susesrv_id_rsa azureuser@susesrv01
-
-USER=azureuser; PASSWORD=L@bAdm1n1234; echo "${USER}:$(openssl passwd -stdin -apr1 <<< ${PASSWORD})" >> auth
-kubectl -n longhorn-system create secret generic basic-auth --from-file=auth
-exit
-
-kubectl apply -f C:\Deployment\longhorn-1.5.3\longhorngui.yaml
-
+Write-Header "$(Get-Date) - Deploying Metallb to K8s"
 kubectl apply -f C:\Deployment\metallb-0.13.11\config\manifests\metallb-native.yaml
+
+Write-Header "$(Get-Date) - Verifying availability of Metallb Deployment"
+VerifyDeploymentRunning -namespace "metallb-system" -deploymentName "controller" -replicas 1 -maxAttempts 60 -failedSleepTime 10
+
+Write-Header "$(Get-Date) - Configuring Metallb loadbalancer"
 kubectl apply -f C:\Deployment\metallb-0.13.11\metallb-config.yaml
 
-ssh -i $HOME\.ssh\susesrv_id_rsa azureuser@susesrv01
-
+Write-Header "$(Get-Date) - Generating and download Kerberos keytab and TLS certificates"
+Write-Host "$(Get-Date) - Generating Kerberos keytab files using script in variable"
+$script = @"
+# Download and install adutil
 sudo zypper addrepo https://packages.microsoft.com/config/sles/15/prod.repo
 sudo zypper --gpg-auto-import-keys refresh
 sudo ACCEPT_EULA=Y zypper install -y adutil
-echo "L@bAdm1n1234" | kinit azureuser@SQLK8S.LOCAL;
-adutil keytab createauto -k /home/azureuser/mssql_mssql19-0.keytab -p 1433 -H mssql19-0.sqlk8s.local -y -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234 -s MSSQLSvc;
-adutil keytab createauto -k /home/azureuser/mssql_mssql19-1.keytab -p 1433 -H mssql19-1.sqlk8s.local -y -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234 -s MSSQLSvc;
-adutil keytab createauto -k /home/azureuser/mssql_mssql19-2.keytab -p 1433 -H mssql19-2.sqlk8s.local -y -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234 -s MSSQLSvc;
-adutil keytab createauto -k /home/azureuser/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.sqlk8s.local -y -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234 -s MSSQLSvc;
-adutil keytab createauto -k /home/azureuser/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.sqlk8s.local -y -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234 -s MSSQLSvc;
-adutil keytab createauto -k /home/azureuser/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.sqlk8s.local -y -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234 -s MSSQLSvc;
 
-adutil keytab create -k /home/azureuser/mssql_mssql19-0.keytab -p "sqlk8ssvc19" -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234;
-adutil keytab create -k /home/azureuser/mssql_mssql19-1.keytab -p "sqlk8ssvc19" -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234;
-adutil keytab create -k /home/azureuser/mssql_mssql19-2.keytab -p "sqlk8ssvc19" -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234;
-adutil keytab create -k /home/azureuser/mssql_mssql22-0.keytab -p "sqlk8ssvc22" -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234;
-adutil keytab create -k /home/azureuser/mssql_mssql22-1.keytab -p "sqlk8ssvc22" -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234;
-adutil keytab create -k /home/azureuser/mssql_mssql22-2.keytab -p "sqlk8ssvc22" -e aes256-cts-hmac-sha1-96 --password L@bAdm1n1234;
+$script = @"
+# kinit using AD credentials
+echo "$Env:adminPassword" | kinit $($Env:adminUsername)@$($Env:netbiosName.ToUpper()).$($Env:domainSuffix.ToUpper());
 
+# Create keytab files for pods
+adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql19-0.keytab -p 1433 -H mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql19-1.keytab -p 1433 -H mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql19-2.keytab -p 1433 -H mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
 
-Certificates
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-0.sqlk8s.local' -addext "subjectAltName = DNS:mssql19-0.sqlk8s.local, DNS:mssql19-agl1.sqlk8s.local" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout mssql19-0.key -out mssql19-0.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-1.sqlk8s.local' -addext "subjectAltName = DNS:mssql19-1.sqlk8s.local, DNS:mssql19-agl1.sqlk8s.local" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout mssql19-1.key -out mssql19-1.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-2.sqlk8s.local' -addext "subjectAltName = DNS:mssql19-2.sqlk8s.local, DNS:mssql19-agl1.sqlk8s.local" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout mssql19-2.key -out mssql19-2.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-0.sqlk8s.local' -addext "subjectAltName = DNS:mssql22-0.sqlk8s.local, DNS:mssql22-agl1.sqlk8s.local" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout mssql22-0.key -out mssql22-0.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-1.sqlk8s.local' -addext "subjectAltName = DNS:mssql22-1.sqlk8s.local, DNS:mssql22-agl1.sqlk8s.local" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout mssql22-1.key -out mssql22-1.pem -days 365
-openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-2.sqlk8s.local' -addext "subjectAltName = DNS:mssql22-2.sqlk8s.local, DNS:mssql22-agl1.sqlk8s.local" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout mssql22-2.key -out mssql22-2.pem -days 365
+# Update keytab files with service account credentials
+adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql19-0.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql19-1.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql19-2.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql22-0.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql22-1.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql22-2.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+"@
 
-exit
+ssh -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01 $($script)
 
-New-Item -Path $Env:DeploymentDir\keytab  -ItemType directory -Force
-New-Item -Path $Env:DeploymentDir\keytab\SQL2019  -ItemType directory -Force
-New-Item -Path $Env:DeploymentDir\keytab\SQL2022  -ItemType directory -Force
-
-scp -i $HOME\.ssh\susesrv_id_rsa azureuser@susesrv01:/home/$Env:adminUsername/mssql_mssql19*.keytab $Env:DeploymentDir\keytab\SQL2019\
-scp -i $HOME\.ssh\susesrv_id_rsa azureuser@susesrv01:/home/$Env:adminUsername/mssql_mssql22*.keytab $Env:DeploymentDir\keytab\SQL2022\
-
-New-Item -Path $Env:DeploymentDir\certificates  -ItemType directory -Force
-New-Item -Path $Env:DeploymentDir\certificates\SQL2019  -ItemType directory -Force
-New-Item -Path $Env:DeploymentDir\certificates\SQL2022  -ItemType directory -Force
-
-scp -i $HOME\.ssh\susesrv_id_rsa azureuser@susesrv01:/home/$Env:adminUsername/mssql19*.pem $Env:DeploymentDir\certificates\SQL2019\
-scp -i $HOME\.ssh\susesrv_id_rsa azureuser@susesrv01:/home/$Env:adminUsername/mssql19*.key $Env:DeploymentDir\certificates\SQL2019\
-scp -i $HOME\.ssh\susesrv_id_rsa azureuser@susesrv01:/home/$Env:adminUsername/mssql22*.pem $Env:DeploymentDir\certificates\SQL2022\
-scp -i $HOME\.ssh\susesrv_id_rsa azureuser@susesrv01:/home/$Env:adminUsername/mssql22*.key $Env:DeploymentDir\certificates\SQL2022\
-
-
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-0.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-0.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-
-SQL
-kubectl create namespace sql22
-kubectl apply -f $DeploymentDir\yaml\SQL20$($currentSqlVersion)Rancher\headless-services.yaml -n sql$($currentSqlVersion)
-kubectl create secret generic mssql$($currentSqlVersion) --from-literal=MSSQL_SA_PASSWORD=$adminPassword -n sql$($currentSqlVersion)
-kubectl apply -f $DeploymentDir\yaml\SQL20$($currentSqlVersion)Rancher\krb5-conf.yaml -n sql$($currentSqlVersion)
-kubectl apply -f $DeploymentDir\yaml\SQL20$($currentSqlVersion)Rancher\mssql-conf.yaml -n sql$($currentSqlVersion)
-kubectl apply -f $DeploymentDir\yaml\SQL20$($currentSqlVersion)Rancher\mssql.yaml -n sql$($currentSqlVersion)
-kubectl apply -f $DeploymentDir\yaml\SQL20$($currentSqlVersion)Rancher\pod-service.yaml -n sql$($currentSqlVersion)
-kubectl get pods -n sql$($currentSqlVersion)
-kubectl get services -n sql$($currentSqlVersion)
-kubectl get pod -o=custom-columns=NAME:.metadata.name,STATUS:.status.phase,NODE:.spec.nodeName -n sql22
-kubectl apply -f $DeploymentDir\yaml\SQL20$($currentSqlVersion)Rancher\service.yaml -n sql$($currentSqlVersion)
-
-kubectl cp \..\Deployment\keytab\SQL2022\mssql_mssql22-0.keytab mssql22-0:/var/opt/mssql/secrets/mssql.keytab -n sql22
-kubectl cp \..\Deployment\keytab\SQL2022\mssql_mssql22-1.keytab mssql22-1:/var/opt/mssql/secrets/mssql.keytab -n sql22
-kubectl cp \..\Deployment\keytab\SQL2022\mssql_mssql22-2.keytab mssql22-2:/var/opt/mssql/secrets/mssql.keytab -n sql22
-kubectl cp "\..\Deployment\yaml\SQL2022\logger.ini" mssql22-0:/var/opt/mssql/logger.ini -n sql22
-kubectl cp "\..\Deployment\yaml\SQL2022\logger.ini" mssql22-1:/var/opt/mssql/logger.ini -n sql22
-kubectl cp "\..\Deployment\yaml\SQL2022\logger.ini" mssql22-2:/var/opt/mssql/logger.ini -n sql22
-kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.pem" mssql22-0:/var/opt/mssql/certs/mssql.pem -n sql22
-kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-0.key" mssql22-0:/var/opt/mssql/private/mssql.key -n sql22
-kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.pem" mssql22-1:/var/opt/mssql/certs/mssql.pem -n sql22
-kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-1.key" mssql22-1:/var/opt/mssql/private/mssql.key -n sql22
-kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.pem" mssql22-2:/var/opt/mssql/certs/mssql.pem -n sql22
-kubectl cp "\..\Deployment\certificates\SQL2022\mssql22-2.key" mssql22-2:/var/opt/mssql/private/mssql.key -n sql22
-kubectl apply -f C:\Deployment\yaml\SQL2022Rancher\mssql-conf-encryption.yaml -n sql22
-kubectl delete pod mssql22-0 -n sql22
-kubectl delete pod mssql22-1 -n sql22
-kubectl delete pod mssql22-2 -n sql22
-
-
-
-
-
-
-
-
-
-
-
-
-# Deploy Linux Server with public key authentication
-Write-Header "$(Get-Date) - Deploying Linux Server with private key authentication"
-
-# Generate ssh keys
-Write-Host "$(Get-Date) - Generating ssh keys"
-$linuxKeyFile = "$($Env:linuxVM.toLower())_id_rsa"
-New-Item -Path $HOME\.ssh  -ItemType directory -Force
-ssh-keygen -q -t rsa -b 4096 -N '""' -f $HOME\.ssh\$linuxKeyFile
-$publicKey = Get-Content $HOME\.ssh\$linuxKeyFile.pub
-
-# Generate parameters for template deployment
-Write-Host "$(Get-Date) - Generating parameters for template deployment"
-$templateParameters = @{}
-$templateParameters.add("adminUsername", $Env:adminUsername)
-$templateParameters.add("sshRSAPublicKey", $publicKey)
-$templateParameters.add("linuxVM", $Env:linuxVM)
-
-# Deploy Linux server
-Write-Host "$(Get-Date) - Deploying $Env:linuxVM"
-New-AzResourceGroupDeployment -ResourceGroupName $Env:resourceGroup -Mode Incremental -Force -TemplateFile "C:\Deployment\templates\linux.json" -TemplateParameterObject $templateParameters
-Start-Sleep -Seconds 20
-
-# Add known host
-Write-Host "$(Get-Date) - Adding $Env:linuxVM as known host"
-ssh-keyscan -t ecdsa 10.$Env:vnetIpAddressRangeStr.16.5 >> $HOME\.ssh\known_hosts
-ssh-keyscan -t ecdsa $Env:linuxVM >> $HOME\.ssh\known_hosts
-(Get-Content $HOME\.ssh\known_hosts) | Set-Content -Encoding UTF8 $HOME\.ssh\known_hosts
-
-Write-Host "$(Get-Date) - To connect to $Env:linuxVM server you can now run ssh -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$Env:linuxVM"
-
-Write-Header "$(Get-Date) - Generate and download Kerberos keytab and TLS certificates"
-Write-Host "$(Get-Date) - Configuring script for $Env:linuxVM"
-$linuxScript = @"
-
-# Update hostname and get latest updates
-cp /etc/hosts /home/$Env:adminUsername/hosts
-echo 127.0.0.1 $Env:linuxVM >> /home/$Env:adminUsername/hosts
-sudo cp /home/$Env:adminUsername/hosts /etc/hosts
-sudo apt-get update -y;
-
-# Installing and configuring resolvconf
-sudo apt-get install resolvconf;
-cp /etc/resolvconf/resolv.conf.d/head /home/$Env:adminUsername/resolv.conf;
-echo nameserver 10.$Env:vnetIpAddressRangeStr.16.4 >> /home/$Env:adminUsername/resolv.conf;
-sudo cp /home/$Env:adminUsername/resolv.conf /etc/resolvconf/resolv.conf.d/head;
-sudo systemctl enable --now resolvconf.service;
-
-# Joining $Env:linuxVM to the domain
-sudo apt-get install -y realmd;
-sudo apt-get install -y software-properties-common;
-sudo apt-get install -y packagekit;
-sudo apt-get install -y sssd;
-sudo apt-get install -y sssd-tools;
-export DEBIAN_FRONTEND=noninteractive;
-sudo -E apt -y -qq install krb5-user;
-cp /etc/krb5.conf /home/$Env:adminUsername/krb5.conf;
-sed 's/default_realm = ATHENA.MIT.EDU/default_realm = $($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper())\n\trdns = false/' /home/$Env:adminUsername/krb5.conf > /home/$Env:adminUsername/krb5.conf.updated;
-sudo cp /home/$Env:adminUsername/krb5.conf.updated /etc/krb5.conf;
-echo $Env:adminPassword | sudo realm join $($Env:netbiosName.toLower()).$Env:domainSuffix -U '$Env:adminUsername@$($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper())' -v;
-
-# Installing adutil
-curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -;
-sudo curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list;
-sudo apt-get remove adutil-preview;
-sudo apt-get update;
-sudo ACCEPT_EULA=Y apt-get install -y adutil;
-
-# Obtaining Kerberos Ticket
-echo $Env:adminPassword | kinit $Env:adminUsername@$($Env:netbiosName.toUpper()).$($Env:domainSuffix.toUpper());
-
-# Generating keytab files
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-0.keytab -p 1433 -H mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-1.keytab -p 1433 -H mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p 1433 -H mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-0.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-1.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-
-# Removing error when generating certificates due to missing .rnd file
-cp /etc/ssl/openssl.cnf /home/$Env:adminUsername/openssl.cnf;
-sed 's/RANDFILE\t\t= `$ENV::HOME\/.rnd/#RANDFILE\t\t= `$ENV::HOME\/.rnd/' /home/$Env:adminUsername/openssl.cnf > /home/$Env:adminUsername/openssl.cnf.updated;
-sudo cp /home/$Env:adminUsername/openssl.cnf.updated /etc/ssl/openssl.cnf;
+Write-Host "$(Get-Date) - Generating certificate files using script in file"
+$certscript = @"
 
 # Generating certificate and private key files
 openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql19-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-0.key -out /home/$Env:adminUsername/mssql19-0.pem -days 365;
 openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql19-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-1.key -out /home/$Env:adminUsername/mssql19-1.pem -days 365;
 openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql19-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql19-2.key -out /home/$Env:adminUsername/mssql19-2.pem -days 365;
-
 openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql22-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-0.key -out /home/$Env:adminUsername/mssql22-0.pem -days 365;
 openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql22-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-1.key -out /home/$Env:adminUsername/mssql22-1.pem -days 365;
 openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix' -addext "subjectAltName = DNS:mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix, DNS:mssql22-agl1.$($Env:netbiosName.toLower()).$Env:domainSuffix" -addext "extendedKeyUsage=1.3.6.1.5.5.7.3.1" -addext "keyUsage=keyEncipherment" -keyout /home/$Env:adminUsername/mssql22-2.key -out /home/$Env:adminUsername/mssql22-2.pem -days 365;
-
-# Changing ownership on files to $Env:adminUsername
-sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.keytab;
-sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.key;
-sudo chown $Env:adminUsername:$Env:adminUsername /home/$Env:adminUsername/mssql*.pem;
-
 "@
 
-Write-Host "$(Get-Date) - Executing script on $Env:linuxVM"
-$linuxFile = "$Env:DeploymentDir\scripts\GenerateLinuxFiles.sh"
-$linuxScript | Out-File -FilePath $linuxFile -force    
+$certFile = "$Env:DeploymentDir\scripts\GenerateCertificates.sh"
+$certscript | Out-File -FilePath $certFile -force    
+scp -i $HOME\.ssh\susesrv_id_rsa $Env:DeploymentDir\scripts\GenerateCertificates.sh $Env:adminUsername@susesrv01:/home/$Env:adminUsername/GenerateCertificates.sh
 
-$linuxResult = Invoke-AzVMRunCommand -ResourceGroupName $Env:resourceGroup -VMName $Env:linuxVM -CommandId "RunShellScript" -ScriptPath $linuxFile
-Write-Host "$(Get-Date) - Script returned a result of $($linuxResult.Status)"
-$linuxResult | Out-File -FilePath $Env:DeploymentLogsDir\GenerateLinuxFiles.log -force
+ssh -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01 /home/$Env:adminUsername/GenerateCertificates.sh
 
-Write-Host "$(Get-Date) - Downloading keytab files from $Env:linuxVM"
+Write-Host "$(Get-Date) - Downloading keytab files and certificates"
 New-Item -Path $Env:DeploymentDir\keytab  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\keytab\SQL2019  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\keytab\SQL2022  -ItemType directory -Force
 
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql_mssql19*.keytab $Env:DeploymentDir\keytab\SQL2019\
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql_mssql22*.keytab $Env:DeploymentDir\keytab\SQL2022\
+scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/mssql_mssql19*.keytab $Env:DeploymentDir\keytab\SQL2019\
+scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/mssql_mssql22*.keytab $Env:DeploymentDir\keytab\SQL2022\
 
-Write-Host "$(Get-Date) - Downloading certificate and private key files from $Env:linuxVM"
 New-Item -Path $Env:DeploymentDir\certificates  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\certificates\SQL2019  -ItemType directory -Force
 New-Item -Path $Env:DeploymentDir\certificates\SQL2022  -ItemType directory -Force
 
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql19*.pem $Env:DeploymentDir\certificates\SQL2019\
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql19*.key $Env:DeploymentDir\certificates\SQL2019\
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql22*.pem $Env:DeploymentDir\certificates\SQL2022\
-scp -i $HOME\.ssh\$linuxKeyFile $Env:adminUsername@$($Env:linuxVM):/home/$Env:adminUsername/mssql22*.key $Env:DeploymentDir\certificates\SQL2022\
+scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/mssql19*.pem $Env:DeploymentDir\certificates\SQL2019\
+scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/mssql19*.key $Env:DeploymentDir\certificates\SQL2019\
+scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/mssql22*.pem $Env:DeploymentDir\certificates\SQL2022\
+scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/mssql22*.key $Env:DeploymentDir\certificates\SQL2022\
 
-Write-Host "$(Get-Date) - Installing SQL Server certificates on $Env:jumpboxVM"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-0.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2019\mssql19-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-0.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
-Import-Certificate -FilePath "C:\Deployment\certificates\SQL2022\mssql22-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
+Write-Host "$(Get-Date) - Importing certificates"
+Import-Certificate -FilePath "$Env:DeploymentDir\certificates\SQL2019\mssql19-0.pem" -CertStoreLocation "cert:\LocalMachine\Root"
+Import-Certificate -FilePath "$Env:DeploymentDir\certificates\SQL2019\mssql19-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
+Import-Certificate -FilePath "$Env:DeploymentDir\certificates\SQL2019\mssql19-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
+Import-Certificate -FilePath "$Env:DeploymentDir\certificates\SQL2022\mssql22-0.pem" -CertStoreLocation "cert:\LocalMachine\Root"
+Import-Certificate -FilePath "$Env:DeploymentDir\certificates\SQL2022\mssql22-1.pem" -CertStoreLocation "cert:\LocalMachine\Root"
+Import-Certificate -FilePath "$Env:DeploymentDir\certificates\SQL2022\mssql22-2.pem" -CertStoreLocation "cert:\LocalMachine\Root"
 
 # Generate yaml files for SQL Server 2019 pod and service creation
-[System.Environment]::SetEnvironmentVariable('currentSqlVersion', "19", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "4", [System.EnvironmentVariableTarget]::Machine)
-$Env:currentSqlVersion = "19"
-$Env:vnetIpAddressRangeStr2 = "4"
+$currentSqlVersion = "19"
+$internalIpAddressRangeStr = "192"
 if ($Env:dH2iAvailabilityGroup -eq "No") {
     & $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
 }
@@ -710,10 +584,8 @@ if ($Env:installSQL2019 -eq "Yes") {
 }
 
 # Generate yaml files for SQL Server 2022 pod and service creation
-[System.Environment]::SetEnvironmentVariable('currentSqlVersion', "22", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "5", [System.EnvironmentVariableTarget]::Machine)
-$Env:currentSqlVersion = "22"
-$Env:vnetIpAddressRangeStr2 = "5"
+$currentSqlVersion = "22"
+$internalIpAddressRangeStr = "193"
 if ($Env:dH2iAvailabilityGroup -eq "No") {
     & $Env:DeploymentDir\scripts\GenerateSqlYaml.ps1
 }
@@ -727,8 +599,7 @@ if ($Env:installSQL2022 -eq "Yes") {
 }
 
 # Generate yaml files for Monitor pod and service creation
-[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "6", [System.EnvironmentVariableTarget]::Machine)
-$Env:vnetIpAddressRangeStr2 = "6"
+$internalIpAddressRangeStr = "194"
 & $Env:DeploymentDir\scripts\GenerateMonitorServiceYaml.ps1
 
 # Install Monitor Containers
@@ -740,9 +611,7 @@ if ($Env:installMonitoring -eq "Yes") {
 Write-Header "$(Get-Date) - Cleanup environment"
 Get-ScheduledTask -TaskName JumpboxLogon | Unregister-ScheduledTask -Confirm:$false
 
-Remove-Item -Path "$Env:DeploymentDir\scripts\CreateDC.ps1" -Force
-Remove-Item -Path "$Env:DeploymentDir\scripts\ConfigureDC.ps1" -Force
-Remove-Item -Path "$Env:DeploymentDir\scripts\GenerateLinuxFiles.sh" -Force
+Remove-Item -Path "$Env:DeploymentDir\scripts\GenerateCertificates.sh" -Force
 
 Stop-Transcript
 $logSuppress = Get-Content $Env:DeploymentLogsDir\JumpboxLogon.log | Where-Object { $_ -notmatch "Host Application: powershell.exe" }
@@ -750,24 +619,16 @@ $logSuppress | Set-Content $Env:DeploymentLogsDir\JumpboxLogon.log -Force
 
 [System.Environment]::SetEnvironmentVariable('adminUsername', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('adminPassword', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('resourceGroup', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('azureLocation', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('templateBaseUrl', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('templateSuseUrl', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('netbiosName', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('domainSuffix', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('vnetName', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('dcVM', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('linuxVM', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('jumpboxVM', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('jumpboxNic', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2019', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installSQL2022', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('aksCluster', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dH2iAvailabilityGroup', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('dH2iLicenseKey', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('installMonitoring', "", [System.EnvironmentVariableTarget]::Machine)
+[System.Environment]::SetEnvironmentVariable('suseLicenseKey', $suseLicenseKey, [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('DeploymentLogsDir', "", [System.EnvironmentVariableTarget]::Machine)
 [System.Environment]::SetEnvironmentVariable('currentSqlVersion', "", [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('vnetIpAddressRangeStr2', "", [System.EnvironmentVariableTarget]::Machine)
