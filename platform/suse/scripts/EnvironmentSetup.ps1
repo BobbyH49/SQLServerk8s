@@ -52,6 +52,7 @@ New-Item -Path "$Env:DeploymentDir\yaml\Monitor\Grafana" -ItemType directory -Fo
 New-Item -Path "$Env:DeploymentDir\yaml\Monitor\InfluxDB" -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\yaml\Monitor\Telegraf" -ItemType directory -Force
 New-Item -Path "$Env:DeploymentDir\backups" -ItemType directory -Force
+New-Item -Path "$Env:DeploymentDir\susesrv" -ItemType directory -Force
 
 Start-Transcript -Path $Env:DeploymentLogsDir\EnvironmentSetup.log
 
@@ -123,7 +124,15 @@ Write-Host "$(Get-Date) - Downloading AdventureWorks2019 backup file"
 Invoke-WebRequest ($templateSuseUrl + "backups/AdventureWorks2019.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019.bak
 
 Write-Host "$(Get-Date) - Downloading susesrv files"
-Invoke-WebRequest ($templateSuseUrl + "scripts/JumpboxLogon.ps1") -OutFile $Env:DeploymentDir\scripts\JumpboxLogon.ps1
+Invoke-WebRequest ($templateSuseUrl + "susesrv/osdisk.zip") -OutFile $Env:DeploymentDir\susesrv\osdisk.zip
+Invoke-WebRequest ($templateSuseUrl + "susesrv/susesrv_id_rsa") -OutFile $Env:DeploymentDir\susesrv\susesrv_id_rsa
+Invoke-WebRequest ($templateSuseUrl + "susesrv/susesrv_id_rsa.pub") -OutFile $Env:DeploymentDir\susesrv\susesrv_id_rsa.pub
+
+Write-Host "$(Get-Date) - Downloading Longhorn"
+Invoke-WebRequest ($templateSuseUrl + "longhorn-1.5.3.zip") -OutFile $Env:DeploymentDir\longhorn-1.5.3.zip
+
+Write-Host "$(Get-Date) - Downloading Metallb"
+Invoke-WebRequest ($templateSuseUrl + "metallb-0.13.11.zip") -OutFile $Env:DeploymentDir\metallb-0.13.11.zip
 
 Write-Header "$(Get-Date) - Making alterations to Edge"
 # Disable Microsoft Edge sidebar
