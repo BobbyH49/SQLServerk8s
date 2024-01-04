@@ -130,15 +130,15 @@ $sourceContainer = 'https://sqlserverk8s.blob.core.windows.net/githublfs'
 $sas = "?sv=2021-10-04&si=githubpol&sr=c&sig=qr6XC3j0cgnxppJGuPCUmUNGDt4nRCLhTEDLazq%2FqsY%3D"
 azcopy cp $sourceContainer/*$sas $Env:DeploymentDir\susesrv --recursive=true --include-pattern 'osdisk.vhdx' --check-length=false --log-level=ERROR
 
-Write-Host "$(Get-Date) - Extracting Zip Files"
-Expand-Archive $Env:DeploymentDir\longhorn-1.5.3.zip -DestinationPath $Env:DeploymentDir
-Expand-Archive $Env:DeploymentDir\metallb-0.13.11.zip -DestinationPath $Env:DeploymentDir
-
 Write-Host "$(Get-Date) - Downloading Longhorn"
 Invoke-WebRequest ($templateSuseUrl + "longhorn-1.5.3.zip") -OutFile $Env:DeploymentDir\longhorn-1.5.3.zip
 
 Write-Host "$(Get-Date) - Downloading Metallb"
 Invoke-WebRequest ($templateSuseUrl + "metallb-0.13.11.zip") -OutFile $Env:DeploymentDir\metallb-0.13.11.zip
+
+Write-Host "$(Get-Date) - Extracting Zip Files"
+Expand-Archive $Env:DeploymentDir\longhorn-1.5.3.zip -DestinationPath $Env:DeploymentDir
+Expand-Archive $Env:DeploymentDir\metallb-0.13.11.zip -DestinationPath $Env:DeploymentDir
 
 Write-Header "$(Get-Date) - Making alterations to Edge"
 # Disable Microsoft Edge sidebar
