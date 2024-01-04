@@ -66,7 +66,7 @@ Install-PackageProvider -Name NuGet -Force
 
 # Installing tools
 Write-Header "$(Get-Date) - Installing Chocolatey Apps"
-$chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,microsoft-edge,ssms,sqlcmd'
+$chocolateyAppList = 'azure-cli,az.powershell,kubernetes-cli,azcopy10,microsoft-edge,ssms,sqlcmd'
 
 try {
     choco config get cacheLocation
@@ -124,9 +124,15 @@ Write-Host "$(Get-Date) - Downloading AdventureWorks2019 backup file"
 Invoke-WebRequest ($templateSuseUrl + "backups/AdventureWorks2019.bak") -OutFile $Env:DeploymentDir\backups\AdventureWorks2019.bak
 
 Write-Host "$(Get-Date) - Downloading susesrv files"
-Invoke-WebRequest ($templateSuseUrl + "susesrv/osdisk.zip") -OutFile $Env:DeploymentDir\susesrv\osdisk.zip
 Invoke-WebRequest ($templateSuseUrl + "susesrv/susesrv_id_rsa") -OutFile $Env:DeploymentDir\susesrv\susesrv_id_rsa
 Invoke-WebRequest ($templateSuseUrl + "susesrv/susesrv_id_rsa.pub") -OutFile $Env:DeploymentDir\susesrv\susesrv_id_rsa.pub
+$sourceContainer = 'https://sqlserverk8s.blob.core.windows.net/githublfs'
+$sas = "?sv=2021-10-04&si=githubpol&sr=c&sig=qr6XC3j0cgnxppJGuPCUmUNGDt4nRCLhTEDLazq%2FqsY%3D"
+azcopy cp $sourceContainer/*$sas $Env:DeploymentDir\susesrv --recursive=true --include-pattern 'osdisk.vhdx' --check-length=false --log-level=ERROR
+
+Write-Host "$(Get-Date) - Extracting Zip Files"
+Expand-Archive $Env:DeploymentDir\longhorn-1.5.3.zip -DestinationPath $Env:DeploymentDir
+Expand-Archive $Env:DeploymentDir\metallb-0.13.11.zip -DestinationPath $Env:DeploymentDir
 
 Write-Host "$(Get-Date) - Downloading Longhorn"
 Invoke-WebRequest ($templateSuseUrl + "longhorn-1.5.3.zip") -OutFile $Env:DeploymentDir\longhorn-1.5.3.zip
