@@ -72,7 +72,8 @@
         "domainSuffix": "local",
         "templateBaseUrl": "[concat('https://raw.githubusercontent.com/BobbyH49/SQLServerk8s/', parameters('githubBranch'), '/')]",
         "templateAksUrl": "[concat(variables('templateBaseUrl'), 'platform/aks/')]",
-        "templateSuseUrl": "[concat(variables('templateBaseUrl'), 'platform/suse/')]"
+        "templateSuseUrl": "[concat(variables('templateBaseUrl'), 'platform/suse/')]",
+        "dH2iLicenseKey": "[if(equals(parameters('DH2iLicenseKey'),''), 'NoLicenseKey', parameters('DH2iLicenseKey'))]"
     },
     "resources": [
         {
@@ -125,7 +126,7 @@
                         "value": "[parameters('DH2iAvailabilityGroup')]"
                     },
                     "DH2iLicenseKey" : {
-                        "value": "[parameters('DH2iLicenseKey')]"
+                        "value": "[variables('dH2iLicenseKey')]"
                     }
                 }
             }
@@ -180,7 +181,7 @@
                         "value": "[parameters('DH2iAvailabilityGroup')]"
                     },
                     "DH2iLicenseKey" : {
-                        "value": "[parameters('DH2iLicenseKey')]"
+                        "value": "[variables('dH2iLicenseKey')]"
                     },
                     "suseLicenseKey" : {
                         "value": "[parameters('suseLicenseKey')]"
