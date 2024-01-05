@@ -29,8 +29,8 @@ spec:
           image: 'mcr.microsoft.com/mssql/server:20$($currentSqlVersion)-latest'
           resources:
             limits:
-              memory: 12Gi
-              cpu: '4'
+              memory: 6Gi
+              cpu: '2'
           ports:
             - containerPort: 1433
           env:
@@ -83,7 +83,7 @@ spec:
         accessModes:
           - ReadWriteOnce
         storageClassName: longhorn
-         resources:
+        resources:
           requests:
             storage: 8Gi
     - metadata:

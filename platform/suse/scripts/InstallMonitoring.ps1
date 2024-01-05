@@ -84,7 +84,7 @@ kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\InfluxDB\service.yaml" -n sqlm
 
 Write-Host "$(Get-Date) - Verify pod and service started successfully"
 VerifyPodRunning -podApp "influxdb" -namespace "sqlmonitor" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-VerifyServiceRunning -serviceName "influxdb-lb" -namespace "sqlmonitor" -expectedServiceIP "192.168.$($Env:internalIpAddressRangeStr).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+VerifyServiceRunning -serviceName "influxdb-lb" -namespace "sqlmonitor" -expectedServiceIP "192.168.$($internalIpAddressRangeStr).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
 
 Write-Host "$(Get-Date) - Get the InfluxDB Pod Name"
 $influxDbPodName = kubectl get pods -n sqlmonitor -o jsonpath="{.items[?(@.metadata.labels.app=='influxdb')].metadata.name}"
@@ -128,4 +128,4 @@ kubectl apply -f "$Env:DeploymentDir\yaml\Monitor\Grafana\service.yaml" -n sqlmo
 
 Write-Host "$(Get-Date) - Verify pod and service started successfully"
 VerifyPodRunning -podApp "grafana" -namespace "sqlmonitor" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-VerifyServiceRunning -serviceName "grafana-lb" -namespace "sqlmonitor" -expectedServiceIP "192.168.$($Env:internalIpAddressRangeStr).1" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+VerifyServiceRunning -serviceName "grafana-lb" -namespace "sqlmonitor" -expectedServiceIP "192.168.$($internalIpAddressRangeStr).1" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0

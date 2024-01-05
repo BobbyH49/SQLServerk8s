@@ -168,10 +168,10 @@ if ($Env:dH2iAvailabilityGroup -eq "Yes") {
   VerifyPodRunning -podName "mssql$($currentSqlVersion)-2" -namespace "sql$($currentSqlVersion)" -maxAttempts 120 -failedSleepTime 10 -successSleepTime 0  
 }
 
-VerifyServiceRunning -serviceName "mssql$($currentSqlVersion)-0-lb" -namespace "sql$($currentSqlVersion)" -expectedServiceIP "192.168.$($Env:internalIpAddressRangeStr).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+VerifyServiceRunning -serviceName "mssql$($currentSqlVersion)-0-lb" -namespace "sql$($currentSqlVersion)" -expectedServiceIP "192.168.$($internalIpAddressRangeStr).0" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
 if ($Env:dH2iAvailabilityGroup -eq "Yes") {
-  VerifyServiceRunning -serviceName "mssql$($currentSqlVersion)-1-lb" -namespace "sql$($currentSqlVersion)" -expectedServiceIP "192.168.$($Env:internalIpAddressRangeStr).1" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
-  VerifyServiceRunning -serviceName "mssql$($currentSqlVersion)-2-lb" -namespace "sql$($currentSqlVersion)" -expectedServiceIP "192.168.$($Env:internalIpAddressRangeStr).2" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+  VerifyServiceRunning -serviceName "mssql$($currentSqlVersion)-1-lb" -namespace "sql$($currentSqlVersion)" -expectedServiceIP "192.168.$($internalIpAddressRangeStr).1" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
+  VerifyServiceRunning -serviceName "mssql$($currentSqlVersion)-2-lb" -namespace "sql$($currentSqlVersion)" -expectedServiceIP "192.168.$($internalIpAddressRangeStr).2" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 0
 }
 
 Write-Host "$(Get-Date) - Uploading keytab files to pods"
