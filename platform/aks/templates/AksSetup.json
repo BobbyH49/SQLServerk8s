@@ -40,7 +40,7 @@
         },
         "DH2iLicenseKey": {
             "type": "string",
-            "defaultValue": ""
+            "defaultValue": "NoKey"
         }
     },
     "variables": {
