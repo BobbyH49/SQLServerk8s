@@ -335,7 +335,7 @@ if ($Env:dH2iAvailabilityGroup -eq "Yes") {
     kubectl apply -f $Env:DeploymentDir\yaml\SQL20$($currentSqlVersion)\service.yaml -n sql$($currentSqlVersion)
 
     Write-Host "$(Get-Date) - Verifying listener service started successfully"
-    VerifyServiceRunning -serviceName "mssql$($currentSqlVersion)-cluster-lb" -namespace "sql$($currentSqlVersion)" -expectedServiceIP "192.168.$($Env:internalIpAddressRangeStr).3" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
+    VerifyServiceRunning -serviceName "mssql$($currentSqlVersion)-cluster-lb" -namespace "sql$($currentSqlVersion)" -expectedServiceIP "192.168.$($internalIpAddressRangeStr).3" -maxAttempts 60 -failedSleepTime 10 -successSleepTime 10
 
     Write-Host "$(Get-Date) - Copying backup file to mssql$($currentSqlVersion)-0"
     kubectl cp $kubectlDeploymentDir\backups\AdventureWorks2019.bak mssql$($currentSqlVersion)-0:/var/opt/mssql/backup/AdventureWorks2019.bak -n sql$($currentSqlVersion)
