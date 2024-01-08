@@ -98,6 +98,7 @@ function Connect-SuseServer
     param(
         [string]$serverName,
         [string]$ipAddress,
+        [string]$adminUsername,
         [string]$adminPassword,
         [string]$suseLicenseKey
     )
@@ -107,7 +108,7 @@ suseconnect -r $suseLicenseKey
 
 # Install and configure sudo
 zypper install -y sudo
-sed 's/root ALL=(ALL:ALL) ALL/root ALL=(ALL:ALL) ALL\nazureuser ALL=NOPASSWD: ALL/' /etc/sudoers > /etc/sudoers.updated
+sed 's/root ALL=(ALL:ALL) ALL/root ALL=(ALL:ALL) ALL\n$($adminUsername) ALL=NOPASSWD: ALL/' /etc/sudoers > /etc/sudoers.updated
 mv /etc/sudoers.updated /etc/sudoers
 
 # Install and configure sshpass
@@ -118,7 +119,7 @@ echo $adminPassword > /root/sshpassfile
 
 # Add known host
 ssh-keyscan -t ecdsa $ipAddress > /root/.ssh/known_hosts
-sshpass -f /root/sshpassfile ssh-copy-id -i /root/susesrv_id_rsa.pub azureuser@$($ipAddress)
+sshpass -f /root/sshpassfile ssh-copy-id -i /root/susesrv_id_rsa.pub $($adminUsername)@$($ipAddress)
 "@
     ssh -i $HOME\.ssh\susesrv_id_rsa root@$($ipAddress) $($script)
 }
@@ -189,12 +190,12 @@ if ($serverName -eq "susesrv01")
 $script += @"
 # Configure and startup Rancher RKE2 cluster
 sudo mkdir -p /etc/rancher/rke2/
-echo token: my-shared-secret > /home/$($Env:adminUsername)/config.yaml
-echo tls-san: >> /home/$($Env:adminUsername)/config.yaml
-#echo "    - my-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
-#echo "    - another-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
-echo "    - sqlk8s.local" >> /home/$($Env:adminUsername)/config.yaml
-sudo cp /home/$($Env:adminUsername)/config.yaml /etc/rancher/rke2/config.yaml
+echo token: my-shared-secret > /home/$($adminUsername)/config.yaml
+echo tls-san: >> /home/$($adminUsername)/config.yaml
+#echo "    - my-kubernetes-domain.com" >> /home/$($adminUsername)/config.yaml
+#echo "    - another-kubernetes-domain.com" >> /home/$($adminUsername)/config.yaml
+echo "    - sqlk8s.local" >> /home/$($adminUsername)/config.yaml
+sudo cp /home/$($adminUsername)/config.yaml /etc/rancher/rke2/config.yaml
 curl -sfL https://get.rke2.io | sudo sh -
 sudo systemctl enable rke2-server.service
 sudo systemctl start rke2-server.service
@@ -206,13 +207,13 @@ else
 $script += @"
 # Configure and startup Rancher RKE2 cluster
 sudo mkdir -p /etc/rancher/rke2/
-echo token: my-shared-secret > /home/$($Env:adminUsername)/config.yaml
-echo server: https://192.168.0.5:9345 >> /home/$($Env:adminUsername)/config.yaml
-echo tls-san: >> /home/$($Env:adminUsername)/config.yaml
-#echo "    - my-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
-#echo "    - another-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
-echo "    - sqlk8s.local" >> /home/$($Env:adminUsername)/config.yaml
-sudo cp /home/$($Env:adminUsername)/config.yaml /etc/rancher/rke2/config.yaml
+echo token: my-shared-secret > /home/$($adminUsername)/config.yaml
+echo server: https://192.168.0.5:9345 >> /home/$($adminUsername)/config.yaml
+echo tls-san: >> /home/$($adminUsername)/config.yaml
+#echo "    - my-kubernetes-domain.com" >> /home/$($adminUsername)/config.yaml
+#echo "    - another-kubernetes-domain.com" >> /home/$($adminUsername)/config.yaml
+echo "    - sqlk8s.local" >> /home/$($adminUsername)/config.yaml
+sudo cp /home/$($adminUsername)/config.yaml /etc/rancher/rke2/config.yaml
 curl -sfL https://get.rke2.io | sudo sh -
 sudo systemctl enable rke2-server.service
 sudo systemctl start rke2-server.service
@@ -235,10 +236,10 @@ sudo zypper install -y jq
 # Configure kubectl for client connection 
 curl -LO "https://dl.k8s.io/release/`$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-mkdir /home/$($Env:adminUsername)/.kube
-sudo cp -T /etc/rancher/rke2/rke2.yaml /home/$($Env:adminUsername)/.kube/config
-sudo chown $($Env:adminUsername):users /home/$($Env:adminUsername)/.kube/config
-sed 's/127.0.0.1/$($susesrvip)/' /home/$($Env:adminUsername)/.kube/config > /home/$($adminUsername)/.kube/config.updated;
+mkdir /home/$($adminUsername)/.kube
+sudo cp -T /etc/rancher/rke2/rke2.yaml /home/$($adminUsername)/.kube/config
+sudo chown $($adminUsername):users /home/$($adminUsername)/.kube/config
+sed 's/127.0.0.1/$($susesrvip)/' /home/$($adminUsername)/.kube/config > /home/$($adminUsername)/.kube/config.updated;
 sudo sshpass -f /root/sshpassfile ssh-copy-id -i /root/susesrv_id_rsa.pub $($adminUsername)@$($susesrv)
 "@
 
@@ -422,7 +423,7 @@ Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
 # Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
 ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
-Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
+Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
 Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
 Setup-K8sCluster -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
 
@@ -437,7 +438,7 @@ Add-VMHardDiskDrive -VMName $susesrv -Path G:\$susesrv\datadisk.vhdx
 # Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
 ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
-Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
+Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
 Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
 Setup-K8sCluster -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
 
@@ -452,7 +453,7 @@ Add-VMHardDiskDrive -VMName $susesrv -Path H:\$susesrv\datadisk.vhdx
 # Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
 ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
 Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
-Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
+Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
 Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
 Setup-K8sCluster -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
 
