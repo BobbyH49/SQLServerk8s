@@ -191,8 +191,9 @@ $script += @"
 sudo mkdir -p /etc/rancher/rke2/
 echo token: my-shared-secret > /home/$($Env:adminUsername)/config.yaml
 echo tls-san: >> /home/$($Env:adminUsername)/config.yaml
-echo "    - my-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
-echo "    - another-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
+#echo "    - my-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
+#echo "    - another-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
+echo "    - sqlk8s.local" >> /home/$($Env:adminUsername)/config.yaml
 sudo cp /home/$($Env:adminUsername)/config.yaml /etc/rancher/rke2/config.yaml
 curl -sfL https://get.rke2.io | sudo sh -
 sudo systemctl enable rke2-server.service
@@ -342,7 +343,7 @@ setspn -S "MSSQLSvc/mssql22-0" "$($Env:netbiosName.toUpper())\$($Env:netbiosName
 setspn -S "MSSQLSvc/mssql22-1" "$($Env:netbiosName.toUpper())\$($Env:netbiosName.toLower())svc22"
 setspn -S "MSSQLSvc/mssql22-2" "$($Env:netbiosName.toUpper())\$($Env:netbiosName.toLower())svc22"
 setspn -S "MSSQLSvc/mssql22-agl1.$($Env:netbiosName.toLower()).$($Env:domainSuffix):14033" "$($Env:netbiosName.toUpper())\$($Env:netbiosName.toLower())svc22"
-setspn -S "MSSQLSvc/mssql22-agl1:14033" "$($Env:netbiosName.toUpper())\$($Env:netbiosName.toLower())svc19"
+setspn -S "MSSQLSvc/mssql22-agl1:14033" "$($Env:netbiosName.toUpper())\$($Env:netbiosName.toLower())svc22"
 
 # Add all of the DNS entry records
 Write-Host "$(Get-Date) - Adding DNS records"
@@ -514,21 +515,20 @@ sudo ACCEPT_EULA=Y zypper install -y adutil
 # kinit using AD credentials
 echo "$Env:adminPassword" | kinit $($Env:adminUsername)@$($Env:netbiosName.ToUpper()).$($Env:domainSuffix.ToUpper());
 
-# Create keytab files for pods
-adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql19-0.keytab -p 1433 -H mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql19-1.keytab -p 1433 -H mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql19-2.keytab -p 1433 -H mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
-adutil keytab createauto -k /home/$($Env:adminUsername)/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+# Generating keytab files
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-0.keytab -p 1433 -H mssql19-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-1.keytab -p 1433 -H mssql19-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p 1433 -H mssql19-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p 1433 -H mssql22-0.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p 1433 -H mssql22-1.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
+adutil keytab createauto -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p 1433 -H mssql22-2.$($Env:netbiosName.toLower()).$Env:domainSuffix -y -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword -s MSSQLSvc;
 
-# Update keytab files with service account credentials
-adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql19-0.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql19-1.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql19-2.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql22-0.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql22-1.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
-adutil keytab create -k /home/$($Env:adminUsername)/mssql_mssql22-2.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-0.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-1.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql19-2.keytab -p "$($Env:netbiosName.toLower())svc19" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-0.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-1.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
+adutil keytab create -k /home/$Env:adminUsername/mssql_mssql22-2.keytab -p "$($Env:netbiosName.toLower())svc22" -e aes256-cts-hmac-sha1-96 --password $Env:adminPassword;
 "@
 
 ssh -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01 $($script)
