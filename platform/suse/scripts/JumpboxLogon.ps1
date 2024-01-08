@@ -209,8 +209,9 @@ sudo mkdir -p /etc/rancher/rke2/
 echo token: my-shared-secret > /home/$($Env:adminUsername)/config.yaml
 echo server: https://192.168.0.5:9345 >> /home/$($Env:adminUsername)/config.yaml
 echo tls-san: >> /home/$($Env:adminUsername)/config.yaml
-echo "    - my-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
-echo "    - another-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
+#echo "    - my-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
+#echo "    - another-kubernetes-domain.com" >> /home/$($Env:adminUsername)/config.yaml
+echo "    - sqlk8s.local" >> /home/$($Env:adminUsername)/config.yaml
 sudo cp /home/$($Env:adminUsername)/config.yaml /etc/rancher/rke2/config.yaml
 curl -sfL https://get.rke2.io | sudo sh -
 sudo systemctl enable rke2-server.service
