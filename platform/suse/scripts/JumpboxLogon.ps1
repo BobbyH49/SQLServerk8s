@@ -39,7 +39,9 @@ function Install-SuseServer
         [string]$serverName,
         [string]$ipAddress,
         [string]$adminUsername,
-        [string]$adminPassword
+        [string]$adminPassword,
+	[string]$netbiosName,
+	[string]$domainSuffix
     )
     Copy-Item -Path "C:\Deployment\susesrv\osdisk.vhdx" -Destination "C:\Hyper-V\$susesrv\osdisk.vhdx"
     New-VM -Name $susesrv -MemoryStartupBytes 24GB -BootDevice VHD -VHDPath "C:\Hyper-V\$susesrv\osdisk.vhdx" -Path "C:\Hyper-V" -Generation 2 -Switch $switchName
@@ -56,7 +58,7 @@ function Install-SuseServer
     Write-Host "$(Get-Date) - Congigure networking and logins for $susesrv"
 $script = @"
 # Add Hostname
-echo "$serverName" >> /etc/hostname
+echo "$($serverName).$($netbiosName.ToLower()).$($domainSuffix)" >> /etc/hostname
 
 # Update network config
 sed 's/192.168.0.4/$($ipAddress)/' /etc/sysconfig/network/ifcfg-eth0 > /etc/sysconfig/network/ifcfg-eth0.updated
@@ -70,8 +72,9 @@ mv /etc/hosts.updated /etc/hosts
 echo "default 192.168.0.1 - -" >> /etc/sysconfig/network/routes
 
 # Update DNS server
-sed 's/NETCONFIG_DNS_STATIC_SERVERS=\"\"/NETCONFIG_DNS_STATIC_SERVERS=\"192.168.0.1\"/' /etc/sysconfig/network/config > /etc/sysconfig/network/config.updated
-mv /etc/sysconfig/network/config.updated /etc/sysconfig/network/config
+sed 's/NETCONFIG_DNS_STATIC_SEARCHLIST=\"\"/NETCONFIG_DNS_STATIC_SEARCHLIST=\"$($netbiosName.ToLower()).$($domainSuffix)\"/' /etc/sysconfig/network/config > /etc/sysconfig/network/config.updated1
+sed 's/NETCONFIG_DNS_STATIC_SERVERS=\"\"/NETCONFIG_DNS_STATIC_SERVERS=\"192.168.0.1\"/' /etc/sysconfig/network/config.updated1 > /etc/sysconfig/network/config.updated2
+mv /etc/sysconfig/network/config.updated2 /etc/sysconfig/network/config
 
 # Alter root password
 yes $adminPassword | passwd root
@@ -157,8 +160,15 @@ echo -e "UUID=`$storage_uuid\\t/var/longhorn-storage\\text4\\tnoatime,x-systemd.
 sudo cp /home/$($adminUsername)/fstab /etc/fstab
 sudo mount -a
 
+# Install ping, nslookup and other network utilities
+sudo zypper addrepo https://download.opensuse.org/repositories/network:utilities/SLE_15_SP4/network:utilities.repo
+sudo zypper --gpg-auto-import-keys refresh
+sudo zypper install -y iputils
+sudo zypper install -y bind
+
 # Join to the domain
 sudo zypper -n install realmd adcli sssd sssd-tools sssd-ad samba-client
+sudo hostname $($serverName).$($netbiosName.ToLower()).$($domainSuffix)
 echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffix) -U '$($adminUsername)@$($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' -v
 
 # Add firewall rules
@@ -244,6 +254,30 @@ sudo sshpass -f /root/sshpassfile ssh-copy-id -i /root/susesrv_id_rsa.pub $($adm
 "@
 
     ssh -i $HOME\.ssh\susesrv_id_rsa $adminUsername@$($ipAddress) $($script)
+}
+
+function Spinup-Node
+{
+  param(
+    [string]$serverName,
+    [string]$ipAddress,
+    [string]$adminUsername,
+    [string]$adminPassword,
+    [string]$suseLicenseKey,
+    [string]$netbiosName,
+    [string]$domainSuffix
+  )
+  Write-Host "$(Get-Date) - Creating $serverName"
+  Install-SuseServer -serverName $serverName -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -netbiosName $netbiosName -domainSuffix $domainSuffix
+  Write-Host "$(Get-Date) - Adding data disk to $serverName"
+  New-VHD -Path F:\$serverName\datadisk.vhdx -SizeBytes 512GB -Dynamic
+  Add-VMHardDiskDrive -VMName $serverName -Path F:\$serverName\datadisk.vhdx
+  # Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
+  ssh -i $HOME\.ssh\susesrv_id_rsa root@$ipAddress "exit"
+  Write-Host "$(Get-Date) - Installing dependencies on $serverName"
+  Connect-SuseServer -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -suseLicenseKey $suseLicenseKey
+  Write-Host "$(Get-Date) - Configuring K8s cluster on $serverName"
+  Setup-K8sCluster -serverName $serverName -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -netbiosName $netbiosName -domainSuffix $domainSuffix
 }
 
 function VerifyNodeRunning
@@ -366,6 +400,28 @@ Add-DnsServerResourceRecordA -Name "mssql22-agl1" -ZoneName "$($Env:netbiosName.
 Add-DnsServerResourceRecordA -Name "influxdb" -ZoneName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -IPv4Address "192.168.194.0" -TimeToLive "00:20:00"
 Add-DnsServerResourceRecordA -Name "grafana" -ZoneName "$($Env:netbiosName.toLower()).$Env:domainSuffix" -IPv4Address "192.168.194.1" -TimeToLive "00:20:00"
 
+# Create new rDNS and add records
+Write-Host "$(Get-Date) - Adding reverse DNS records"
+Add-DnsServerPrimaryZone -NetworkID "192.168.0.0/16" -ReplicationScope "Domain"
+Add-DnsServerResourceRecordPtr -Name "1.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "sqlk8sjumpbox.sqlk8s.local"
+
+Add-DnsServerResourceRecordPtr -Name "5.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv01.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "6.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv02.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "7.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv03.sqlk8s.local"
+
+Add-DnsServerResourceRecordPtr -Name "0.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-0.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "1.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-1.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "2.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-2.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "3.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-agl1.sqlk8s.local"
+
+Add-DnsServerResourceRecordPtr -Name "0.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-0.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "1.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-1.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "2.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-2.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "3.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-agl1.sqlk8s.local"
+
+Add-DnsServerResourceRecordPtr -Name "0.194" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "influxdb.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "1.194" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "grafana.sqlk8s.local"
+
 # Create the NAT network
 Write-Header "$(Get-Date) - Creating Hyper-V Network"
 Write-Host "$(Get-Date) - Creating Internal NAT"
@@ -415,47 +471,17 @@ Copy-Item -Path "C:\Deployment\susesrv\susesrv_id_rsa*" -Destination "$HOME\.ssh
 $susesrv = "susesrv01"
 $susesrvip = "192.168.0.5"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Write-Host "$(Get-Date) - Creating $susesrv"
-Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword
-Write-Host "$(Get-Date) - Adding data disk to $susesrv"
-New-VHD -Path F:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
-Add-VMHardDiskDrive -VMName $susesrv -Path F:\$susesrv\datadisk.vhdx
-# Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
-ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
-Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
-Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
-Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
-Setup-K8sCluster -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
 
 $susesrv = "susesrv02"
 $susesrvip = "192.168.0.6"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Write-Host "$(Get-Date) - Creating $susesrv"
-Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword
-Write-Host "$(Get-Date) - Adding data disk to $susesrv"
-New-VHD -Path G:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
-Add-VMHardDiskDrive -VMName $susesrv -Path G:\$susesrv\datadisk.vhdx
-# Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
-ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
-Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
-Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
-Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
-Setup-K8sCluster -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
 
 $susesrv = "susesrv03"
 $susesrvip = "192.168.0.7"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Write-Host "$(Get-Date) - Creating $susesrv"
-Install-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword
-Write-Host "$(Get-Date) - Adding data disk to $susesrv"
-New-VHD -Path H:\$susesrv\datadisk.vhdx -SizeBytes 512GB -Dynamic
-Add-VMHardDiskDrive -VMName $susesrv -Path H:\$susesrv\datadisk.vhdx
-# Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
-ssh -i $HOME\.ssh\susesrv_id_rsa root@$susesrvip "exit"
-Write-Host "$(Get-Date) - Installing dependencies on $susesrv"
-Connect-SuseServer -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey
-Write-Host "$(Get-Date) - Configuring K8s cluster on $susesrv"
-Setup-K8sCluster -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
 
 Write-Header "$(Get-Date) - Configuring known_hosts on $Env:jumpboxVM"
 ssh-keyscan -t ecdsa 192.168.0.5 > $HOME\.ssh\known_hosts
@@ -471,9 +497,9 @@ New-Item -Path "$HOME\.kube" -ItemType directory -Force
 scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/.kube/config.updated $HOME\.kube\config
 
 Write-Header "$(Get-Date) - Verifying availability of K8s Nodes"
-VerifyNodeRunning -serverName "susesrv01" -maxAttempts 60 -failedSleepTime 10
-VerifyNodeRunning -serverName "susesrv02" -maxAttempts 60 -failedSleepTime 10
-VerifyNodeRunning -serverName "susesrv03" -maxAttempts 60 -failedSleepTime 10
+VerifyNodeRunning -serverName "susesrv01.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
+VerifyNodeRunning -serverName "susesrv02.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
+VerifyNodeRunning -serverName "susesrv03.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
 
 Write-Header "$(Get-Date) - Deploying Longhorn to K8s"
 kubectl apply -f $Env:DeploymentDir\longhorn-1.5.3\deploy\longhorn.yaml
