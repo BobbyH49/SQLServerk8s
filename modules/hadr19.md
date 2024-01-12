@@ -16,7 +16,7 @@ The first thing you will need to do is obtain a license to use the DxEnterprise 
 
     ![Open Powershell](media/OpenPowershell.jpg)
 
-3. Login to Azure AD using the System Managed Identity for SqlK8sJumpbox
+3. Login to Azure AD using the System Managed Identity for SqlK8sJumpbox (**AKS** Platform only)
 
     ```text
     az login --identity
