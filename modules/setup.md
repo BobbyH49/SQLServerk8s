@@ -10,7 +10,7 @@
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2Fsetup.json)
 
-The following options are available
+The following options are available as a SQL Server Kubernetes build on either Azure Kubernetes Service (AKS) or a Rancher RKE2 cluster built on top of 3 SLES 15 SP4 servers which you can port to an on-premise environment.  **You don't need a managed Kubernetes service to run this, you just need 3 VMs with SLES 15 SP4 installed and a copy of the scripts and templates from this Repository.**
 
 1. Deploy lab environment including domain, kerberos authentication, and TLS certificates. You can then follow instructions on how to install a standalone instance of SQL Server 2019 and \/ or SQL Server 2022.
     1. Select **NO** for the **Install SQL 2019** and **Install SQL 2022** parameters
@@ -27,7 +27,7 @@ The following options are available
 
 **NB: For the Always-on Availability Group solutions, you will be using DxEnterprise which is a licensed product from DH2i.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.  The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.**
 
-The following resources will be deployed.  It takes around 30-40 minutes to deploy resources followed by between 5 minutes (no sql or monitoring deployed) and 30 minutes (all sql and monitoring deployed) to execute the SqlK8sJumpbox logon script.
+The following resources will be deployed if you choose the AKS platform.  It takes around 30-40 minutes to deploy resources followed by between 5 minutes (no sql or monitoring deployed) and 30 minutes (all sql and monitoring deployed) to execute the SqlK8sJumpbox logon script.
 
 * Virtual Network (SqlK8s-vnet)
 * 3 subnets (AKS, VMs, AzureBastionSubnet)
@@ -44,6 +44,18 @@ The following resources will be deployed.  It takes around 30-40 minutes to depl
 
 **The Linux server (SqlK8sLinux) is not required once deployment has completed.  It can be permanently deleted.**
 
+The following resources will be deployed if you choose the SLES 15 platform.  It takes around 10-15 minutes to deploy resources followed by between 25 minutes (no sql or monitoring deployed) and 45 minutes (all sql and monitoring deployed) to execute the SqlK8sJumpbox logon script.
+
+* Virtual Network (SqlK8s-vnet)
+* 2 subnets (VMs, AzureBastionSubnet)
+* Bastion Host (SqlK8s-bastion)
+* 1 Virtual Machine (Standard_D48ls_v5)
+    * SqlK8sJumpbox (Client, Domain Controller, and Hyper-V Server used to run scripts with 1 Nic, 1 OS Disk, and 3 Data Disks)
+* 3 Network Security Groups (1 for each subnet and 1 for Nic on SqlK8sJumpbox)
+* 2 Public IP Addresses (1 for Bastion and 1 for Jumpbox)
+
+**NB: This deployment can be expensive to keep running but you can reduce costs by shutting down the Virtual Machine, and starting up when required.  You can also drop the bastion host when shutting down the Virtual Machine and then re-create when required.**
+
 ## Deploy Azure Resources
 
 1. Right-click or **Ctrl + click** the deploy button under [Deployment](#deployment).  This will open the Azure Portal in a new window.
@@ -59,8 +71,11 @@ The following resources will be deployed.  It takes around 30-40 minutes to depl
     * Ip Address Range_10.X.0.0 - A number between 0 and 255 to set the IP Address range of your network (default is 0 for 10.0.0.0, max is 255 for 10.255.0.0)
     * Install SQL2019 - Select **Yes** if you want SQL Server 2019 to be automatically installed
     * Install SQL2022 - Select **Yes** if you want SQL Server 2022 to be automatically installed
-    * DH2i License Key - Leave blank to install standalone instances or populate to automatically configure an Availability Group (SQL Server 2019) and \/ or a Contained Availability Group (SQL Server 2022)
     * Install Monitoring - Select **Yes** if you want the Grafana monitoring solution to be installed
+    * DH2i Availability Group - Select **Yes** to create a 3 node Availability Group (SQL Server 2019) and \/ or Contained Availability Group (SQL Server 2022), or select **No** to create standalone instance(s)
+    * DH2i License Key - If you have selected **Yes** for **DH2i Availability Group**, then provide the DxEnterprise License Key, otherwise you can leave blank
+    * Platform - Select **AKS** to create an Azure Kubernetes Service Cluster, or **SUSE** to create a Rancher RKE2 Kubernetes cluster on SLES 15 Servers
+    * Suse License Key - If you have selected **SUSE** for **Platform**, then provide the SLES 15 License Key, otherwise you can leave blank
 
     ![Deploy Resources](media/DeployResources.jpg)
 
@@ -88,7 +103,7 @@ The following resources will be deployed.  It takes around 30-40 minutes to depl
 
     ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 
-9. A Powershell window will open and setup the lab.  This can take between 5 minutes (no sql or monitoring deployed) and 30 minutes (all sql and monitoring deployed).  Once the script has completed, your lab environment should be ready.
+9. A Powershell window will open and setup the lab.  This can take between 5 minutes and 45 minutes depending on the options selected when deploying.  Once the script has completed, your lab environment should be ready.
 
     ![Jumbbox Logon Script](media/JumpboxLogonScript.jpg)
 

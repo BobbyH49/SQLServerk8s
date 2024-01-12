@@ -12,7 +12,7 @@
 
     ![Open Powershell](media/OpenPowershell.jpg)
 
-3. Login to Azure AD using the System Managed Identity for SqlK8sJumpbox
+3. Login to Azure AD using the System Managed Identity for SqlK8sJumpbox (**AKS** Platform only)
 
     ```text
     az login --identity
@@ -20,7 +20,7 @@
 
     ![Azure CLI SignedIn Powershell](media/AzureCLILogin.jpg)
 
-4. Connect to your AKS Cluster in the scope of your \<resourceGroup\> and store the profile
+4. Connect to your AKS Cluster in the scope of your \<resourceGroup\> and store the profile (**AKS** Platform only)
 
     ```text
     az aks get-credentials -n sqlk8saks -g <resourceGroup>

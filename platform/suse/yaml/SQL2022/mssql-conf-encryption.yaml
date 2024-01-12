@@ -1,0 +1,32 @@
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: mssql22
+data:
+  mssql.conf: |
+    [EULA]
+    accepteula = Y
+    accepteulaml = Y
+
+    [coredump]
+    captureminiandfull = true
+    coredumptype = full
+
+    [language]
+    lcid = 1033
+
+    [filelocation]
+    defaultdatadir = /var/opt/mssql/userdata
+    defaultlogdir = /var/opt/mssql/userlog
+    defaultbackupdir = /var/opt/mssql/backup
+
+    [sqlagent]
+    enabled = true
+
+    [network]
+    privilegedadaccount = sqlk8ssvc22
+    kerberoskeytabfile = /var/opt/mssql/secrets/mssql.keytab
+    tlscert = /var/opt/mssql/certs/mssql.pem
+    tlskey = /var/opt/mssql/private/mssql.key
+    tlsprotocols = 1.2
+    forceencryption = 1
