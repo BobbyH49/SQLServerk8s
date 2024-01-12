@@ -1,4 +1,4 @@
-# Lab Setup with AKS Cluster using privatelink connections
+# Lab Setup with AKS or SLES Rancher RKE2 Kubernetes Cluster using privatelink connections
 
 **[Home](../README.md)** - [Next Module >](../modules/sql19.md)
 

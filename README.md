@@ -1,4 +1,4 @@
-# SQL Server 2019 and 2022 on Azure Kubernetes Service (AKS)
+# SQL Server 2019 and 2022 on Azure Kubernetes Service (AKS) or SLES Rancher RKE2 Kubernetes Cluster
 
 The following topics are covered
 
