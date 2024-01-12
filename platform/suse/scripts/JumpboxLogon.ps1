@@ -279,8 +279,8 @@ function Spinup-Node
   else {
     $driveLetter = "H"
   }
-  New-VHD -Path $($driveLetter):\$serverName\datadisk.vhdx -SizeBytes 512GB -Dynamic
-  Add-VMHardDiskDrive -VMName $serverName -Path $($driveLetter):\$serverName\datadisk.vhdx
+  New-VHD -Path "$($driveLetter):\$serverName\datadisk.vhdx" -SizeBytes 512GB -Dynamic
+  Add-VMHardDiskDrive -VMName $serverName -Path "$($driveLetter):\$serverName\datadisk.vhdx"
   # Attempt to fix a bug where the primary disk swaps from /dev/sda to /dev/sdb
   ssh -i $HOME\.ssh\susesrv_id_rsa root@$ipAddress "exit"
   Write-Host "$(Get-Date) - Installing dependencies on $serverName"
@@ -288,7 +288,6 @@ function Spinup-Node
   Write-Host "$(Get-Date) - Configuring K8s cluster on $serverName"
   Setup-K8sCluster -serverName $serverName -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -netbiosName $netbiosName -domainSuffix $domainSuffix
 }
-
 
 function VerifyNodeRunning
 {
