@@ -44,7 +44,7 @@ The following resources will be deployed if you choose the AKS platform.  It tak
 
 **The Linux server (SqlK8sLinux) is not required once deployment has completed.  It can be permanently deleted.**
 
-The following resources will be deployed if you choose the SLES 15 platform.  It takes around 10-15 minutes to deploy resources followed by between 20 minutes (no sql or monitoring deployed) and 45 minutes (all sql and monitoring deployed) to execute the SqlK8sJumpbox logon script.
+The following resources will be deployed if you choose the SLES 15 platform.  It takes around 10-15 minutes to deploy resources followed by between 25 minutes (no sql or monitoring deployed) and 45 minutes (all sql and monitoring deployed) to execute the SqlK8sJumpbox logon script.
 
 * Virtual Network (SqlK8s-vnet)
 * 2 subnets (VMs, AzureBastionSubnet)
@@ -103,7 +103,7 @@ The following resources will be deployed if you choose the SLES 15 platform.  It
 
     ![Supply AD Credentials](media/SupplyADCredentials.jpg)
 
-9. A Powershell window will open and setup the lab.  This can take between 5 minutes (no sql or monitoring deployed) and 30 minutes (all sql and monitoring deployed).  Once the script has completed, your lab environment should be ready.
+9. A Powershell window will open and setup the lab.  This can take between 5 minutes and 45 minutes depending on the options selected when deploying.  Once the script has completed, your lab environment should be ready.
 
     ![Jumbbox Logon Script](media/JumpboxLogonScript.jpg)
 
