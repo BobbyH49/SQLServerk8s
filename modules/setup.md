@@ -8,7 +8,7 @@
 
 ## Deployment
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Ftemplates%2Fsetup.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Fplatform%2Fsetup.json)
 
 The following options are available as a SQL Server Kubernetes build on either Azure Kubernetes Service (AKS) or a Rancher RKE2 cluster built on top of 3 SLES 15 SP4 servers which you can port to an on-premise environment.  **You don't need a managed Kubernetes service to run this, you just need 3 VMs with SLES 15 SP4 installed and a copy of the scripts and templates from this Repository.**
 
