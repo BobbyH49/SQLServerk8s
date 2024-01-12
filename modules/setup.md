@@ -27,7 +27,7 @@ The following options are available as a SQL Server Kubernetes build on either A
 
 **NB: For the Always-on Availability Group solutions, you will be using DxEnterprise which is a licensed product from DH2i.  For more information refer to https://support.dh2i.com/docs/guides/dxenterprise/containers/kubernetes/mssql-ag-k8s-statefulset-qsg/.  The first thing you will need to do is obtain a license to use the DxEnterprise software.  For the purpose of testing / proof of concepts you can register and download a development license from https://dh2i.com/trial/.**
 
-**NB: For SUSE deployment you will need to have a SLES 15 license.  You can obtain a trial license from https://www.suse.com/download/sles/**
+**NB: For SUSE deployment you will need to have a SLES 15 license.  You can obtain a trial license from https://www.suse.com/download/sles/.  This solution also includes Kubernetes mounted storage using Longhorn (https://longhorn.io/) as well as a Kubernetes load balancer using MetalLB (https://metallb.org/).**
 
 The following resources will be deployed if you choose the AKS platform.  It takes around 30-40 minutes to deploy resources followed by between 5 minutes (no sql or monitoring deployed) and 30 minutes (all sql and monitoring deployed) to execute the SqlK8sJumpbox logon script.
 
