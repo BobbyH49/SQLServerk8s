@@ -58,14 +58,16 @@ function Install-SuseServer
     Write-Host "$(Get-Date) - Congigure networking and logins for $susesrv"
 $script = @"
 # Add Hostname
-echo "$($serverName).$($netbiosName.ToLower()).$($domainSuffix)" >> /etc/hostname
+#echo "$($serverName).$($netbiosName.ToLower()).$($domainSuffix)" >> /etc/hostname
+echo "$($serverName)" >> /etc/hostname
 
 # Update network config
 sed 's/192.168.0.4\/20/$($ipAddress)\/16/' /etc/sysconfig/network/ifcfg-eth0 > /etc/sysconfig/network/ifcfg-eth0.updated
 mv /etc/sysconfig/network/ifcfg-eth0.updated /etc/sysconfig/network/ifcfg-eth0
 
 # Update hosts file
-sed 's/192.168.0.4\tsusesrv/$($ipAddress)\t$($serverName).$($netbiosName.ToLower()).$($domainSuffix)/' /etc/hosts > /etc/hosts.updated
+#sed 's/192.168.0.4\tsusesrv/$($ipAddress)\t$($serverName).$($netbiosName.ToLower()).$($domainSuffix)/' /etc/hosts > /etc/hosts.updated
+sed 's/192.168.0.4\tsusesrv/$($ipAddress)\t$($serverName)/' /etc/hosts > /etc/hosts.updated
 mv /etc/hosts.updated /etc/hosts
 
 # Add route for default gateway
@@ -168,7 +170,7 @@ sudo zypper install -y bind
 
 # Join to the domain
 sudo zypper -n install realmd adcli sssd sssd-tools sssd-ad samba-client
-sudo hostname $($serverName).$($netbiosName.ToLower()).$($domainSuffix)
+#sudo hostname $($serverName).$($netbiosName.ToLower()).$($domainSuffix)
 echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffix) -U '$($adminUsername)@$($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' -v
 
 # Change kernel.hostname
