@@ -61,11 +61,11 @@ $script = @"
 echo "$($serverName).$($netbiosName.ToLower()).$($domainSuffix)" >> /etc/hostname
 
 # Update network config
-sed 's/192.168.0.4/$($ipAddress)/' /etc/sysconfig/network/ifcfg-eth0 > /etc/sysconfig/network/ifcfg-eth0.updated
+sed 's/192.168.0.4\/20/$($ipAddress)\/16/' /etc/sysconfig/network/ifcfg-eth0 > /etc/sysconfig/network/ifcfg-eth0.updated
 mv /etc/sysconfig/network/ifcfg-eth0.updated /etc/sysconfig/network/ifcfg-eth0
 
 # Update hosts file
-sed 's/192.168.0.4\tsusesrv/$($ipAddress)\t$($serverName)/' /etc/hosts > /etc/hosts.updated
+sed 's/192.168.0.4\tsusesrv/$($ipAddress)\t$($serverName).$($netbiosName.ToLower()).$($domainSuffix)/' /etc/hosts > /etc/hosts.updated
 mv /etc/hosts.updated /etc/hosts
 
 # Add route for default gateway
@@ -170,6 +170,12 @@ sudo zypper install -y bind
 sudo zypper -n install realmd adcli sssd sssd-tools sssd-ad samba-client
 sudo hostname $($serverName).$($netbiosName.ToLower()).$($domainSuffix)
 echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffix) -U '$($adminUsername)@$($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' -v
+
+# Change kernel.hostname
+#sudo chown azureuser /etc/sysctl.conf
+#sudo bash -c "echo 'kernel.hostname = $($serverName).$($netbiosName.ToLower()).$($domainSuffix)' >> /etc/sysctl.conf"
+#sudo chown root:root /etc/sysctl.conf
+#sudo sysctl -p
 
 # Add firewall rules
 sudo firewall-cmd --add-rich-rule='rule family=ipv4 source address=192.168.0.0/16 port port=9345 protocol=tcp accept'
@@ -495,10 +501,13 @@ Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:admin
 Write-Header "$(Get-Date) - Configuring known_hosts on $Env:jumpboxVM"
 ssh-keyscan -t ecdsa 192.168.0.5 > $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa susesrv01 >> $HOME\.ssh\known_hosts
+ssh-keyscan -t ecdsa susesrv01.sqlk8s.local >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa 192.168.0.6 >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa susesrv02 >> $HOME\.ssh\known_hosts
+ssh-keyscan -t ecdsa susesrv02.sqlk8s.local >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa 192.168.0.7 >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa susesrv03 >> $HOME\.ssh\known_hosts
+ssh-keyscan -t ecdsa susesrv03.sqlk8s.local >> $HOME\.ssh\known_hosts
 (Get-Content $HOME\.ssh\known_hosts) | Set-Content -Encoding UTF8 $HOME\.ssh\known_hosts
 
 Write-Header "$(Get-Date) - Configuring K8s client on $Env:jumpboxVM"

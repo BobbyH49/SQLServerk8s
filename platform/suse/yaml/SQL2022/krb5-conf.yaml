@@ -9,8 +9,8 @@ data:
 
     [realms]
     SQLK8S.LOCAL = {
-        kdc = sqlk8sdc.sqlk8s.local
-        admin_server = sqlk8sdc.sqlk8s.local
+        kdc = sqlk8sjumpbox.sqlk8s.local
+        admin_server = sqlk8sjumpbox.sqlk8s.local
         default_domain = SQLK8S.LOCAL
     }
 
