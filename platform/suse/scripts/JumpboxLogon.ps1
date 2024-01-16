@@ -517,9 +517,12 @@ New-Item -Path "$HOME\.kube" -ItemType directory -Force
 scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/.kube/config.updated $HOME\.kube\config
 
 Write-Header "$(Get-Date) - Verifying availability of K8s Nodes"
-VerifyNodeRunning -serverName "susesrv01.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
-VerifyNodeRunning -serverName "susesrv02.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
-VerifyNodeRunning -serverName "susesrv03.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
+#VerifyNodeRunning -serverName "susesrv01.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
+#VerifyNodeRunning -serverName "susesrv02.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
+#VerifyNodeRunning -serverName "susesrv03.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
+VerifyNodeRunning -serverName "susesrv01" -maxAttempts 60 -failedSleepTime 10
+VerifyNodeRunning -serverName "susesrv02" -maxAttempts 60 -failedSleepTime 10
+VerifyNodeRunning -serverName "susesrv03" -maxAttempts 60 -failedSleepTime 10
 
 Write-Header "$(Get-Date) - Deploying Longhorn to K8s"
 kubectl apply -f $Env:DeploymentDir\longhorn-1.5.3\deploy\longhorn.yaml
