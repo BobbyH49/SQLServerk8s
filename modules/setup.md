@@ -10,6 +10,10 @@
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FBobbyH49%2FSQLServerk8s%2Fmain%2Fplatform%2Fsetup.json)
 
+**Current Issues :**
+AKS Platform: Kerberos Authentication currently fails on SQL Server 2022 and is being investigated.
+SUSE Platform: Kerberos Authentication currently fails on both SQL Server 2019 and 2022, and is being investigated.  Also, the firewall is currently disabled on all 3 SLES servers.
+
 The following options are available as a SQL Server Kubernetes build on either Azure Kubernetes Service (AKS) or a Rancher RKE2 cluster built on top of 3 SLES 15 SP4 servers which you can port to an on-premise environment.  **You don't need a managed Kubernetes service to run this, you just need 3 VMs with SLES 15 SP4 installed and a copy of the scripts and templates from this Repository.**
 
 1. Deploy lab environment including domain, kerberos authentication, and TLS certificates. You can then follow instructions on how to install a standalone instance of SQL Server 2019 and \/ or SQL Server 2022.
