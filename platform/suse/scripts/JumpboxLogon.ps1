@@ -35,46 +35,46 @@ function Verify-ServerStart
 
 function Install-SuseServer
 {
-    param(
-        [string]$serverName,
-        [string]$ipAddress,
-        [string]$adminUsername,
-        [string]$adminPassword,
-	[string]$netbiosName,
-	[string]$domainSuffix
-    )
-    Copy-Item -Path "C:\Deployment\susesrv\osdisk.vhdx" -Destination "C:\Hyper-V\$susesrv\osdisk.vhdx"
-    New-VM -Name $susesrv -MemoryStartupBytes 24GB -BootDevice VHD -VHDPath "C:\Hyper-V\$susesrv\osdisk.vhdx" -Path "C:\Hyper-V" -Generation 2 -Switch $switchName
-    Set-VMProcessor -VMName $susesrv -Count 12
-    Set-VMFirmware -VMName $susesrv -EnableSecureBoot off
-    Set-VM -Name $susesrv -AutomaticStartAction Start -AutomaticStopAction ShutDown
-    Start-VM -Name $susesrv
-    Start-Sleep -Seconds 10
+  param(
+    [string]$serverName,
+    [string]$ipAddress,
+    [string]$adminUsername,
+    [string]$adminPassword,
+    [string]$netbiosName,
+    [string]$domainSuffix,
+    [string]$deploymentDir,
+    [string]$switchName
+  )
+  Copy-Item -Path "$deploymentDir\susesrv\osdisk.vhdx" -Destination "C:\Hyper-V\$serverName\osdisk.vhdx"
+  New-VM -Name $serverName -MemoryStartupBytes 24GB -BootDevice VHD -VHDPath "C:\Hyper-V\$serverName\osdisk.vhdx" -Path "C:\Hyper-V" -Generation 2 -Switch $switchName
+  Set-VMProcessor -VMName $serverName -Count 12
+  Set-VMFirmware -VMName $serverName -EnableSecureBoot off
+  Set-VM -Name $serverName -AutomaticStartAction Start -AutomaticStopAction ShutDown
+  Start-VM -Name $serverName
+  Start-Sleep -Seconds 10
 
-    Verify-ServerStart -serverName "$serverName" -ipAddress "192.168.0.4" -maxAttempts 60 -failedSleepTime 10
+  Verify-ServerStart -serverName "$serverName" -ipAddress "192.168.0.4" -maxAttempts 60 -failedSleepTime 10
 
-    scp -i $HOME\.ssh\susesrv_id_rsa /../Deployment/susesrv/susesrv_id_rsa* root@192.168.0.4:~/
+  scp -i $HOME\.ssh\susesrv_id_rsa $deploymentDir\susesrv\susesrv_id_rsa* root@192.168.0.4:/root
 
-    Write-Host "$(Get-Date) - Congigure networking and logins for $susesrv"
+  Write-Host "$(Get-Date) - Congigure networking and logins for $serverName"
 $script = @"
 # Add Hostname
-#echo "$($serverName).$($netbiosName.ToLower()).$($domainSuffix)" >> /etc/hostname
-echo "$($serverName)" >> /etc/hostname
+echo "$($serverName).$($netbiosName.ToLower()).$($domainSuffix)" >> /etc/hostname
 
 # Update network config
 sed 's/192.168.0.4\/20/$($ipAddress)\/16/' /etc/sysconfig/network/ifcfg-eth0 > /etc/sysconfig/network/ifcfg-eth0.updated
 mv /etc/sysconfig/network/ifcfg-eth0.updated /etc/sysconfig/network/ifcfg-eth0
 
 # Update hosts file
-#sed 's/192.168.0.4\tsusesrv/$($ipAddress)\t$($serverName).$($netbiosName.ToLower()).$($domainSuffix)/' /etc/hosts > /etc/hosts.updated
-sed 's/192.168.0.4\tsusesrv/$($ipAddress)\t$($serverName)/' /etc/hosts > /etc/hosts.updated
+sed 's/192.168.0.4\tsusesrv/$($ipAddress)\t$($serverName).$($netbiosName.ToLower()).$($domainSuffix)/' /etc/hosts > /etc/hosts.updated
 mv /etc/hosts.updated /etc/hosts
 
 # Add route for default gateway
 echo "default 192.168.0.1 - -" >> /etc/sysconfig/network/routes
 
 # Update DNS server
-sed 's/NETCONFIG_DNS_STATIC_SEARCHLIST=\"\"/NETCONFIG_DNS_STATIC_SEARCHLIST=\"$($netbiosName.ToLower()).$($domainSuffix)\"/' /etc/sysconfig/network/config > /etc/sysconfig/network/config.updated1
+sed 's/NETCONFIG_DNS_STATIC_SEARCHLIST=\"\"/NETCONFIG_DNS_STATIC_SEARCHLIST=\"$($netbiosName.ToLower()).$($domainSuffix) com\"/' /etc/sysconfig/network/config > /etc/sysconfig/network/config.updated1
 sed 's/NETCONFIG_DNS_STATIC_SERVERS=\"\"/NETCONFIG_DNS_STATIC_SERVERS=\"192.168.0.1\"/' /etc/sysconfig/network/config.updated1 > /etc/sysconfig/network/config.updated2
 mv /etc/sysconfig/network/config.updated2 /etc/sysconfig/network/config
 
@@ -93,9 +93,9 @@ mv /etc/chrony.conf.updated /etc/chrony.conf
 reboot
 "@
 
-    ssh -i $HOME\.ssh\susesrv_id_rsa root@192.168.0.4 $($script)
+  ssh -i $HOME\.ssh\susesrv_id_rsa root@192.168.0.4 $($script)
 
-    Verify-ServerStart -serverName "$serverName" -ipAddress $ipAddress -maxAttempts 60 -failedSleepTime 10
+  Verify-ServerStart -serverName "$serverName" -ipAddress $ipAddress -maxAttempts 60 -failedSleepTime 10
 }
 
 function Connect-SuseServer
@@ -162,29 +162,32 @@ echo -e "UUID=`$storage_uuid\\t/var/longhorn-storage\\text4\\tnoatime,x-systemd.
 sudo cp /home/$($adminUsername)/fstab /etc/fstab
 sudo mount -a
 
+# install domain tools
+sudo zypper -n install realmd krb5-client sssd-ad adcli sssd sssd-ldap sssd-tools
+
 # Install ping, nslookup and other network utilities
-sudo zypper addrepo https://download.opensuse.org/repositories/network:utilities/SLE_15_SP4/network:utilities.repo
+sudo zypper addrepo https://download.opensuse.org/repositories/network:utilities/SLE_15_SP5/network:utilities.repo
 sudo zypper --gpg-auto-import-keys refresh
 sudo zypper install -y iputils
 sudo zypper install -y bind
 
-# Join to the domain
-sudo zypper -n install realmd krb5-client sssd-ad adcli sssd sssd-ldap sssd-tools
-#sudo hostname $($serverName).$($netbiosName.ToLower()).$($domainSuffix)
+# Join the domain
 echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffix) -U '$($adminUsername)@$($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' -v
 
 # Add configurations to krb5.conf
-sudo echo '' >> /etc/krb5.conf
-sudo echo '[realms]' >> /etc/krb5.conf
-sudo echo 'SQLK8S.LOCAL = {' >> /etc/krb5.conf
-sudo echo '    kdc = sqlk8sjumpbox.sqlk8s.local' >> /etc/krb5.conf
-sudo echo '    admin_server = sqlk8sjumpbox.sqlk8s.local' >> /etc/krb5.conf
-sudo echo '    default_domain = sqlk8s.local' >> /etc/krb5.conf
-sudo echo '}' >> /etc/krb5.conf
-sudo echo '' >> /etc/krb5.conf
-sudo echo '[domain_realm]' >> /etc/krb5.conf
-sudo echo '.sqlk8s.local = SQLK8S.LOCAL' >> /etc/krb5.conf
-sudo echo 'sqlk8s.local = SQLK8S.LOCAL' >> /etc/krb5.conf
+cp /etc/krb5.conf /home/$($adminUsername)/krb5.conf
+echo '' >> /home/$($adminUsername)/krb5.conf
+echo '[realms]' >> /home/$($adminUsername)/krb5.conf
+echo 'SQLK8S.LOCAL = {' >> /home/$($adminUsername)/krb5.conf
+echo '    kdc = sqlk8sjumpbox.sqlk8s.local' >> /home/$($adminUsername)/krb5.conf
+echo '    admin_server = sqlk8sjumpbox.sqlk8s.local' >> /home/$($adminUsername)/krb5.conf
+echo '    default_domain = sqlk8s.local' >> /home/$($adminUsername)/krb5.conf
+echo '}' >> /home/$($adminUsername)/krb5.conf
+echo '' >> /home/$($adminUsername)/krb5.conf
+echo '[domain_realm]' >> /home/$($adminUsername)/krb5.conf
+echo '.sqlk8s.local = SQLK8S.LOCAL' >> /home/$($adminUsername)/krb5.conf
+echo 'sqlk8s.local = SQLK8S.LOCAL' >> /home/$($adminUsername)/krb5.conf
+sudo mv /home/$($adminUsername)/krb5.conf /etc/krb5.conf
 
 # Add firewall rules
 sudo firewall-cmd --add-rich-rule='rule family=ipv4 source address=192.168.0.0/16 port port=9345 protocol=tcp accept'
@@ -264,8 +267,8 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 mkdir /home/$($adminUsername)/.kube
 sudo cp -T /etc/rancher/rke2/rke2.yaml /home/$($adminUsername)/.kube/config
 sudo chown $($adminUsername):users /home/$($adminUsername)/.kube/config
-sed 's/127.0.0.1/$($susesrvip)/' /home/$($adminUsername)/.kube/config > /home/$($adminUsername)/.kube/config.updated;
-sudo sshpass -f /root/sshpassfile ssh-copy-id -i /root/susesrv_id_rsa.pub $($adminUsername)@$($susesrv)
+sed 's/127.0.0.1/$($ipAddress)/' /home/$($adminUsername)/.kube/config > /home/$($adminUsername)/.kube/config.updated;
+sudo sshpass -f /root/sshpassfile ssh-copy-id -i /root/susesrv_id_rsa.pub $($adminUsername)@$($serverName)
 "@
 
     ssh -i $HOME\.ssh\susesrv_id_rsa $adminUsername@$($ipAddress) $($script)
@@ -280,10 +283,12 @@ function Spinup-Node
     [string]$adminPassword,
     [string]$suseLicenseKey,
     [string]$netbiosName,
-    [string]$domainSuffix
+    [string]$domainSuffix,
+    [string]$deploymentDir,
+    [string]$switchName
   )
   Write-Host "$(Get-Date) - Creating $serverName"
-  Install-SuseServer -serverName $serverName -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -netbiosName $netbiosName -domainSuffix $domainSuffix
+  Install-SuseServer -serverName $serverName -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -netbiosName $netbiosName -domainSuffix $domainSuffix -deploymentDir $deploymentDir -switchName $switchName
   Write-Host "$(Get-Date) - Adding data disk to $serverName"
   if ($serverName -eq "susesrv01") {
     $driveLetter = "F"
@@ -495,17 +500,17 @@ Copy-Item -Path "C:\Deployment\susesrv\susesrv_id_rsa*" -Destination "$HOME\.ssh
 $susesrv = "susesrv01"
 $susesrvip = "192.168.0.5"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $Env:switchName
 
 $susesrv = "susesrv02"
 $susesrvip = "192.168.0.6"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $Env:switchName
 
 $susesrv = "susesrv03"
 $susesrvip = "192.168.0.7"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $Env:switchName
 
 Write-Header "$(Get-Date) - Configuring known_hosts on $Env:jumpboxVM"
 ssh-keyscan -t ecdsa 192.168.0.5 > $HOME\.ssh\known_hosts
@@ -524,9 +529,6 @@ New-Item -Path "$HOME\.kube" -ItemType directory -Force
 scp -i $HOME\.ssh\susesrv_id_rsa $Env:adminUsername@susesrv01:/home/$Env:adminUsername/.kube/config.updated $HOME\.kube\config
 
 Write-Header "$(Get-Date) - Verifying availability of K8s Nodes"
-#VerifyNodeRunning -serverName "susesrv01.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
-#VerifyNodeRunning -serverName "susesrv02.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
-#VerifyNodeRunning -serverName "susesrv03.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)" -maxAttempts 60 -failedSleepTime 10
 VerifyNodeRunning -serverName "susesrv01" -maxAttempts 60 -failedSleepTime 10
 VerifyNodeRunning -serverName "susesrv02" -maxAttempts 60 -failedSleepTime 10
 VerifyNodeRunning -serverName "susesrv03" -maxAttempts 60 -failedSleepTime 10
