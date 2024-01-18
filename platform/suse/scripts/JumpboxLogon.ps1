@@ -169,15 +169,22 @@ sudo zypper install -y iputils
 sudo zypper install -y bind
 
 # Join to the domain
-sudo zypper -n install realmd adcli sssd sssd-tools sssd-ad samba-client
+sudo zypper -n install realmd krb5-client sssd-ad adcli sssd sssd-ldap sssd-tools
 #sudo hostname $($serverName).$($netbiosName.ToLower()).$($domainSuffix)
 echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffix) -U '$($adminUsername)@$($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' -v
 
-# Change kernel.hostname
-#sudo chown azureuser /etc/sysctl.conf
-#sudo bash -c "echo 'kernel.hostname = $($serverName).$($netbiosName.ToLower()).$($domainSuffix)' >> /etc/sysctl.conf"
-#sudo chown root:root /etc/sysctl.conf
-#sudo sysctl -p
+# Add configurations to krb5.conf
+sudo echo '' >> /etc/krb5.conf
+sudo echo '[realms]' >> /etc/krb5.conf
+sudo echo 'SQLK8S.LOCAL = {' >> /etc/krb5.conf
+sudo echo '    kdc = sqlk8sjumpbox.sqlk8s.local' >> /etc/krb5.conf
+sudo echo '    admin_server = sqlk8sjumpbox.sqlk8s.local' >> /etc/krb5.conf
+sudo echo '    default_domain = sqlk8s.local' >> /etc/krb5.conf
+sudo echo '}' >> /etc/krb5.conf
+sudo echo '' >> /etc/krb5.conf
+sudo echo '[domain_realm]' >> /etc/krb5.conf
+sudo echo '.sqlk8s.local = SQLK8S.LOCAL' >> /etc/krb5.conf
+sudo echo 'sqlk8s.local = SQLK8S.LOCAL' >> /etc/krb5.conf
 
 # Add firewall rules
 sudo firewall-cmd --add-rich-rule='rule family=ipv4 source address=192.168.0.0/16 port port=9345 protocol=tcp accept'
