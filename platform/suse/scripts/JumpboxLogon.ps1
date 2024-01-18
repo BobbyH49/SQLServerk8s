@@ -121,6 +121,7 @@ zypper addrepo https://download.opensuse.org/repositories/network/SLE_15/network
 sudo zypper --gpg-auto-import-keys refresh
 zypper install -y sshpass
 echo $adminPassword > /root/sshpassfile
+sudo zypper mr -d network
 
 # Add known host
 ssh-keyscan -t ecdsa $ipAddress > /root/.ssh/known_hosts
@@ -162,16 +163,15 @@ echo -e "UUID=`$storage_uuid\\t/var/longhorn-storage\\text4\\tnoatime,x-systemd.
 sudo cp /home/$($adminUsername)/fstab /etc/fstab
 sudo mount -a
 
-# install domain tools
-sudo zypper -n install realmd krb5-client sssd-ad adcli sssd sssd-ldap sssd-tools
-
 # Install ping, nslookup and other network utilities
 sudo zypper addrepo https://download.opensuse.org/repositories/network:utilities/SLE_15_SP5/network:utilities.repo
 sudo zypper --gpg-auto-import-keys refresh
 sudo zypper install -y iputils
 sudo zypper install -y bind
+sudo zypper mr -d network_utilities
 
 # Join the domain
+sudo zypper -n install realmd krb5-client sssd-ad adcli sssd sssd-ldap sssd-tools
 echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffix) -U '$($adminUsername)@$($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' -v
 
 # Add configurations to krb5.conf
