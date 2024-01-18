@@ -500,17 +500,17 @@ Copy-Item -Path "C:\Deployment\susesrv\susesrv_id_rsa*" -Destination "$HOME\.ssh
 $susesrv = "susesrv01"
 $susesrvip = "192.168.0.5"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $Env:switchName
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $switchName
 
 $susesrv = "susesrv02"
 $susesrvip = "192.168.0.6"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $Env:switchName
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $switchName
 
 $susesrv = "susesrv03"
 $susesrvip = "192.168.0.7"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $Env:switchName
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $switchName
 
 Write-Header "$(Get-Date) - Configuring known_hosts on $Env:jumpboxVM"
 ssh-keyscan -t ecdsa 192.168.0.5 > $HOME\.ssh\known_hosts
