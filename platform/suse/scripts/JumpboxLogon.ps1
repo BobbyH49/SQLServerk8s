@@ -177,6 +177,7 @@ sudo zypper -n install realmd krb5-client sssd-ad adcli sssd sssd-ldap sssd-tool
 # Add configurations to krb5.conf
 cp /etc/krb5.conf /home/$($adminUsername)/krb5.conf
 sed s'/rdns = false/rdns = false\n    default_realm = $($netbiosName.ToUpper()).$($domainSuffix.ToUpper())/' /home/$($adminUsername)/krb5.conf > /home/$($adminUsername)/krb5.conf.updated
+mv /home/$($adminUsername)/krb5.conf.updated /home/$($adminUsername)/krb5.conf
 echo '' >> /home/$($adminUsername)/krb5.conf
 echo '[realms]' >> /home/$($adminUsername)/krb5.conf
 echo '$($netbiosName.ToUpper()).$($domainSuffix.ToUpper()) = {' >> /home/$($adminUsername)/krb5.conf
