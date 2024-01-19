@@ -171,15 +171,12 @@ sudo zypper install -y iputils
 sudo zypper install -y bind
 sudo zypper mr -d network_utilities
 
-# Join the domain
+# Install domain tools
 sudo zypper -n install realmd krb5-client sssd-ad adcli sssd sssd-ldap sssd-tools
-echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffix) -U '$($adminUsername)@$($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' -v
 
 # Add configurations to krb5.conf
 cp /etc/krb5.conf /home/$($adminUsername)/krb5.conf
 sed s'/rdns = false/rdns = false\n    default_realm = $($netbiosName.ToUpper()).$($domainSuffix.ToUpper())/' /home/$($adminUsername)/krb5.conf > /home/$($adminUsername)/krb5.conf.updated
-sudo mv /home/$($adminUsername)/krb5.conf.updated /etc/krb5.conf
-
 echo '' >> /home/$($adminUsername)/krb5.conf
 echo '[realms]' >> /home/$($adminUsername)/krb5.conf
 echo '$($netbiosName.ToUpper()).$($domainSuffix.ToUpper()) = {' >> /home/$($adminUsername)/krb5.conf
@@ -192,6 +189,9 @@ echo '[domain_realm]' >> /home/$($adminUsername)/krb5.conf
 echo '.$($netbiosName.ToLower()).$($domainSuffix) = $($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' >> /home/$($adminUsername)/krb5.conf
 echo '$($netbiosName.ToLower()).$($domainSuffix) = $($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' >> /home/$($adminUsername)/krb5.conf
 sudo mv /home/$($adminUsername)/krb5.conf /etc/krb5.conf
+
+# Join the domain
+echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffix) -U '$($adminUsername)@$($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' -v
 
 # Add firewall rules
 sudo firewall-cmd --add-rich-rule='rule family=ipv4 source address=192.168.0.0/16 port port=9345 protocol=tcp accept'
