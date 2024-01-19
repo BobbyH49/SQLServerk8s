@@ -138,7 +138,8 @@ function Setup-K8sCluster
         [string]$adminUsername,
         [string]$adminPassword,
         [string]$netbiosName,
-        [string]$domainSuffix
+        [string]$domainSuffix,
+        [string]$jumpboxVM
     )
 
 $script = @"
@@ -176,17 +177,20 @@ echo '$adminPassword' | sudo realm join $($netbiosName.ToLower()).$($domainSuffi
 
 # Add configurations to krb5.conf
 cp /etc/krb5.conf /home/$($adminUsername)/krb5.conf
+sed s'/rdns = false/rdns = false\n    default_realm = $($netbiosName.ToUpper()).$($domainSuffix.ToUpper())/' /home/$($adminUsername)/krb5.conf > /home/$($adminUsername)/krb5.conf.updated
+sudo mv /home/$($adminUsername)/krb5.conf.updated /etc/krb5.conf
+
 echo '' >> /home/$($adminUsername)/krb5.conf
 echo '[realms]' >> /home/$($adminUsername)/krb5.conf
-echo 'SQLK8S.LOCAL = {' >> /home/$($adminUsername)/krb5.conf
-echo '    kdc = sqlk8sjumpbox.sqlk8s.local' >> /home/$($adminUsername)/krb5.conf
-echo '    admin_server = sqlk8sjumpbox.sqlk8s.local' >> /home/$($adminUsername)/krb5.conf
-echo '    default_domain = sqlk8s.local' >> /home/$($adminUsername)/krb5.conf
+echo '$($netbiosName.ToUpper()).$($domainSuffix.ToUpper()) = {' >> /home/$($adminUsername)/krb5.conf
+echo '    kdc = $($jumpboxVM.ToLower()).$($netbiosName.ToLower()).$($domainSuffix)' >> /home/$($adminUsername)/krb5.conf
+echo '    admin_server = $($jumpboxVM.ToLower()).$($netbiosName.ToLower()).$($domainSuffix)' >> /home/$($adminUsername)/krb5.conf
+echo '    default_domain = $($netbiosName.ToLower()).$($domainSuffix)' >> /home/$($adminUsername)/krb5.conf
 echo '}' >> /home/$($adminUsername)/krb5.conf
 echo '' >> /home/$($adminUsername)/krb5.conf
 echo '[domain_realm]' >> /home/$($adminUsername)/krb5.conf
-echo '.sqlk8s.local = SQLK8S.LOCAL' >> /home/$($adminUsername)/krb5.conf
-echo 'sqlk8s.local = SQLK8S.LOCAL' >> /home/$($adminUsername)/krb5.conf
+echo '.$($netbiosName.ToLower()).$($domainSuffix) = $($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' >> /home/$($adminUsername)/krb5.conf
+echo '$($netbiosName.ToLower()).$($domainSuffix) = $($netbiosName.ToUpper()).$($domainSuffix.ToUpper())' >> /home/$($adminUsername)/krb5.conf
 sudo mv /home/$($adminUsername)/krb5.conf /etc/krb5.conf
 
 # Add firewall rules
@@ -222,7 +226,7 @@ echo token: my-shared-secret > /home/$($adminUsername)/config.yaml
 echo tls-san: >> /home/$($adminUsername)/config.yaml
 #echo "    - my-kubernetes-domain.com" >> /home/$($adminUsername)/config.yaml
 #echo "    - another-kubernetes-domain.com" >> /home/$($adminUsername)/config.yaml
-echo "    - sqlk8s.local" >> /home/$($adminUsername)/config.yaml
+echo "    - $($netbiosName.ToLower()).$($domainSuffix)" >> /home/$($adminUsername)/config.yaml
 sudo cp /home/$($adminUsername)/config.yaml /etc/rancher/rke2/config.yaml
 curl -sfL https://get.rke2.io | sudo sh -
 sudo systemctl enable rke2-server.service
@@ -240,7 +244,7 @@ echo server: https://192.168.0.5:9345 >> /home/$($adminUsername)/config.yaml
 echo tls-san: >> /home/$($adminUsername)/config.yaml
 #echo "    - my-kubernetes-domain.com" >> /home/$($adminUsername)/config.yaml
 #echo "    - another-kubernetes-domain.com" >> /home/$($adminUsername)/config.yaml
-echo "    - sqlk8s.local" >> /home/$($adminUsername)/config.yaml
+echo "    - $($netbiosName.ToLower()).$($domainSuffix)" >> /home/$($adminUsername)/config.yaml
 sudo cp /home/$($adminUsername)/config.yaml /etc/rancher/rke2/config.yaml
 curl -sfL https://get.rke2.io | sudo sh -
 sudo systemctl enable rke2-server.service
@@ -284,6 +288,7 @@ function Spinup-Node
     [string]$suseLicenseKey,
     [string]$netbiosName,
     [string]$domainSuffix,
+    [string]$jumpboxVM,
     [string]$deploymentDir,
     [string]$switchName
   )
@@ -306,7 +311,7 @@ function Spinup-Node
   Write-Host "$(Get-Date) - Installing dependencies on $serverName"
   Connect-SuseServer -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -suseLicenseKey $suseLicenseKey
   Write-Host "$(Get-Date) - Configuring K8s cluster on $serverName"
-  Setup-K8sCluster -serverName $serverName -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -netbiosName $netbiosName -domainSuffix $domainSuffix
+  Setup-K8sCluster -serverName $serverName -ipAddress $ipAddress -adminUsername $adminUsername -adminPassword $adminPassword -netbiosName $netbiosName -domainSuffix $domainSuffix -jumpboxVM $jumpboxVM
 }
 
 function VerifyNodeRunning
@@ -432,24 +437,24 @@ Add-DnsServerResourceRecordA -Name "grafana" -ZoneName "$($Env:netbiosName.toLow
 # Create new rDNS and add records
 Write-Host "$(Get-Date) - Adding reverse DNS records"
 Add-DnsServerPrimaryZone -NetworkID "192.168.0.0/16" -ReplicationScope "Domain"
-Add-DnsServerResourceRecordPtr -Name "1.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "sqlk8sjumpbox.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "1.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "$($Env:jumpboxVM.ToLower()).$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
 
-Add-DnsServerResourceRecordPtr -Name "5.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv01.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "6.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv02.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "7.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv03.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "5.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv01.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "6.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv02.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "7.0" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "susesrv03.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
 
-Add-DnsServerResourceRecordPtr -Name "0.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-0.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "1.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-1.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "2.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-2.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "3.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-agl1.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "0.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-0.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "1.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-1.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "2.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-2.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "3.192" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql19-agl1.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
 
-Add-DnsServerResourceRecordPtr -Name "0.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-0.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "1.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-1.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "2.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-2.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "3.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-agl1.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "0.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-0.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "1.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-1.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "2.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-2.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "3.193" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "mssql22-agl1.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
 
-Add-DnsServerResourceRecordPtr -Name "0.194" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "influxdb.sqlk8s.local"
-Add-DnsServerResourceRecordPtr -Name "1.194" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "grafana.sqlk8s.local"
+Add-DnsServerResourceRecordPtr -Name "0.194" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "influxdb.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
+Add-DnsServerResourceRecordPtr -Name "1.194" -ZoneName "168.192.in-addr.arpa" -AllowUpdateAny -TimeToLive 00:20:00 -AgeRecord -PtrDomainName "grafana.$($Env:netbiosName.ToLower()).$($Env:domainSuffix)"
 
 # Create the NAT network
 Write-Header "$(Get-Date) - Creating Hyper-V Network"
@@ -500,28 +505,28 @@ Copy-Item -Path "C:\Deployment\susesrv\susesrv_id_rsa*" -Destination "$HOME\.ssh
 $susesrv = "susesrv01"
 $susesrvip = "192.168.0.5"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $switchName
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -jumpboxVM $Env:jumpboxVM -deploymentDir $Env:DeploymentDir -switchName $switchName
 
 $susesrv = "susesrv02"
 $susesrvip = "192.168.0.6"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $switchName
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -jumpboxVM $Env:jumpboxVM -deploymentDir $Env:DeploymentDir -switchName $switchName
 
 $susesrv = "susesrv03"
 $susesrvip = "192.168.0.7"
 Write-Header "$(Get-Date) - Spinning up $susesrv"
-Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -deploymentDir $Env:DeploymentDir -switchName $switchName
+Spinup-Node -serverName $susesrv -ipAddress $susesrvip -adminUsername $Env:adminUsername -adminPassword $Env:adminPassword -suseLicenseKey $Env:suseLicenseKey -netbiosName $Env:netbiosName -domainSuffix $Env:domainSuffix -jumpboxVM $Env:jumpboxVM -deploymentDir $Env:DeploymentDir -switchName $switchName
 
 Write-Header "$(Get-Date) - Configuring known_hosts on $Env:jumpboxVM"
 ssh-keyscan -t ecdsa 192.168.0.5 > $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa susesrv01 >> $HOME\.ssh\known_hosts
-ssh-keyscan -t ecdsa susesrv01.sqlk8s.local >> $HOME\.ssh\known_hosts
+ssh-keyscan -t ecdsa susesrv01.$($Env:netbiosName.toLower()).$($Env:domainSuffix) >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa 192.168.0.6 >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa susesrv02 >> $HOME\.ssh\known_hosts
-ssh-keyscan -t ecdsa susesrv02.sqlk8s.local >> $HOME\.ssh\known_hosts
+ssh-keyscan -t ecdsa susesrv02.$($Env:netbiosName.toLower()).$($Env:domainSuffix) >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa 192.168.0.7 >> $HOME\.ssh\known_hosts
 ssh-keyscan -t ecdsa susesrv03 >> $HOME\.ssh\known_hosts
-ssh-keyscan -t ecdsa susesrv03.sqlk8s.local >> $HOME\.ssh\known_hosts
+ssh-keyscan -t ecdsa susesrv03.$($Env:netbiosName.toLower()).$($Env:domainSuffix) >> $HOME\.ssh\known_hosts
 (Get-Content $HOME\.ssh\known_hosts) | Set-Content -Encoding UTF8 $HOME\.ssh\known_hosts
 
 Write-Header "$(Get-Date) - Configuring K8s client on $Env:jumpboxVM"
